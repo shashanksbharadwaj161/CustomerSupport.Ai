@@ -1,0 +1,29 @@
+# secrets
+.env
+.env.*
+!.env.example
+# local data (sqlite, chroma, encrypted key secret, recordings)
+data/
+# models and weights
+models/
+*.safetensors
+*.bin
+*.ckpt
+*.nemo
+*.onnx
+*.pt
+# eval raw outputs and audio (results.md is committed)
+eval/out/
+eval/audio/
+*.wav
+*.flac
+*.mp3
+# python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+*.egg-info/
+# node
+node_modules/
+.next/
