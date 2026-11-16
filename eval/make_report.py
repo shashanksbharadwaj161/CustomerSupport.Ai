@@ -168,6 +168,21 @@ def section_retrieval(lines, data):
     lines.append(f"\nMixed lines hit@1 {fmt(d['mixed']['hit1'], True)} (n={d['mixed']['n']}). Query embed {d['query_ms']} ms each, load {d['load_s']} s, peak GPU {fmt(d['peak_gpu_mb'])} MB.\n")
 
 
+def section_kb(lines, data):
+    lines.append("## Cross-lingual retrieval through the ingestion pipeline (M4: crawl -> clean -> chunk -> embed -> Chroma)\n")
+    d = next((d for d in data if d.get("kind") == "kb_retrieval"), None)
+    if not d:
+        lines.append("PENDING: `SHAON_EMBEDDER=bge-m3 python -m eval.runners.run_kb`\n")
+        return
+    lines.append(f"Embedder: {d['embedder']}. Queries = test lines whose topic has an answer page on the two fake sites.\n")
+    lines.append("| lang | n | hit@1 | hit@3 |\n|---|---|---|---|")
+    for lang in LANGS:
+        v = d["per_lang"].get(lang)
+        if v:
+            lines.append(f"| {lang} | {v['n']} | {fmt(v['hit1'], True)} | {fmt(v['hit3'], True)} |")
+    lines.append(f"\nMixed lines hit@1 {fmt(d['mixed']['hit1'], True)} (n={d['mixed']['n']}).\n")
+
+
 def main():
     data = load_all()
     ratings = load_ratings()
@@ -181,6 +196,7 @@ def main():
     section_tts(lines, data, ratings)
     section_llm(lines, data, ratings)
     section_retrieval(lines, data)
+    section_kb(lines, data)
     dec = EVAL / "decisions.md"
     lines.append("## Decisions\n")
     lines.append(dec.read_text(encoding="utf-8") if dec.exists() else "PENDING: engines are locked after native-speaker ratings.\n")

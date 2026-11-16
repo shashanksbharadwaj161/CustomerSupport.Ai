@@ -47,6 +47,27 @@ await run("settings", async (page) => {
   if (!spent.includes("7.50")) throw new Error("cap not shown: " + spent);
 });
 
+for (const mode of ["sse", "poll"]) {
+  await run(`knowledge-${mode}`, async (page) => {
+    await page.goto(`${base}/knowledge/?effects=off${mode === "poll" ? "&poll=1" : ""}`, { waitUntil: "networkidle" });
+    await page.fill("[data-testid=kb-url]", `${base}/demo-sites/lotus-bank/`);
+    await page.check("[data-testid=kb-perm]");
+    await page.click("[data-testid=kb-start]");
+    await page.waitForFunction(() => /ready|error/.test(document.querySelector("[data-testid=kb-status]")?.textContent || ""), null, { timeout: 120000 });
+    const status = await page.textContent("[data-testid=kb-status]");
+    if (!status.startsWith("ready")) throw new Error(status);
+    const nodes = await page.locator("[data-testid=crawl-graph] g.node").count();
+    if (nodes < 5) throw new Error(`only ${nodes} page nodes`);
+    await page.fill("[data-testid=kb-question]", "What are the branch opening hours on Saturday?");
+    await page.click("[data-testid=kb-ask]");
+    await page.waitForSelector("[data-testid=kb-answer]", { timeout: 60000 });
+    const txt = await page.textContent("[data-testid=kb-answer]");
+    if (!/Saturday/.test(txt)) throw new Error("answer passages missing hours: " + txt.slice(0, 200));
+    const log = await page.textContent("details:has-text('Event log')");
+    if (/private\/internal/.test(log) && !/robots/.test(log)) throw new Error("private page crawled");
+  });
+}
+
 await browser.close();
 console.log(JSON.stringify(results, null, 1));
 process.exit(Object.values(results).every((r) => r.ok) ? 0 : 1);

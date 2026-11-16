@@ -33,5 +33,9 @@ particle hero, ASCII) are re-implemented from scratch.
 | Kokoro-82M | Apache-2.0 | TTS product track en/ja |
 | OmniVoice | code Apache-2.0, **weights CC-BY-NC** | **TTS demo only** |
 | BGE-M3 | MIT | embeddings |
+| Crawl4AI | Apache-2.0 | JS rendering for the crawler (our own BFS, robots check and limits) |
+| chromadb | Apache-2.0 | local vector store (telemetry disabled) |
+| Playwright (Python) | Apache-2.0 | crawler JS fallback renderer, E2E |
+| Silero VAD (via Pipecat) | MIT | voice activity detection |
 | anthropic (Python SDK) | MIT | Claude API |
 | Eval tool fonts: Noto Sans families (Google Fonts) | SIL OFL 1.1 | recorder/rater pages |

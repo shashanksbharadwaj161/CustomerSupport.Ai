@@ -10,7 +10,7 @@ dependencies = ["numpy", "soundfile"]
 [project.optional-dependencies]
 # the app server (FastAPI + Pipecat transports + Silero VAD + crawler/store); add engine extras below
 app = ["fastapi>=0.115", "uvicorn[standard]", "cryptography", "anthropic>=2", "httpx", "beautifulsoup4",
-       "chromadb", "pipecat-ai[webrtc,silero,websocket]>=1.16", "playwright==1.63.0"]
+       "chromadb", "pipecat-ai[webrtc,silero,websocket]>=1.16", "playwright==1.63.0", "crawl4ai>=0.9"]
 stt-whisper = ["faster-whisper>=1.1"]
 stt-indic = ["torch", "torchaudio", "transformers", "onnx", "onnxruntime"]
 tts-parler = ["torch", "parler-tts @ git+https://github.com/huggingface/parler-tts.git"]

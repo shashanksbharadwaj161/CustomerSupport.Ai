@@ -49,6 +49,20 @@ PENDING: `python -m eval.runners.run_llm` (quick set, $0.50 cap)
 
 Mixed lines hit@1 80% (n=10). Query embed 50.8 ms each, load 18.9 s, peak GPU - MB.
 
+## Cross-lingual retrieval through the ingestion pipeline (M4: crawl -> clean -> chunk -> embed -> Chroma)
+
+Embedder: BAAI/bge-m3. Queries = test lines whose topic has an answer page on the two fake sites.
+
+| lang | n | hit@1 | hit@3 |
+|---|---|---|---|
+| en | 9 | 89% | 100% |
+| ja | 9 | 100% | 100% |
+| hi | 9 | 78% | 100% |
+| bn | 9 | 100% | 100% |
+| kn | 9 | 100% | 100% |
+
+Mixed lines hit@1 67% (n=9).
+
 ## Decisions
 
 Status 2026-11-16: no engine is locked yet. Native recordings, native ratings and a GPU run are pending.

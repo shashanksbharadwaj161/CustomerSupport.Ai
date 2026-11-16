@@ -42,3 +42,17 @@ PENDING = cannot be done here; says who must do it.
 - Known: Whisper small heard 支店 as 視点 (homophone) - CPU model quality; GPU large-v3 expected better (measure in M0).
 - PENDING (user): native recordings for all languages -> `python -m eval.runners.run_lid` (thresholds) and `run_switch`;
   hi/bn/kn speech output needs Indic Parler / OmniVoice on GPU (adapters complete, never run here).
+
+## M4 - Knowledge: BUILT + VERIFIED
+- Built: crawler with our own robots.txt check and clear user agent, same host + start-path scope, depth/page limits,
+  query strings ignored, allowlist enforced when exposed; JS rendering via Crawl4AI (headless Chromium), Playwright fallback;
+  cleaning (nav/footer/script removed, cross-page boilerplate dedupe), heading chunks with URL/title; BGE-M3 embeddings
+  (lexical fallback clearly labelled when BGE-M3 is not downloaded) in Chroma (telemetry off), one collection per source;
+  site brief by Claude (honestly skipped without a key); small sites go fully into the cached prompt; retrieval feeds each
+  call turn with sources shown in the transcript; Knowledge page: drop zone, crawl graph, SSE progress with automatic
+  polling fallback (`?mode=poll`, needed behind Quick Tunnels), pages, chunk preview, brief, test question, re-crawl, delete.
+- Verified: 8 tests on two fake sites + a JS-rendered site served locally (robots skip, external links ignored, limits,
+  dedupe, JS rendering via Crawl4AI, API ingest -> retrieve -> ask -> attach -> delete, SSE + polling, exposed allowlist);
+  UI E2E crawls the demo site in SSE and polling modes. Cross-lingual retrieval through the real pipeline with BGE-M3
+  (eval/results.md): hit@3 100% in en/ja/hi/bn/kn; hit@1 en 89%, ja 100%, hi 78%, bn 100%, kn 100%.
+- PENDING (user): site brief needs the API key; real customer sites only with permission.

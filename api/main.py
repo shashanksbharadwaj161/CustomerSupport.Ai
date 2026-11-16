@@ -20,7 +20,14 @@ from api.state import AppState, require_admin
 def create_app(state: AppState | None = None) -> FastAPI:
     logscrub.install()
     st = state or AppState()
-    app = FastAPI(title="ShaOn Voice AI", version="0.1.0", docs_url="/api/docs", openapi_url="/api/openapi.json")
+    from contextlib import asynccontextmanager
+
+    @asynccontextmanager
+    async def lifespan(_app):
+        _preload(st)
+        yield
+
+    app = FastAPI(title="ShaOn Voice AI", version="0.1.0", docs_url="/api/docs", openapi_url="/api/openapi.json", lifespan=lifespan)
     app.state.app = st
     app.state.auth = Auth(st.cfg.admin_password, st.secrets.key_file.read_bytes(), st.cfg.allowed_origins)
     app.state.profiles = ProfileStore(st.db)
@@ -41,29 +48,6 @@ def create_app(state: AppState | None = None) -> FastAPI:
     async def scrubbed_errors(request: Request, exc: Exception):  # never leak keys in error bodies
         logging.getLogger("shaon").exception("unhandled error")
         return JSONResponse({"detail": logscrub.scrub(f"{type(exc).__name__}: {exc}")[:300]}, status_code=500)
-
-    @app.on_event("startup")
-    async def preload():
-        """SHAON_PRELOAD=stt:en,tts:en,stt:ja ... loads engines in the background so call one is not slow."""
-        import threading
-
-        def work():
-            for item in st.cfg.preload:
-                kind, _, lang = item.partition(":")
-                try:
-                    if kind == "stt":
-                        name, opts = st.engines.stt_choice(lang or "en")
-                        st.engines.get_stt(name, opts)
-                    elif kind == "tts":
-                        vid = st.engines.cfg["default_voices"].get(lang or "en")
-                        v = st.voices().voice(vid) if vid else None
-                        if v:
-                            st.engines.get_tts(v.engine).synthesize("Ready.", v)
-                    elif kind == "lid":
-                        st.engines.lid_engine()
-                except Exception as e:
-                    logging.getLogger("shaon").warning("preload %s failed: %s", item, e)
-        threading.Thread(target=work, daemon=True).start()
 
     # ---- auth
     @app.get("/api/auth/status")
@@ -149,6 +133,9 @@ def create_app(state: AppState | None = None) -> FastAPI:
     app.include_router(calls_router(app))
     from api.routes import register
     register(app)
+    if app.state.knowledge is not None:
+        from api.knowledge import register as register_knowledge
+        register_knowledge(app)
 
     # ---- web UI (static export). Mounted last so /api wins.
     web = st.cfg.web_dir
@@ -162,6 +149,30 @@ def create_app(state: AppState | None = None) -> FastAPI:
         def no_web():
             return JSONResponse({"detail": "web UI not built: run `cd web && npm run build` (scripts/start.sh does it)"})
     return app
+
+
+def _preload(st) -> None:
+    """SHAON_PRELOAD=stt:en,tts:en,stt:ja ... loads engines in the background so call one is not slow."""
+    import threading
+
+    def work():
+        for item in st.cfg.preload:
+            kind, _, lang = item.partition(":")
+            try:
+                if kind == "stt":
+                    name, opts = st.engines.stt_choice(lang or "en")
+                    st.engines.get_stt(name, opts)
+                elif kind == "tts":
+                    vid = st.engines.cfg["default_voices"].get(lang or "en")
+                    v = st.voices().voice(vid) if vid else None
+                    if v:
+                        st.engines.get_tts(v.engine).synthesize("Ready.", v)
+                elif kind == "lid":
+                    st.engines.lid_engine()
+            except Exception as e:
+                logging.getLogger("shaon").warning("preload %s failed: %s", item, e)
+    if st.cfg.preload:
+        threading.Thread(target=work, daemon=True).start()
 
 
 def _optional_modules(app: FastAPI) -> None:
