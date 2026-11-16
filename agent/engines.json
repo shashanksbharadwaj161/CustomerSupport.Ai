@@ -97,32 +97,58 @@
   },
   "stt_cpu": {
     "en": {
-      "engine": "faster-whisper",
-      "options": {
-        "model": "small",
-        "beam_size": 1,
-        "temperature": 0.0
-      }
+      "order": [
+        {
+          "engine": "faster-whisper",
+          "options": {
+            "model": "small",
+            "beam_size": 1,
+            "temperature": 0.0
+          }
+        },
+        {
+          "engine": "faster-whisper",
+          "options": {
+            "model": "base",
+            "beam_size": 1,
+            "temperature": 0.0
+          }
+        }
+      ],
+      "_measured": "FLEURS test, CPU, see eval/results.md"
     },
     "ja": {
-      "engine": "faster-whisper",
-      "options": {
-        "model": "small",
-        "beam_size": 1,
-        "temperature": 0.0
-      }
+      "order": [
+        {
+          "engine": "faster-whisper",
+          "options": {
+            "model": "small",
+            "beam_size": 1,
+            "temperature": 0.0
+          }
+        },
+        {
+          "engine": "faster-whisper",
+          "options": {
+            "model": "base",
+            "beam_size": 1,
+            "temperature": 0.0
+          }
+        }
+      ],
+      "_measured": "FLEURS test, CPU, see eval/results.md"
     },
     "hi": {
       "order": [
         {
+          "engine": "mms",
+          "options": {}
+        },
+        {
           "engine": "indicconformer",
           "options": {
             "decoding": "rnnt"
           }
-        },
-        {
-          "engine": "mms",
-          "options": {}
         },
         {
           "engine": "faster-whisper",
@@ -131,20 +157,29 @@
             "beam_size": 1,
             "temperature": 0.0
           }
+        },
+        {
+          "engine": "faster-whisper",
+          "options": {
+            "model": "base",
+            "beam_size": 1,
+            "temperature": 0.0
+          }
         }
-      ]
+      ],
+      "_measured": "FLEURS test, CPU, see eval/results.md"
     },
     "bn": {
       "order": [
         {
+          "engine": "mms",
+          "options": {}
+        },
+        {
           "engine": "indicconformer",
           "options": {
             "decoding": "rnnt"
           }
-        },
-        {
-          "engine": "mms",
-          "options": {}
         },
         {
           "engine": "faster-whisper",
@@ -153,20 +188,29 @@
             "beam_size": 1,
             "temperature": 0.0
           }
+        },
+        {
+          "engine": "faster-whisper",
+          "options": {
+            "model": "base",
+            "beam_size": 1,
+            "temperature": 0.0
+          }
         }
-      ]
+      ],
+      "_measured": "FLEURS test, CPU, see eval/results.md"
     },
     "kn": {
       "order": [
         {
+          "engine": "mms",
+          "options": {}
+        },
+        {
           "engine": "indicconformer",
           "options": {
             "decoding": "rnnt"
           }
-        },
-        {
-          "engine": "mms",
-          "options": {}
         },
         {
           "engine": "faster-whisper",
@@ -175,8 +219,17 @@
             "beam_size": 1,
             "temperature": 0.0
           }
+        },
+        {
+          "engine": "faster-whisper",
+          "options": {
+            "model": "base",
+            "beam_size": 1,
+            "temperature": 0.0
+          }
         }
-      ]
+      ],
+      "_measured": "FLEURS test, CPU, see eval/results.md"
     }
   },
   "default_voices": {

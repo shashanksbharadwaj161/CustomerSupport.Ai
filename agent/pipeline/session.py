@@ -77,26 +77,38 @@ class CallSession:
         else:
             lid = self.engines.lid_engine()
             tl = time.perf_counter()
-            first = lid.transcribe(audio, None)  # one pass: language probabilities + text
+            # detection only (encoder + one decoder step): no transcript is decoded here, so a language routed to a
+            # different engine (MMS / IndicConformer) is transcribed exactly once (measured: ~3-6 s saved per Indic turn on CPU)
+            raw = lid.detect_language(audio)
             info["lid_ms"] = round((time.perf_counter() - tl) * 1000)
-            probs = {k: v for k, v in (first.lid_probs or {}).items() if k in enabled}
+            # renormalize over the agent's enabled languages: Whisper often puts Hindi mass on Urdu (measured: raw hi 0.47-0.51
+            # on FLEURS clips that are 0.96 once restricted), which would wrongly look "unsure"
+            probs = {k: v for k, v in raw.items() if k in enabled}
+            total = sum(probs.values())
+            if total > 0:
+                probs = {k: v / total for k, v in probs.items()}
             info["lid_probs"] = {k: round(v, 3) for k, v in probs.items()}
-            info["lid_text"] = first.text  # first-pass (auto-language) transcript: used by the script check and the eval sweep
-            d = decide_language(probs, None, prev, default_lang=prev, threshold=self.lid_threshold, prev_bias=self.lid_bias)
+            first = None
+            if max(probs.values(), default=0.0) < self.script_override_max_conf:
+                # unsure: also decode the auto-language transcript so the SCRIPT can break the tie (rare on FLEURS)
+                first = lid.transcribe(audio, None)
+                info["lid_text"] = first.text
+                info["lid_ms"] = round((time.perf_counter() - tl) * 1000)
+            d = decide_language(probs, first.text if first else None, prev, default_lang=prev, threshold=self.lid_threshold,
+                                prev_bias=self.lid_bias, script_override_max_conf=self.script_override_max_conf)
             lang, info["reason"] = d.language, d.reason
             if d.reason == "low_conf_keep_prev" and probs:
                 top = max(probs, key=probs.get)
                 if top != prev:  # PLAN 6.2: run both recognizers, keep the transcript whose script fits
                     a = self._stt(audio, prev, info)
-                    b = first.text if self._same_engine(lid, top) and first.language == top else self._stt(audio, top, info)
+                    b = self._stt(audio, top, info)
                     fit_b = dominant_language(b)[0] == top and top != "en"
                     lang, text = (top, b) if fit_b else (prev, a)
                     info["reason"] = "dual_recognition"
                     return self._finish(text, lang, info, t0)
-            if self._same_engine(lid, lang) and first.language == lang:
-                info["engines"].append(f"faster-whisper:{lid.options.get('model', '')}:{lang}:single-pass")
-                text = first.text
-                return self._post_script_check(audio, text, lang, info, t0, enabled)
+            if first is not None and first.language == lang and self._same_engine(lid, lang):
+                info["engines"].append(f"faster-whisper:{lid.options.get('model', '')}:{lang}:reused")
+                return self._post_script_check(audio, first.text, lang, info, t0, enabled)
         text = self._stt(audio, lang, info)
         return self._post_script_check(audio, text, lang, info, t0, enabled)
 
@@ -134,6 +146,7 @@ class CallSession:
         return text
 
     def _finish(self, text, lang, info, t0) -> dict:
+        info.setdefault("lid_text", text)
         info.update(text=text.strip(), lang=lang, stt_ms=round((time.perf_counter() - t0) * 1000))
         if text.strip():
             self.ctx.current_lang = lang

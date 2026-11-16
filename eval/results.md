@@ -21,9 +21,24 @@ PENDING: `python -m eval.runners.run_lid --model large-v3`
 
 google/fleurs test split (CC-BY-4.0, Conneau et al. 2022), fixed seed, one recording per sentence. **Caveat:** clean read Wikipedia-style speech, not phone calls - numbers are optimistic for live calls; Whisper small/base on CPU are stand-ins for the GPU engines. Text normalized per language (NFC, lowercase, punctuation/danda removed, native digits -> ASCII); CER for Japanese. Oracle language given to the recognizer.
 
-| engine (weights) | lang | n | WER | CER | WER, refs without digits (n) | median ms | worst-10% ms (p90) | RTF median |
-|---|---|---|---|---|---|---|---|---|
+| engine (weights) | lang | n | WER | CER | WER, refs without digits (n) | WER / CER Indic-folded* | median ms | worst-10% ms (p90) | RTF median |
+|---|---|---|---|---|---|---|---|---|---|
 | indicconformer (ai4bharat/indic-conformer-600m-multilingual) | hi/bn/kn | - | PENDING | | | | | |
+| mms (facebook/mms-1b-all, 3889 MB, fp32 PyTorch, CC-BY-NC (eval only)) | hi | 20 | 20% | 7% | 20% (20) | 3942 | 7262 | 0.343 |
+| mms (facebook/mms-1b-all, 3889 MB, fp32 PyTorch, CC-BY-NC (eval only)) | bn | 20 | 31% | 9% | 28% (15) | 3032 | 6937 | 0.325 |
+| mms (facebook/mms-1b-all, 3889 MB, fp32 PyTorch, CC-BY-NC (eval only)) | kn | 20 | 26% | 4% | 26% (19) | 4358 | 8037 | 0.351 |
+| whisper-base (Systran/faster-whisper-base, 148 MB, int8 CTranslate2, greedy beam 1, temperature 0) | en | 50 | 10% | 5% | 10% (45) | 822 | 1023 | 0.091 |
+| whisper-base (Systran/faster-whisper-base, 148 MB, int8 CTranslate2, greedy beam 1, temperature 0) | ja | 50 | - | 23% | 22% (34) | 995 | 1238 | 0.08 |
+| whisper-base (Systran/faster-whisper-base, 148 MB, int8 CTranslate2, greedy beam 1, temperature 0) | hi | 50 | 122% | 121% | 123% (43) | 1078 | 2394 | 0.104 |
+| whisper-base (Systran/faster-whisper-base, 148 MB, int8 CTranslate2, greedy beam 1, temperature 0) | bn | 50 | 126% | 113% | 133% (40) | 1052 | 2363 | 0.089 |
+| whisper-base (Systran/faster-whisper-base, 148 MB, int8 CTranslate2, greedy beam 1, temperature 0) | kn | 50 | 157% | 110% | 166% (43) | 1935 | 3141 | 0.113 |
+| whisper-small (Systran/faster-whisper-small, 486 MB, int8 CTranslate2, greedy beam 1, temperature 0) | en | 50 | 5% | 2% | 5% (45) | 1806 | 2079 | 0.205 |
+| whisper-small (Systran/faster-whisper-small, 486 MB, int8 CTranslate2, greedy beam 1, temperature 0) | ja | 50 | - | 13% | 13% (34) | 2307 | 2590 | 0.182 |
+| whisper-small (Systran/faster-whisper-small, 486 MB, int8 CTranslate2, greedy beam 1, temperature 0) | hi | 50 | 78% | 51% | 73% (43) | 3817 | 6404 | 0.406 |
+| whisper-small (Systran/faster-whisper-small, 486 MB, int8 CTranslate2, greedy beam 1, temperature 0) | bn | 50 | 103% | 118% | 100% (40) | 6010 | 6288 | 0.488 |
+| whisper-small (Systran/faster-whisper-small, 486 MB, int8 CTranslate2, greedy beam 1, temperature 0) | kn | 50 | 100% | 94% | 100% (43) | 5754 | 6160 | 0.406 |
+
+*Indic-folded = same transcripts rescored after folding nukta forms (ज़/ज, ড়/ড) and chandrabindu/anusvara: spelling variants, not recognition errors. Secondary metric; the strict WER/CER is primary.
 
 indicconformer: PENDING - OSError: You are trying to access a gated repo.
 Make sure to have access to it at https://huggingface.co/ai4bharat/indic-conformer-600m-multilingual.
@@ -31,7 +46,17 @@ Make sure to have access to it at https://huggingface.co/ai4bharat/indic-conform
 
 ### Language ID on the same clips (the app's real path: Whisper small LID + routing, call starting in English)
 
-PENDING
+Overall raw top-1 100%; app decision 99%; median LID time 4518 ms.
+
+| true \ detected | en | ja | hi | bn | kn | raw top-1 | app decision | median confidence |
+|---|---|---|---|---|---|---|---|---|
+| en | 50 | 0 | 0 | 0 | 0 | 100% | 100% | 0.969 |
+| ja | 0 | 50 | 0 | 0 | 0 | 100% | 100% | 0.989 |
+| hi | 0 | 0 | 50 | 0 | 0 | 100% | 100% | 0.8714999999999999 |
+| bn | 0 | 0 | 0 | 50 | 0 | 100% | 96% | 0.899 |
+| kn | 0 | 0 | 0 | 0 | 50 | 100% | 100% | 0.7164999999999999 |
+
+Threshold sweep (stay = previous turn in the same language, switch = previous turn in another language): best threshold 0.3, prev_bias 0.0, script check True -> stay 100%, switch 100%. **Proposed values are CPU / read-speech estimates: re-measure on the demo PC.**
 
 ## Language switching (PLAN M3 rule: 3 consecutive switch directions per pair)
 
@@ -51,11 +76,40 @@ No engine streams: first audio = full sentence generation time. Round-trip CER =
 
 ## CPU speaking engines for hi / bn / kn (demo mode)
 
-PENDING: `python -m eval.runners.run_tts_cpu`
+MMS voices are robotic pipeline-testing voices (CC-BY-NC, DEMO ONLY). Round-trip CER = TTS output transcribed back by the best measured STT: an intelligibility PROXY, not naturalness. Reply lines machine-written (native review pending).
+
+| voice | lang | engine | license | first audio median ms | p90 ms | RTF median | round-trip CER (proxy) | via |
+|---|---|---|---|---|---|---|---|---|
+| kokoro_hi_alpha | hi | kokoro | Apache-2.0 | 1577 | 2118 | 0.328 | 6% | mms (FLEURS WER 0.1964) |
+| mms_hi | hi | mms-tts | CC-BY-NC-4.0 (DEMO ONLY) | 1270 | 1654 | 0.221 | 10% | mms (FLEURS WER 0.1964) |
+| mms_bn | bn | mms-tts | CC-BY-NC-4.0 (DEMO ONLY) | 988 | 1103 | 0.183 | 8% | mms (FLEURS WER 0.3087) |
+| mms_kn | kn | mms-tts | CC-BY-NC-4.0 (DEMO ONLY) | 1119 | 1329 | 0.175 | 8% | mms (FLEURS WER 0.2609) |
 
 ## Live-call E2E with real speech: hi / bn / kn and switches (CPU, scripted fake LLM)
 
-PENDING: `python tests/e2e/run_indic_e2e.py`
+Pass rate 100% (6/6 calls). FLEURS read speech as caller; scripted fake LLM (machine-written lines, native review pending); CPU engines; one run each.
+
+First audio, median per language (same calls): BEFORE = full Whisper transcription for language ID + routed STT; AFTER = detection-only language ID, one transcription per turn.
+
+| lang | before ms | after ms |
+|---|---|---|
+| en | 3197 | 4148 |
+| ja | 5527 | 4417 |
+| hi | 8746 | 5769 |
+| bn | 8628 | 5257 |
+| kn | 12139 | 6663 |
+
+| call | turn | detected | STT engine | reply lang | TTS voice | first audio ms | result |
+|---|---|---|---|---|---|---|---|
+| hi | hi | hi | mms | hi | kokoro_hi_alpha | 5769 | PASS |
+| bn | bn | bn | mms | bn | mms_bn | 5306 | PASS |
+| kn | kn | kn | mms | kn | mms_kn | 7065 | PASS |
+| hi->en | hi | hi | mms | hi | kokoro_hi_alpha | 5558 | PASS |
+| hi->en | en | en | faster-whisper | en | kokoro_en_heart | 4148 | PASS |
+| bn->ja | bn | bn | mms | bn | mms_bn | 5208 | PASS |
+| bn->ja | ja | ja | faster-whisper | ja | kokoro_ja_alpha | 4417 | PASS |
+| kn->hi | kn | kn | mms | kn | mms_kn | 6261 | PASS |
+| kn->hi | hi | hi | mms | hi | kokoro_hi_alpha | 5874 | PASS |
 
 ## Claude replies
 

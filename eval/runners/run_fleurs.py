@@ -169,6 +169,11 @@ def rescore() -> None:
         for l in LANGS:
             rs = [r for r in d["rows"] if r["lang"] == l]
             d["per_lang"][l]["app_current_rules"] = round(sum(r["app_lang_current_rules"] == l for r in rs) / len(rs), 3)
+        for l in LANGS:
+            rs = [r for r in d["rows"] if r["lang"] == l]
+            ren = [r["probs"].get(l, 0) / s for r in rs if (s := sum(r["probs"].values())) > 0]
+            d["per_lang"][l]["median_conf_renorm"] = round(float(np.median(ren)), 3) if ren else None
+            d["per_lang"][l]["unsure_share"] = round(sum(x < float(lid.get("script_override_max_conf", 0.6)) for x in ren) / len(ren), 3) if ren else None
         d["overall_app_current_rules"] = round(sum(r["app_lang_current_rules"] == r["lang"] for r in d["rows"]) / len(d["rows"]), 3)
         d["current_rules"] = {k: lid.get(k) for k in ("threshold", "prev_bias", "script_override_max_conf")}
         d["grid"], d["recommended"] = sweep(d["rows"])

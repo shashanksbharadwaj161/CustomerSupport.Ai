@@ -19,6 +19,10 @@ class StubSTT:
         text, detected, probs = self.script(language)
         return Transcript(text=text, language=detected, lid_probs=probs if language is None else {})
 
+    def detect_language(self, audio):
+        self.calls.append("detect")
+        return self.script(None)[2]
+
 
 class StubEngines:
     def __init__(self, script, indic=False):
@@ -66,7 +70,7 @@ def test_confident_lid_switches_language_single_pass():
     s = session(script)
     info = s.transcribe_turn(AUDIO)
     assert info["lang"] == "ja" and info["reason"] == "lid" and info["text"] == TEXT["ja"]
-    assert s.engines.whisper.calls == [None]  # one pass gave probabilities + text
+    assert s.engines.whisper.calls == ["detect", "ja"]  # cheap detection, then ONE transcription in the routed engine
     assert s.ctx.current_lang == "ja"
 
 
@@ -78,12 +82,15 @@ def test_low_confidence_keeps_previous_language_or_uses_dual_recognition():
         return (TEXT[lang], lang, {})
     s = session(script, prev="hi")
     info = s.transcribe_turn(AUDIO)
-    assert info["reason"] == "dual_recognition" and info["lang"] == "bn" and info["text"] == TEXT["bn"]
+    # unsure LID + a Bengali-script auto transcript: the script decides (cheaper), or dual recognition confirms it
+    assert info["reason"] in ("script_flip", "dual_recognition") and info["lang"] == "bn" and info["text"] == TEXT["bn"]
 
     # same weak LID but the candidate transcript is not in Bengali script -> keep the previous language
     def script2(lang):
         if lang is None:
             return ("amar card", "bn", {"bn": 0.40, "hi": 0.35, "en": 0.25})
+        if lang == "bn":  # forced Bengali decoding of non-Bengali audio comes out as non-native text
+            return ("amar card", "bn", {})
         return (TEXT[lang], lang, {})
     s = session(script2, prev="hi")
     info = s.transcribe_turn(AUDIO)

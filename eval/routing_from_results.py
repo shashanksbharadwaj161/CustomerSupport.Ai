@@ -2,8 +2,9 @@
 
   python -m eval.routing_from_results           # print the proposal
   python -m eval.routing_from_results --write   # write it into agent/engines.json -> stt_cpu.<lang>.order
-Rule: measured engines sorted by WER (CER for Japanese) ascending; engines not measured on this machine (e.g. gated
-IndicConformer) follow them; Whisper is always present as the last resort. The GPU table ('stt') is not touched:
+Rule: usable measured engines (WER, CER for Japanese, <= 0.5) sorted ascending; then engines not measured on this machine
+(e.g. gated IndicConformer: tried when available, logged, re-measure!); then measured-but-unusable engines as last resorts.
+Whisper is always present at the end. The GPU table ('stt') is not touched:
 it must be decided from GPU measurements on the demo PC.
 """
 from __future__ import annotations
@@ -14,7 +15,9 @@ import json
 from agent.engines import ENGINES_JSON
 from eval.common import OUT
 
-SPEC = {"whisper-small": ("faster-whisper", {"model": "small"}), "whisper-base": ("faster-whisper", {"model": "base"}),
+CPU_DEC = {"beam_size": 1, "temperature": 0.0}  # the decoding the measurements used (run_fleurs)
+USABLE = 0.5  # WER/CER at or below this counts as usable
+SPEC = {"whisper-small": ("faster-whisper", {"model": "small", **CPU_DEC}), "whisper-base": ("faster-whisper", {"model": "base", **CPU_DEC}),
         "mms": ("mms", {}), "indicconformer": ("indicconformer", {"decoding": "rnnt"})}
 
 
@@ -33,9 +36,10 @@ def proposal() -> dict:
     out = {}
     for lang, rows in measured.items():
         rows.sort()
-        order = [r[1] for r in rows]
+        order = [r[1] for r in rows if r[0] <= USABLE]
         if lang in ("hi", "bn", "kn"):
             order += [p for p in pending if p not in order]
+        order += [r[1] for r in rows if r[0] > USABLE]
         if not any(o.startswith("whisper") for o in order):
             order.append("whisper-small")
         out[lang] = {"order": order, "evidence": [{"engine": e, "metric": "cer" if lang == "ja" else "wer", "value": m, "n": n,

@@ -274,6 +274,20 @@ def section_indic_e2e(lines, data):
         lines.append("PENDING: `python tests/e2e/run_indic_e2e.py`\n")
         return
     lines.append(f"Pass rate {fmt(d['pass_rate'], True)} ({sum(c['pass'] for c in d['cases'])}/{len(d['cases'])} calls). {d['note']}\n")
+    before = next((b for b in data if b.get("kind") == "indic_e2e_before"), None)
+    if before:
+        import statistics as _st
+        def med(dd, lang):
+            xs = [t["first_audio_ms"] for c in dd["cases"] for t in c["turns"] if t["want"] == lang and t["first_audio_ms"]]
+            return round(_st.median(xs)) if xs else None
+        lines.append("First audio, median per language (same calls): BEFORE = full Whisper transcription for language ID + routed STT; "
+                     "AFTER = detection-only language ID, one transcription per turn.\n")
+        lines.append("| lang | before ms | after ms |\n|---|---|---|")
+        for lang in LANGS:
+            b, a = med(before, lang), med(d, lang)
+            if b or a:
+                lines.append(f"| {lang} | {fmt(b)} | {fmt(a)} |")
+        lines.append("")
     lines.append("| call | turn | detected | STT engine | reply lang | TTS voice | first audio ms | result |")
     lines.append("|---|---|---|---|---|---|---|---|")
     for c in d["cases"]:
