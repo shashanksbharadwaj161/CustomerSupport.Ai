@@ -165,7 +165,7 @@ Presets ship with sensible defaults and disclaimers. Custom type uses free text.
 ## 9. Guardrails spec
 
 - Layer 1: prompt rules built from profile fields.
-- Layer 2: checker on caller input (injection, off-topic, forbidden topic, PII) and on the reply before TTS (forbidden content, banned claims, missing disclaimer, ungrounded answers). Implemented as a small Claude call with a strict JSON verdict; fails closed to the handoff message.
+- Layer 2 (default, cost-saving): local rules on caller input (keywords, patterns: injection, off-topic, forbidden topic, PII) plus ONE combined Claude check on the reply before TTS. Settings toggle: full Claude checker on input as well. Reply check covers (forbidden content, banned claims, missing disclaimer, ungrounded answers). Implemented as a small Claude call with a strict JSON verdict; fails closed to the handoff message.
 - Layer 3: tool allowlist per agent type.
 - Every trigger logged with turn id.
 - Red-team set: 10 attacks per preset (prompt injection, off-topic, other customer's data, "ignore your rules", social engineering for account details, language-switch jailbreaks in each of the 5 languages). Report pass rate honestly.
@@ -230,7 +230,7 @@ shaon-voice-ai/
   data/       sqlite, chroma (gitignored)
   scripts/    start.sh, download_models.sh, check_hardware.py
   tests/      unit tests (pytest) for agent/ api/ eval/ code
-  deploy/     added at M10 only: Dockerfile, Modal app (DEPLOY.md)
+  deploy/     added at M10 only: tunnel script + checklist (DEPLOY.md, $0 plan)
 ```
 Additions vs v3 (2026-11-16): DEPLOY.md (hosted demo plan), pyproject.toml (one Python project with optional extras per engine), tests/, deploy/ (M10).
 
@@ -249,7 +249,7 @@ Additions vs v3 (2026-11-16): DEPLOY.md (hosted demo plan), pyproject.toml (one 
 **M7 - UI build-out.** Full design system applied to all pages, motion, ASCII, performance tiers, accessibility pass.
 **M8 - Demo hardening.** Call logs, one-command start, fallback video, two demo agents with sample sites (one bank-style fake, one tourism), demo script, README.
 **M9 - Eval report.** Numbers per language, honest weak spots, product-track notes.
-**M10 - Hosted demo.** See DEPLOY.md. Vercel (web) + GPU worker (Modal first, RunPod alternative), password-protected, private.
+**M10 - $0 remote demo.** See DEPLOY.md. Worker stays on your PC; optional Cloudflare Quick Tunnel + WebSocket transport (tested first); frontend from your PC or Vercel Hobby; app-level password; recorded fallback video. No paid hosts.
 
 Estimate: about 3 weeks of focused work with Claude Code including design (estimate, not measurement).
 
@@ -266,6 +266,6 @@ Estimate: about 3 weeks of focused work with Claude Code including design (estim
 7. Ungrounded answers: retrieval plus "answer only from sources" plus handoff; checker flags ungrounded replies.
 8. Crawl legality/ethics: permission, robots.txt, limits.
 9. Bank demo: fake data only, AI disclosure, no real account numbers.
-10. Needs an Anthropic API key and spend cap (a claude.ai subscription does not include API usage).
+10. Needs an Anthropic API key and spend cap (a claude.ai subscription does not include API usage). The Claude API is the only spend ($0 rule, DEPLOY.md); default app cap $10.
 11. Demo from a laptop: record a fallback video; tunnel if the client must connect.
 12. Naming: check that "ShaOn Voice AI" is not already used before showing a client.

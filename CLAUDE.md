@@ -1,12 +1,12 @@
 # CLAUDE.md - ShaOn Voice AI
 
-Read PLAN.md (system) and DESIGN.md (UI) first; DEPLOY.md only for M10 (hosted demo). Build one milestone per session. M0 (bake-off) comes first, D0 (design spike) runs alongside M0/M1.
+Read PLAN.md (system) and DESIGN.md (UI) first; DEPLOY.md is the $0 deployment plan (M10). Build one milestone per session. M0 (bake-off) comes first, D0 (design spike) runs alongside M0/M1.
 
 ## Stack rules
 - Frontend: Next.js (React) + Tailwind. Backend: Python, FastAPI + Pipecat (SmallWebRTC). SQLite + Chroma.
 - LLM: Anthropic API, model `claude-haiku-5-5`, streaming on, prompt caching for system prompt + site brief. Sonnet (`claude-sonnet-5-5`) as per-language fallback. Never commit keys.
 - API key handling (decision 2026-11-16): the key is entered in the app's Settings page and stored server-side only, encrypted at rest with a secret generated on first run into a 0600 file under `data/`. Never returned to the browser (show last 4 only). "Test key" button makes one tiny call. DB value wins over `ANTHROPIC_API_KEY` in `.env` (the `.env` value is the fallback; `.env.example` documents it). `ALLOW_KEY_EDIT=false` disables editing (hosted); otherwise editing needs `ADMIN_PASSWORD`. Scrub the key from logs, tracebacks and transcripts.
-- Spend cap and spend-so-far live in the DB (survive restarts). Claude calls stop when the cap is reached.
+- Spend cap and spend-so-far live in the DB (survive restarts). Default cap $10. Claude calls stop when the cap is reached.
 - Audio models run locally. Only text goes to the Anthropic API. Fake customer data only.
 - STT and TTS sit behind small interfaces (`STT`, `TTS`), selected per language by config. Load models on demand.
 - Layout as in PLAN.md section 14. Do not create files outside it without saying why.
@@ -32,7 +32,7 @@ Read PLAN.md (system) and DESIGN.md (UI) first; DEPLOY.md only for M10 (hosted d
 - Thresholds come from `eval/results.md`, not guesses.
 
 ## Guardrails
-- Layer 1 prompt rules, layer 2 checker (input and reply, strict JSON verdict, fail closed to handoff), layer 3 tool allowlist.
+- Layer 1 prompt rules, layer 2 checker, layer 3 tool allowlist. Layer 2 default (cost): local rules on input (keywords, patterns) + ONE combined Claude check on the reply (strict JSON verdict, fail closed to handoff). Full two-call checking (input + reply) is a settings toggle.
 - Log every trigger. Maintain the red-team set (10 attacks per preset, include jailbreaks in each language). Report pass rate honestly.
 
 ## UI rules (see DESIGN.md)
@@ -48,7 +48,8 @@ Read PLAN.md (system) and DESIGN.md (UI) first; DEPLOY.md only for M10 (hosted d
 - Report measured latency, error rates and native-speaker ratings, not guesses. Put results in `eval/results.md`.
 - If an engine fails a check, say so and propose the fallback in PLAN.md section 16.
 - Ask before adding paid services or hosted audio APIs.
-- Transport is chosen by config from M1: SmallWebRTC locally, FastAPI WebSocket on the hosted demo (DEPLOY.md).
+- Transport is chosen by config from M1: SmallWebRTC locally, FastAPI WebSocket through a Cloudflare Quick Tunnel (DEPLOY.md). Any SSE stream needs a polling fallback (Quick Tunnels do not support SSE).
 - Auth + rate-limit layer lives in `api/` from M2 (no-op locally unless `ADMIN_PASSWORD` is set).
-- GPU for M0: run `scripts/check_hardware.py`. Modal only if no NVIDIA GPU or under ~12 GB VRAM, budget $15 with an alert, and ask before starting anything paid (the user creates the Modal account/token).
+- $0 rule (DEPLOY.md): the only money spent is the Claude API. Nothing in this repo may require a paid host, paid GPU or paid add-on. Modal/RunPod/Render are not used.
+- GPU for M0: run `scripts/check_hardware.py`. If no NVIDIA GPU or under ~12 GB VRAM, run the M0 batch scripts on a free Kaggle GPU notebook (Colab free as backup). Never live calls there.
 - Commit small and often; never commit models, `.env`, `data/`.
