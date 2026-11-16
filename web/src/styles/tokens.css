@@ -1,0 +1,73 @@
+/*
+ * ShaOn design tokens: the ONLY place colors, radii, blur, glow, easing and durations are defined
+ * (CLAUDE.md UI rules). Components use these variables (CSS) or lib/tokens.ts (JS reads them back).
+ * PROVISIONAL until the "Folded Signal" moodboard is in design/moodboard/ (DESIGN.md section 1).
+ */
+:root {
+  color-scheme: dark;
+  /* color roles */
+  --bg: #06070b;
+  --bg-deep: #030305;
+  --surface: rgba(18, 21, 30, 0.72);
+  --surface-raised: rgba(30, 35, 50, 0.78);
+  --surface-solid: #10131b;
+  --line: rgba(160, 180, 220, 0.14);
+  --line-strong: rgba(160, 180, 220, 0.32);
+  --ink: #eef1f7;
+  --ink-muted: #8d95aa;
+  --ink-faint: #5a6175;
+  --signal: #6ef2d6;
+  --signal-alt: #8a7dff;
+  --warn: #ffc857;
+  --danger: #ff5d6c;
+  --ok: #6be58a;
+  --on-signal: #04110d;
+  /* per-language hue: badges, orb tint, ASCII tint */
+  --lang-en: #7cc7ff;
+  --lang-ja: #ff7ab6;
+  --lang-hi: #ffb347;
+  --lang-bn: #74f0a0;
+  --lang-kn: #c08bff;
+  /* shape, glass, glow */
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 24px;
+  --radius-pill: 999px;
+  --blur-glass: 18px;
+  --glass-opacity: 0.72;
+  --glow-soft: 0 0 24px rgba(110, 242, 214, 0.18);
+  --glow-strong: 0 0 48px rgba(110, 242, 214, 0.35);
+  /* motion: exactly 3 easings and 3 durations (DESIGN.md section 4) */
+  --ease-enter: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-exit: cubic-bezier(0.7, 0, 0.84, 0);
+  --ease-emphasis: cubic-bezier(0.87, 0, 0.13, 1);
+  --dur-fast: 180ms;
+  --dur-base: 420ms;
+  --dur-slow: 1100ms;
+  /* type */
+  --font-display: "Space Grotesk", "Noto Sans", system-ui, sans-serif;
+  --font-body: "Noto Sans", "Noto Sans Bengali", "Noto Sans Devanagari", "Noto Sans Kannada", "Noto Sans JP", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --font-bn: "Noto Sans Bengali", var(--font-body);
+  --font-hi: "Noto Sans Devanagari", var(--font-body);
+  --font-kn: "Noto Sans Kannada", var(--font-body);
+  --font-ja: "Noto Sans JP", var(--font-body);
+  /* layout */
+  --gutter: 16px;
+  --content-max: 1280px;
+  /* signal (3D): particle counts and DPR caps per effects tier */
+  --signal-particles-full: 14000;
+  --signal-particles-lite: 3500;
+  --signal-dpr-full: 2;
+  --signal-dpr-lite: 1;
+  --signal-fps-lite: 30;
+}
+
+@media (min-width: 768px) {
+  :root { --gutter: 32px; }
+}
+
+/* reduced motion: durations collapse; components also switch to static visuals */
+@media (prefers-reduced-motion: reduce) {
+  :root { --dur-fast: 1ms; --dur-base: 1ms; --dur-slow: 1ms; }
+}
