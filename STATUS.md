@@ -81,3 +81,15 @@ PENDING = cannot be done here; says who must do it.
   UI E2E previews a Kokoro voice and gets the PENDING message for Indic Parler; call E2E switches en voice mid-call
   (greeting kokoro_en_heart -> reply kokoro_en_michael).
 - PENDING (user): Indic Parler and OmniVoice voices need the GPU run + native-speaker ratings (M0).
+
+## M7 - UI build-out: BUILT + VERIFIED (provisional tokens)
+- Built: all DESIGN.md pages - Landing (ASCII wordmark hero, pinned scroll story "How ShaOn works" with cross-fades,
+  5-language section in native scripts, spatial 3D preset gallery with keys/drag, liquid-metal CTA, footer with the
+  OmniVoice demo-only notice), Agent Studio, Live Call (Signal, floating transcript, telemetry strip, voice dock),
+  Knowledge (drop zone, crawl graph collapsing into the brief), Call Logs (dense list, detail, per-turn timings,
+  guardrail events, Signal replay from stored timings), Settings (API key, spend, voices, effects, engines).
+  Effects tiers + reduced motion apply to every animated component (Signal, ASCII, GSAP timelines jump to end states in Off).
+- Verified: axe-core WCAG 2.1 A/AA scan: 0 violations on all 7 pages (after fixing contrast of dimmed badges and faint text);
+  64 Playwright screenshots in design/screens/ (7 pages + call detail x full/lite/off/reduced x desktop/phone, plus scroll states);
+  no page errors; time-to-first-audio with/without effects in design/perf.md.
+- PENDING (user): "Folded Signal" moodboard, reference inventory and assets -> final styling pass (tokens are provisional).

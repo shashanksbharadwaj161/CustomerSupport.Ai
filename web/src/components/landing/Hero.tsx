@@ -40,7 +40,7 @@ export function Hero() {
         </h1>
         <ul className="flex flex-wrap gap-3 mt-6" aria-label="Supported languages">
           {LANGS.map((l) => (
-            <li key={l} lang={l} className={`lang-badge lang-${l}`} style={{ fontFamily: "var(--font-body)", fontSize: 14, opacity: l === lang ? 1 : 0.55 }}>
+            <li key={l} lang={l} className={`lang-badge lang-${l}`} style={{ fontFamily: "var(--font-body)", fontSize: 14, background: l === lang ? "color-mix(in srgb, currentColor 16%, transparent)" : "transparent" }}>
               {LANG_NAMES[l].native}
             </li>
           ))}

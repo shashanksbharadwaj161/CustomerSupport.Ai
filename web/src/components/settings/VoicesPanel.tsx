@@ -53,7 +53,7 @@ export function VoicesPanel() {
     <section className="glass p-6 space-y-4" aria-labelledby="voices-h" data-testid="voices-panel">
       <h2 id="voices-h" className="display text-2xl">Voices</h2>
       <div className="flex flex-wrap gap-2" role="tablist" aria-label="Voice language">
-        {LANGS.map((l) => <button key={l} role="tab" aria-selected={l === lang} lang={l} className={`btn lang-${l}`} style={{ opacity: l === lang ? 1 : 0.6 }} onClick={() => setLang(l)}>{LANG_NAMES[l].native}</button>)}
+        {LANGS.map((l) => <button key={l} role="tab" aria-selected={l === lang} lang={l} className={`btn lang-${l}`} style={{ background: l === lang ? "color-mix(in srgb, currentColor 16%, var(--surface-raised))" : undefined, borderColor: l === lang ? "currentColor" : undefined }} onClick={() => setLang(l)}>{LANG_NAMES[l].native}</button>)}
       </div>
       <label className="flex items-center gap-2 text-sm">Set defaults for agent
         <select className="btn" value={agent} onChange={(e) => setAgent(e.target.value)}>{profiles.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</select></label>

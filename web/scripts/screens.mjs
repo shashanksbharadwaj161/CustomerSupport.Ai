@@ -24,6 +24,13 @@ for (const vp of [{ name: "desktop", width: 1440, height: 900 }, { name: "phone"
       await page.waitForTimeout(3500);
       const name = `${prefix}${p.replace(/\//g, "_").replace(/^_|_$/g, "") || "landing"}-${tier}-${vp.name}.png`;
       await page.screenshot({ path: out + name });
+      if (p === "/" && vp.name === "desktop") {  // scroll story + gallery
+        for (const [i, y] of [[1, 1.6], [2, 3.2], [3, 5.6]]) {
+          await page.evaluate((f) => window.scrollTo(0, window.innerHeight * f), y);
+          await page.waitForTimeout(1200);
+          await page.screenshot({ path: out + name.replace(".png", `-scroll${i}.png`) });
+        }
+      }
       const fps = await page.locator("[data-testid=fps]").first().textContent({ timeout: 500 }).catch(() => null);
       results.push({ page: p, tier, viewport: vp.name, file: name, fps, errors });
       await ctx.close();

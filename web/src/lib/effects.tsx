@@ -90,7 +90,10 @@ export function EffectsProvider({ children }: { children: React.ReactNode }) {
     return t;
   }, [choice, measuredFps, reducedMotion, generating, software]);
 
-  useEffect(() => { document.documentElement.dataset.effects = tier; }, [tier]);
+  useEffect(() => {
+    document.documentElement.dataset.effects = tier;
+    import("gsap").then(({ default: gsap }) => gsap.globalTimeline.timeScale(tier === "off" ? 1000 : 1)); // off/reduced: end states, no motion
+  }, [tier]);
 
   const setChoice = useCallback((c: TierChoice) => {
     setChoiceState(c);

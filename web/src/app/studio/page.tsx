@@ -156,7 +156,7 @@ export default function Studio() {
                 <fieldset><legend className="telemetry mb-2">Enabled languages</legend>
                   <div className="flex flex-wrap gap-2">{LANGS.map((l) => {
                     const on = cfg.languages.enabled.includes(l);
-                    return <button key={l} lang={l} className={`btn lang-${l}`} aria-pressed={on} style={{ opacity: on ? 1 : 0.5 }}
+                    return <button key={l} lang={l} className={`btn lang-${l}`} aria-pressed={on} style={{ background: on ? "color-mix(in srgb, currentColor 16%, var(--surface-raised))" : undefined, borderColor: on ? "currentColor" : undefined, textDecoration: on ? undefined : "line-through" }}
                       onClick={() => set("languages.enabled", on ? cfg.languages.enabled.filter((x: string) => x !== l) : [...cfg.languages.enabled, l])}>{LANG_NAMES[l].native}</button>;
                   })}</div></fieldset>
                 <Field label="Default language"><select className="btn" value={cfg.languages.default} onChange={(e) => set("languages.default", e.target.value)}>{cfg.languages.enabled.map((l: Lang) => <option key={l} value={l}>{LANG_NAMES[l].native}</option>)}</select></Field>

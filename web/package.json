@@ -29,6 +29,7 @@
     "@types/react": "19.2.2",
     "@types/react-dom": "19.2.2",
     "@types/three": "0.187.0",
+    "axe-core": "^4.10.3",
     "playwright": "^1.63.0",
     "tailwindcss": "4.3.4",
     "typescript": "5.9.3"
