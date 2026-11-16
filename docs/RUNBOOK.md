@@ -173,15 +173,34 @@ Copy the first-audio numbers into `design/perf.md` (the numbers there are from a
 
 ---------------------------------------------------------------------------------------------------
 
+## Real-audio checks for Hindi, Bengali, Kannada ($0, CPU or GPU)
+FLEURS test clips (CC-BY-4.0, read speech: optimistic) are streamed and cached outside the repo (~/.cache/shaon-eval, under 2 GB):
+```bash
+python -m eval.runners.run_fleurs --stt whisper-small whisper-base mms indicconformer --lid
+```
+```bash
+python -m eval.runners.run_tts_cpu
+```
+```bash
+python -m eval.routing_from_results --write
+```
+```bash
+INDIC=1 scripts/test_all.sh
+```
+On your GPU PC add `--stt whisper-large-v3`-style runs (any faster-whisper size works: `whisper-large-v3`) and, after the HF
+token, `indicconformer`. MMS (STT and voices) is CC-BY-NC: demo/testing only.
+
 ## Switching engines per language
 
 All selection lives in `agent/engines.json` (restart the app after editing):
-- `stt` (used when a CUDA GPU is present) and `stt_cpu` (no GPU): engine + options per language, e.g.
+- `stt` (used when a CUDA GPU is present) and `stt_cpu` (no GPU): an ordered list per language, e.g.
   ```json
-  "hi": {"engine": "indicconformer", "options": {"decoding": "rnnt"}, "fallback": "faster-whisper"}
+  "kn": {"order": [{"engine": "indicconformer", "options": {"decoding": "rnnt"}}, {"engine": "mms", "options": {}},
+                   {"engine": "faster-whisper", "options": {"model": "small"}}]}
   ```
-  Use `{"engine": "faster-whisper", "options": {"model": "large-v3"}}` to put a language on Whisper instead.
-  If an engine fails to load, that turn falls back to Whisper automatically and the transcript says so.
+  The first usable engine handles the turn; skipped engines (not installed, gated without token, failed to load) and
+  in-turn fallbacks are logged per turn (Call Logs, transcript metadata). `python -m eval.routing_from_results --write`
+  reorders `stt_cpu` from the measured FLEURS WER; decide the GPU table from GPU measurements.
 - `lid`: language-ID threshold and previous-language bias (from `run_lid`).
 - `default_voices`: the voice used per language when an agent has no override; `cpu_fallback_voices`: used when that
   voice's engine is unavailable on this machine.

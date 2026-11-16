@@ -17,6 +17,22 @@ Pipeline checks on synthetic (TTS) audio, NOT accuracy results: stt_faster-whisp
 
 PENDING: `python -m eval.runners.run_lid --model large-v3`
 
+## Real-audio STT on FLEURS (CPU)
+
+google/fleurs test split (CC-BY-4.0, Conneau et al. 2022), fixed seed, one recording per sentence. **Caveat:** clean read Wikipedia-style speech, not phone calls - numbers are optimistic for live calls; Whisper small/base on CPU are stand-ins for the GPU engines. Text normalized per language (NFC, lowercase, punctuation/danda removed, native digits -> ASCII); CER for Japanese. Oracle language given to the recognizer.
+
+| engine (weights) | lang | n | WER | CER | WER, refs without digits (n) | median ms | worst-10% ms (p90) | RTF median |
+|---|---|---|---|---|---|---|---|---|
+| indicconformer (ai4bharat/indic-conformer-600m-multilingual) | hi/bn/kn | - | PENDING | | | | | |
+
+indicconformer: PENDING - OSError: You are trying to access a gated repo.
+Make sure to have access to it at https://huggingface.co/ai4bharat/indic-conformer-600m-multilingual.
+401 Client
+
+### Language ID on the same clips (the app's real path: Whisper small LID + routing, call starting in English)
+
+PENDING
+
 ## Language switching (PLAN M3 rule: 3 consecutive switch directions per pair)
 
 PENDING: native recordings, then `python -m eval.runners.run_switch`
@@ -32,6 +48,14 @@ PENDING: native recordings, then `python -m eval.runners.run_switch`
 | kokoro_ja_kumo | ja | kokoro | Apache-2.0 | 1306 | 1627 | 0.319 | - | - | PENDING |
 
 No engine streams: first audio = full sentence generation time. Round-trip CER = TTS output transcribed by the configured STT (intelligibility proxy, not naturalness).
+
+## CPU speaking engines for hi / bn / kn (demo mode)
+
+PENDING: `python -m eval.runners.run_tts_cpu`
+
+## Live-call E2E with real speech: hi / bn / kn and switches (CPU, scripted fake LLM)
+
+PENDING: `python tests/e2e/run_indic_e2e.py`
 
 ## Claude replies
 

@@ -45,6 +45,10 @@ scripts/test_all.sh
 Unit/integration tests (pytest), web build, UI E2E, accessibility scan (axe), and browser calls with a fake microphone over
 both transports - all with a scripted LLM, so no API spend.
 
+## Evaluation data attribution
+Real-audio tests use **FLEURS** (google/fleurs, CC-BY-4.0; Conneau et al., "FLEURS: Few-shot Learning Evaluation of
+Universal Representations of Speech", IEEE SLT 2022). Clean read speech, not phone calls: results are optimistic.
+
 ## Docs
 - [PLAN.md](PLAN.md) system plan - [DESIGN.md](DESIGN.md) design - [CLAUDE.md](CLAUDE.md) working rules - [DEPLOY.md](DEPLOY.md) $0 deployment
 - [docs/RUNBOOK.md](docs/RUNBOOK.md) setup and operations - [docs/DEMO_SCRIPT.md](docs/DEMO_SCRIPT.md) client demo

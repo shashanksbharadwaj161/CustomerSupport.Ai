@@ -100,7 +100,8 @@ class RouterTTS(TTSService):
         voice = s.voice_for(lang)
         t0 = time.perf_counter()
         synth = None
-        for v in [voice, s.fallback_voice(lang)]:
+        tried = []
+        for v in [voice, *s.fallback_voices(lang)]:
             if v is None:
                 continue
             try:
@@ -110,7 +111,8 @@ class RouterTTS(TTSService):
                 synth = await asyncio.to_thread(eng.synthesize, text, v)
                 voice = v
                 break
-            except Exception as e:  # engine missing / weights missing: try the fallback voice
+            except Exception as e:  # engine missing / weights missing: try the next fallback voice
+                tried.append(f"{v.id}: {type(e).__name__}")
                 logger.warning(f"TTS {v.engine} unavailable for {lang}: {e}")
         if synth is None:
             await self.push_frame(msg("tts_unavailable", lang=lang, text=text,
@@ -119,7 +121,7 @@ class RouterTTS(TTSService):
         ms = round((time.perf_counter() - t0) * 1000)
         if s.tts_first_ms is None:
             s.tts_first_ms = ms
-        await self.push_frame(msg("tts", lang=lang, voice=voice.id, engine=voice.engine, demo_only=voice.demo_only,
+        await self.push_frame(msg("tts", lang=lang, voice=voice.id, engine=voice.engine, demo_only=voice.demo_only, fallbacks=tried,
                                   gen_ms=ms, audio_s=round(len(synth.audio) / synth.sample_rate, 2)))
         pcm = (np.clip(synth.audio, -1, 1) * 32767).astype(np.int16).tobytes()
         step = int(synth.sample_rate * CHUNK_SECONDS) * 2
@@ -215,9 +217,10 @@ class BrainProcessor(FrameProcessor):
         s.t_user_stopped = info.get("t_stop")  # end of THIS turn's speech (not a later utterance)
         row = {"role": "user", "language": lang, "text": info["text"], "stt_ms": info.get("stt_ms"),
                "lang_reason": info.get("reason"), "engine_json": {"stt": info.get("engines"), "lid": info.get("lid_probs"),
-                                                                  "lid_ms": info.get("lid_ms"), "audio_s": info.get("audio_s")}}
+                                                                  "lid_ms": info.get("lid_ms"), "audio_s": info.get("audio_s"),
+                                                                  "routing": info.get("routing"), "fallbacks": info.get("fallbacks")}}
         s.hooks.on_turn(s.ctx.call_id, row)
-        await self._send(msg("transcript", role="user", text=info["text"], lang=lang, reason=info.get("reason"), fallbacks=info.get("fallbacks"),
+        await self._send(msg("transcript", role="user", text=info["text"], lang=lang, reason=info.get("reason"), fallbacks=info.get("fallbacks"), routing=info.get("routing"),
                              stt_ms=info.get("stt_ms"), lid=info.get("lid_probs"), engines=info.get("engines")))
 
         async def emit(kind: str, data: dict):

@@ -45,6 +45,7 @@ class CallSession:
     ensure_reference: Any = None  # callable(voice) for OmniVoice ref_from voices (set by the API layer)
     lid_threshold: float = 0.5
     lid_bias: float = 0.1
+    script_override_max_conf: float = 0.6
 
     def __post_init__(self):
         lid = self.engines.cfg.get("lid", {})
@@ -52,6 +53,8 @@ class CallSession:
             self.lid_threshold = float(lid["threshold"])
         if isinstance(lid.get("prev_bias"), (int, float)):
             self.lid_bias = float(lid["prev_bias"])
+        if isinstance(lid.get("script_override_max_conf"), (int, float)):
+            self.script_override_max_conf = float(lid["script_override_max_conf"])
         self.ctx.current_lang = self.ctx.profile["languages"]["default"]
 
     @property
@@ -78,6 +81,7 @@ class CallSession:
             info["lid_ms"] = round((time.perf_counter() - tl) * 1000)
             probs = {k: v for k, v in (first.lid_probs or {}).items() if k in enabled}
             info["lid_probs"] = {k: round(v, 3) for k, v in probs.items()}
+            info["lid_text"] = first.text  # first-pass (auto-language) transcript: used by the script check and the eval sweep
             d = decide_language(probs, None, prev, default_lang=prev, threshold=self.lid_threshold, prev_bias=self.lid_bias)
             lang, info["reason"] = d.language, d.reason
             if d.reason == "low_conf_keep_prev" and probs:
@@ -97,7 +101,8 @@ class CallSession:
         return self._post_script_check(audio, text, lang, info, t0, enabled)
 
     def _post_script_check(self, audio, text, lang, info, t0, enabled) -> dict:
-        if info["reason"] not in ("override", "single_language"):
+        conf = max((info.get("lid_probs") or {}).values(), default=0.0)
+        if info["reason"] not in ("override", "single_language") and conf < self.script_override_max_conf:
             d2 = decide_language(None, text, lang, default_lang=lang, threshold=1.1)
             if d2.reason == "script_flip" and d2.language in enabled and d2.language != lang:
                 lang, info["reason"] = d2.language, "script_flip"
@@ -109,19 +114,22 @@ class CallSession:
         return name == "faster-whisper" and opts.get("model") == lid.options.get("model")
 
     def _stt(self, audio, lang, info) -> str:
-        name, opts = self.engines.stt_choice(lang)
-        try:
-            eng = self.engines.get_stt(name, opts)
-            text = eng.transcribe(audio, lang).text
-        except Exception as e:
-            if name == "faster-whisper":
-                raise
-            # e.g. gated IndicConformer weights missing: fall back to Whisper in the SAME turn and say so
-            info.setdefault("fallbacks", []).append(f"{name} failed ({type(e).__name__}): whisper fallback")
-            self.engines.load_errors[name] = f"{type(e).__name__}: {e}"[:300]
-            name, opts = self.engines.stt_choice(lang)
-            eng = self.engines.get_stt(name, opts)
-            text = eng.transcribe(audio, lang).text
+        """Route to the first usable STT for the language; on a load/run failure fall through the configured order
+        IN THE SAME TURN. Every skip and fallback is recorded in info (sent to the client and stored per turn)."""
+        name, opts, skipped = self.engines.stt_route(lang)
+        if skipped:
+            info.setdefault("routing", []).extend(f"{lang}: skipped {s}" for s in skipped)
+        while True:
+            try:
+                eng = self.engines.get_stt(name, opts)
+                text = eng.transcribe(audio, lang).text
+                break
+            except Exception as e:
+                if name == "faster-whisper":
+                    raise
+                self.engines.load_errors[name] = f"{type(e).__name__}: {e}"[:300]
+                info.setdefault("fallbacks", []).append(f"{name} failed ({type(e).__name__}): next in order")
+                name, opts, _ = self.engines.stt_route(lang)
         info["engines"].append(f"{name}:{opts.get('model') or opts.get('decoding') or ''}:{lang}")
         return text
 
@@ -138,6 +146,11 @@ class CallSession:
         v = self.voices.voice(vid) if vid else None
         return v
 
+    def fallback_voices(self, lang: str) -> list:
+        ids = self.engines.cfg.get("cpu_fallback_voices", {}).get(lang) or []
+        ids = [ids] if isinstance(ids, str) else ids
+        return [v for v in (self.voices.voice(i) for i in ids) if v]
+
     def fallback_voice(self, lang: str):
-        vid = self.engines.cfg.get("cpu_fallback_voices", {}).get(lang)
-        return self.voices.voice(vid) if vid else None
+        vs = self.fallback_voices(lang)
+        return vs[0] if vs else None

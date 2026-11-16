@@ -2,6 +2,7 @@
 # Everything that can be verified on this machine, without spending money (fake LLM, local models).
 #   scripts/test_all.sh            # unit tests + web build + UI E2E + a11y + call E2E (needs Chromium + CPU models)
 #   QUICK=1 scripts/test_all.sh    # unit tests + web typecheck only
+#   INDIC=1 scripts/test_all.sh    # also Hindi/Bengali/Kannada live calls with real FLEURS speech (slow, CPU)
 set -uo pipefail
 cd "$(dirname "$0")/.."
 PY="${PYTHON:-}"; [ -z "$PY" ] && { [ -x .venv/bin/python ] && PY=.venv/bin/python || PY=python3; }
@@ -23,6 +24,10 @@ step "accessibility (axe)"; (cd web && node scripts/a11y.mjs http://127.0.0.1:87
 kill $SERVER 2>/dev/null; trap - EXIT
 step "call E2E (fake mic -> STT -> fake LLM -> TTS -> browser)"
 CASES="en_question:smallwebrtc:off en_question:websocket:off ja_question:websocket:off" tests/e2e/run_e2e.sh || fail=1
+if [ -n "${INDIC:-}" ]; then  # opt-in: real FLEURS speech for hi/bn/kn + switches (slow on CPU; loads MMS ~4 GB)
+  step "Indic live-call E2E (FLEURS caller audio, CPU engines)"
+  "$PY" tests/e2e/run_indic_e2e.py || fail=1
+fi
 step "exposed (tunnel) mode: password login + token on the WebSocket upgrade"
 SHAON_DATA_DIR="$(mktemp -d)" SHAON_EXPOSED=1 ALLOW_KEY_EDIT=false ADMIN_PASSWORD=test-password-123 SHAON_SEED_DEMO=0 \
   SHAON_PRELOAD="stt:en,tts:en" "$PY" -m uvicorn --factory api.main:create_app --port 8767 --log-level warning > /dev/null 2>&1 &

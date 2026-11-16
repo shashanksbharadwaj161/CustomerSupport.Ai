@@ -22,6 +22,11 @@ ENGINE_INFO = {
     "indicconformer": {"kind": "stt", "module": "transformers", "license": "MIT (gated)", "demo_only": False,
                        "verified_here": None, "repo": "ai4bharat/indic-conformer-600m-multilingual",
                        "pending": "Needs HF token + GPU run (M0). Adapter complete, never run here."},
+    "mms": {"kind": "stt", "module": "transformers", "license": "CC-BY-NC-4.0: evaluation/demo only", "demo_only": True,
+            "verified_here": "hi, bn, kn on CPU: FLEURS eval + browser E2E", "repo": "facebook/mms-1b-all"},
+    "mms-tts": {"kind": "tts", "module": "transformers", "license": "CC-BY-NC-4.0: DEMO ONLY (robotic pipeline-testing voices)",
+                "demo_only": True, "verified_here": "hi, bn, kn on CPU: synthesis + round-trip proxy + browser E2E",
+                "repo": "facebook/mms-tts-ben"},
     "kokoro": {"kind": "tts", "module": "kokoro", "license": "Apache-2.0", "demo_only": False,
                "verified_here": "en, ja on CPU: E2E browser test (Hindi voices: unrated)", "repo": "hexgrad/Kokoro-82M"},
     "indic-parler": {"kind": "tts", "module": "parler_tts", "license": "Apache-2.0 (gated)", "demo_only": False,
@@ -71,6 +76,17 @@ def weights_cached(repo: str) -> bool:
     return False
 
 
+def _hf_token() -> bool:
+    import os
+    if os.environ.get("HF_TOKEN") or os.environ.get("HUGGING_FACE_HUB_TOKEN"):
+        return True
+    try:
+        from huggingface_hub import get_token
+        return bool(get_token())
+    except Exception:
+        return False
+
+
 class EngineManager:
     def __init__(self):
         self.cfg = load_engines_config()
@@ -80,14 +96,40 @@ class EngineManager:
         self._lock = threading.Lock()
         self.load_errors: dict[str, str] = {}
 
-    def stt_choice(self, lang: str) -> tuple[str, dict]:
+    def stt_candidates(self, lang: str) -> list[tuple[str, dict]]:
+        """Ordered STT candidates for a language from engines.json ('stt' on CUDA, 'stt_cpu' otherwise).
+        An entry is either {"engine", "options"} or {"order": [{"engine", "options"}, ...]}. Whisper is always the last resort."""
         table = self.cfg["stt"] if self.cuda else self.cfg.get("stt_cpu", self.cfg["stt"])
-        c = table.get(lang) or table["en"]
-        name, opts = c["engine"], dict(c.get("options", {}))
-        if not installed(name) or name in self.load_errors:
-            # honest fallback: Whisper with the target language (shown in turn metadata)
-            fb = self.cfg.get("stt_cpu", {}).get(lang) or {"engine": "faster-whisper", "options": {"model": "small"}}
-            name, opts = fb["engine"], dict(fb.get("options", {}))
+        entry = table.get(lang) or table["en"]
+        order = entry.get("order") or [entry]
+        cands = [(c["engine"], dict(c.get("options", {}))) for c in order]
+        if not any(n == "faster-whisper" for n, _ in cands):
+            cands.append(("faster-whisper", {"model": "small"}))
+        return cands
+
+    def usable(self, name: str) -> tuple[bool, str]:
+        if name not in ENGINE_INFO:
+            return False, "unknown engine"
+        if not installed(name):
+            return False, "not installed"
+        if name in self.load_errors:
+            return False, "load error: " + self.load_errors[name][:80]
+        if name == "indicconformer" and not weights_cached(ENGINE_INFO[name]["repo"]) and not _hf_token():
+            return False, "gated weights not downloaded and no HF token"
+        return True, "ok"
+
+    def stt_route(self, lang: str) -> tuple[str, dict, list[str]]:
+        """First usable candidate + the reasons the earlier ones were skipped (logged per turn)."""
+        skipped = []
+        for name, opts in self.stt_candidates(lang):
+            ok, why = self.usable(name)
+            if ok:
+                return name, opts, skipped
+            skipped.append(f"{name}: {why}")
+        return "faster-whisper", {"model": "small"}, skipped
+
+    def stt_choice(self, lang: str) -> tuple[str, dict]:
+        name, opts, _ = self.stt_route(lang)
         return name, opts
 
     def get_stt(self, name: str, opts: dict):

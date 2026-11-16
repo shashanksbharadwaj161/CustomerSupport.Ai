@@ -190,11 +190,18 @@ def _preload(st) -> None:
                 if kind == "stt":
                     name, opts = st.engines.stt_choice(lang or "en")
                     st.engines.get_stt(name, opts)
-                elif kind == "tts":
-                    vid = st.engines.cfg["default_voices"].get(lang or "en")
-                    v = st.voices().voice(vid) if vid else None
-                    if v:
-                        st.engines.get_tts(v.engine).synthesize("Ready.", v)
+                elif kind == "tts":  # default voice, else the CPU fallbacks in order (what a call would use)
+                    cat = st.voices()
+                    ids = [st.engines.cfg["default_voices"].get(lang or "en")]
+                    fb = st.engines.cfg.get("cpu_fallback_voices", {}).get(lang or "en") or []
+                    ids += [fb] if isinstance(fb, str) else fb
+                    for vid in [i for i in ids if i]:
+                        v = cat.voice(vid)
+                        try:
+                            st.engines.get_tts(v.engine).synthesize(cat.ref_text.get(v.language, "Ready."), v)
+                            break
+                        except Exception:
+                            continue
                 elif kind == "lid":
                     st.engines.lid_engine()
             except Exception as e:

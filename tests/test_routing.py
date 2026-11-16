@@ -6,9 +6,11 @@ def test_override_wins():
     assert (d.language, d.reason) == ("kn", "override")
 
 
-def test_script_flip_beats_lid():
-    d = decide_language({"hi": 0.9, "bn": 0.1}, "আমার কার্ড ব্লক করে দিন", "hi")
+def test_script_flip_beats_unsure_lid_only():
+    d = decide_language({"hi": 0.55, "bn": 0.45}, "আমার কার্ড ব্লক করে দিন", "hi")
     assert (d.language, d.reason) == ("bn", "script_flip")
+    d = decide_language({"hi": 0.9, "bn": 0.1}, "আমার কার্ড ব্লক করে দিন", "hi")
+    assert d.language == "hi"
 
 
 def test_latin_transcript_never_flips():

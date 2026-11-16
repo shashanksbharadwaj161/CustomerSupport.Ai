@@ -200,6 +200,90 @@ def section_redteam(lines, data):
     lines.append("")
 
 
+def section_fleurs(lines, data):
+    lines.append("## Real-audio STT on FLEURS (CPU)\n")
+    lines.append("google/fleurs test split (CC-BY-4.0, Conneau et al. 2022), fixed seed, one recording per sentence. "
+                 "**Caveat:** clean read Wikipedia-style speech, not phone calls - numbers are optimistic for live calls; "
+                 "Whisper small/base on CPU are stand-ins for the GPU engines. Text normalized per language (NFC, lowercase, "
+                 "punctuation/danda removed, native digits -> ASCII); CER for Japanese. Oracle language given to the recognizer.\n")
+    runs = sorted([d for d in data if d.get("kind") == "fleurs_stt"], key=lambda d: d["engine"])
+    if not runs:
+        lines.append("PENDING: `python -m eval.runners.run_fleurs --stt whisper-small whisper-base mms indicconformer --lid`\n")
+        return
+    lines.append("| engine (weights) | lang | n | WER | CER | WER, refs without digits (n) | WER / CER Indic-folded* | median ms | worst-10% ms (p90) | RTF median |")
+    lines.append("|---|---|---|---|---|---|---|---|---|---|")
+    for d in runs:
+        if d.get("status") != "measured":
+            lines.append(f"| {d['engine']} ({d['repo']}) | hi/bn/kn | - | PENDING | | | | | |")
+            continue
+        size = f"{d['weights_bytes'] / 1e6:.0f} MB" if d.get("weights_bytes") else "?"
+        for lang in LANGS:
+            v = d["per_lang"].get(lang)
+            if v:
+                nd = v["no_digit_refs"]
+                lines.append(f"| {d['engine']} ({d['repo']}, {size}, {d['format']}) | {lang} | {v['n']} | {fmt(v.get('wer'), True)} | "
+                             f"{fmt(v.get('cer'), True)} | {fmt(nd.get('wer') if lang != 'ja' else nd.get('cer'), True)} ({nd['n']}) | "
+                             f"{fmt(v['latency_median_ms'])} | {fmt(v['latency_p90_ms'])} | {v['rtf_median']} |")
+    lines.append("\n*Indic-folded = same transcripts rescored after folding nukta forms (ज़/ज, ড়/ড) and chandrabindu/anusvara: "
+                 "spelling variants, not recognition errors. Secondary metric; the strict WER/CER is primary.")
+    pend = [d for d in runs if d.get("status") != "measured"]
+    for d in pend:
+        lines.append(f"\n{d['engine']}: PENDING - {d.get('reason', '')[:160]}")
+    lines.append("")
+    lid = next((d for d in data if d.get("kind") == "fleurs_lid"), None)
+    lines.append("### Language ID on the same clips (the app's real path: Whisper small LID + routing, call starting in English)\n")
+    if not lid:
+        lines.append("PENDING\n")
+        return
+    lines.append(f"Overall raw top-1 {fmt(lid['overall_raw_top1'], True)}; app decision {fmt(lid['overall_app'], True)}; "
+                 f"median LID time {fmt(lid['lid_ms_median'])} ms.\n")
+    lines.append("| true \\ detected | " + " | ".join(LANGS) + " | raw top-1 | app decision | median confidence |")
+    lines.append("|---|" + "---|" * (len(LANGS) + 3))
+    for tl in LANGS:
+        row = lid["confusion_raw"][tl]
+        v = lid["per_lang"][tl]
+        lines.append(f"| {tl} | " + " | ".join(str(row[p]) for p in LANGS) + f" | {fmt(v['raw_top1'], True)} | {fmt(v['app_from_en'], True)} | {v['median_conf']} |")
+    b = lid.get("recommended")
+    if b:
+        lines.append(f"\nThreshold sweep (stay = previous turn in the same language, switch = previous turn in another language): "
+                     f"best threshold {b['threshold']}, prev_bias {b['prev_bias']}, script check {b['script_check']} -> stay {fmt(b['stay_acc'], True)}, "
+                     f"switch {fmt(b['switch_acc'], True)}. **Proposed values are CPU / read-speech estimates: re-measure on the demo PC.**")
+    lines.append("")
+
+
+def section_tts_cpu(lines, data):
+    d = next((d for d in data if d.get("kind") == "tts_cpu"), None)
+    lines.append("## CPU speaking engines for hi / bn / kn (demo mode)\n")
+    if not d:
+        lines.append("PENDING: `python -m eval.runners.run_tts_cpu`\n")
+        return
+    lines.append("MMS voices are robotic pipeline-testing voices (CC-BY-NC, DEMO ONLY). Round-trip CER = TTS output transcribed back "
+                 "by the best measured STT: an intelligibility PROXY, not naturalness. Reply lines machine-written (native review pending).\n")
+    lines.append("| voice | lang | engine | license | first audio median ms | p90 ms | RTF median | round-trip CER (proxy) | via |")
+    lines.append("|---|---|---|---|---|---|---|---|---|")
+    for vid, v in d["voices"].items():
+        lines.append(f"| {vid} | {v['lang']} | {v['engine']} | {v['license']} | {fmt(v['first_audio_median_ms'])} | {fmt(v['first_audio_p90_ms'])} | "
+                     f"{v['rtf_median']} | {fmt(v.get('roundtrip_cer'), True)} | {v.get('roundtrip_stt', '')} |")
+    lines.append("")
+
+
+def section_indic_e2e(lines, data):
+    d = next((d for d in data if d.get("kind") == "indic_e2e"), None)
+    lines.append("## Live-call E2E with real speech: hi / bn / kn and switches (CPU, scripted fake LLM)\n")
+    if not d:
+        lines.append("PENDING: `python tests/e2e/run_indic_e2e.py`\n")
+        return
+    lines.append(f"Pass rate {fmt(d['pass_rate'], True)} ({sum(c['pass'] for c in d['cases'])}/{len(d['cases'])} calls). {d['note']}\n")
+    lines.append("| call | turn | detected | STT engine | reply lang | TTS voice | first audio ms | result |")
+    lines.append("|---|---|---|---|---|---|---|---|")
+    for c in d["cases"]:
+        for t in c["turns"]:
+            bad = [k for k, ok in t["checks"].items() if not ok]
+            lines.append(f"| {c['case']} | {t['want']} | {t['detected']} | {t['stt_engine']} | {t['reply_lang']} | {t['tts_voice']} | "
+                         f"{fmt(t['first_audio_ms'])} | {'PASS' if t['pass'] else 'FAIL: ' + ', '.join(bad)} |")
+    lines.append("")
+
+
 def main():
     data = load_all()
     ratings = load_ratings()
@@ -209,8 +293,11 @@ def main():
     section_hw(lines, data)
     section_stt(lines, data)
     section_lid(lines, data)
+    section_fleurs(lines, data)
     section_switch(lines, data)
     section_tts(lines, data, ratings)
+    section_tts_cpu(lines, data)
+    section_indic_e2e(lines, data)
     section_llm(lines, data, ratings)
     section_retrieval(lines, data)
     section_kb(lines, data)

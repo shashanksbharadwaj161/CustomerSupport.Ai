@@ -23,9 +23,13 @@ class FasterWhisperSTT(STT):
 
     def transcribe(self, audio: np.ndarray, language: str | None) -> Transcript:
         self.ensure_loaded()
+        # beam_size / temperature come from engines.json options. CPU profile: greedy (beam 1) with NO temperature-fallback
+        # retries: on CPU the retries made Kannada/Bengali clips take ~1.6 min each (measured). GPU profile: beam 5 + fallback.
+        temp = self.options.get("temperature")
+        kw = {} if temp is None else {"temperature": temp}
         segments, info = self.model.transcribe(
             audio, language=language, beam_size=self.options.get("beam_size", 5),
-            vad_filter=False, condition_on_previous_text=False)
+            vad_filter=False, condition_on_previous_text=False, **kw)
         text = " ".join(s.text.strip() for s in segments).strip()
         probs = dict(info.all_language_probs or []) if language is None else {}
         return Transcript(text=text, language=info.language, lid_probs=probs,

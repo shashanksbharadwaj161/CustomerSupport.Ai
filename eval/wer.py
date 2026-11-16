@@ -9,8 +9,19 @@ from __future__ import annotations
 import unicodedata
 
 
+_NATIVE_DIGITS = {**{chr(0x0966 + i): str(i) for i in range(10)}, **{chr(0x09E6 + i): str(i) for i in range(10)},
+                  **{chr(0x0CE6 + i): str(i) for i in range(10)}, **{chr(0xFF10 + i): str(i) for i in range(10)}}
+
+
+def has_digits(text: str) -> bool:
+    return any(ch.isdigit() for ch in text)
+
+
 def normalize(text: str) -> str:
+    """NFC, lowercase, native/fullwidth digits -> ASCII, punctuation/symbols (incl. danda) -> space, ZWJ/ZWNJ dropped.
+    Digits vs spelled-out numbers are NOT reconciled: that is reported separately (no-digit subset)."""
     text = unicodedata.normalize("NFC", text).lower()
+    text = "".join(_NATIVE_DIGITS.get(ch, ch) for ch in text)
     out = []
     for ch in text:
         cat = unicodedata.category(ch)
@@ -62,3 +73,21 @@ def aggregate(scores: list[dict]) -> dict:
         if n:
             out[k] = round(sum(s.get(f"{k}_err", 0) for s in scores) / n, 4)
     return out
+
+
+# --- Indic orthographic folding (reported as a SECOND, labelled metric; the strict metric stays primary) ---
+_NUKTA = {"\u093c", "\u09bc", "\u0cbc"}
+_FOLD = {"\u0901": "\u0902", "\u0981": "\u0982"}  # chandrabindu -> anusvara (Devanagari, Bengali)
+
+
+def indic_fold(text: str) -> str:
+    """Spelling variants that are not recognition errors: nukta forms (ज़/ज, ड़/ड) and chandrabindu vs anusvara."""
+    d = unicodedata.normalize("NFD", text)
+    d = "".join(_FOLD.get(ch, ch) for ch in d if ch not in _NUKTA)
+    return unicodedata.normalize("NFC", d)
+
+
+def score_folded(lang: str, ref: str, hyp: str) -> dict:
+    if lang not in ("hi", "bn", "kn"):
+        return score(lang, ref, hyp)
+    return score(lang, indic_fold(ref), indic_fold(hyp))

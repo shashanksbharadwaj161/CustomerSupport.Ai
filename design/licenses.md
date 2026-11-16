@@ -37,5 +37,14 @@ particle hero, ASCII) are re-implemented from scratch.
 | chromadb | Apache-2.0 | local vector store (telemetry disabled) |
 | Playwright (Python) | Apache-2.0 | crawler JS fallback renderer, E2E |
 | Silero VAD (via Pipecat) | MIT | voice activity detection |
+| facebook/mms-1b-all (Wav2Vec2 + adapters) | **CC-BY-NC-4.0** | CPU STT candidate for hi/bn/kn: **evaluation / demo only**, never in a product |
+| facebook/mms-tts-hin, -ben, -kan (VITS) | **CC-BY-NC-4.0** | CPU voices for hi/bn/kn: **DEMO ONLY, robotic pipeline-testing voices** (badge in UI) |
+| transformers | Apache-2.0 | runtime for MMS / IndicConformer / Parler |
+
+## Evaluation data
+
+| Dataset | License | Use |
+|---|---|---|
+| google/fleurs (test split; hi_in, bn_in, kn_in, ja_jp, en_us) | **CC-BY-4.0** | Real-audio STT / language-ID evaluation and live-call E2E caller audio. Attribution: Alexis Conneau, Min Ma, Simran Khanuja, Yu Zhang, Vera Axelrod, Siddharth Dalmia, Jason Riesa, Clara Rivera, Ankur Bapna. "FLEURS: Few-shot Learning Evaluation of Universal Representations of Speech." IEEE SLT 2022. https://huggingface.co/datasets/google/fleurs. Clips are cached outside the repo (~/.cache/shaon-eval), resampled to 16 kHz; never committed. |
 | anthropic (Python SDK) | MIT | Claude API |
 | Eval tool fonts: Noto Sans families (Google Fonts) | SIL OFL 1.1 | recorder/rater pages |

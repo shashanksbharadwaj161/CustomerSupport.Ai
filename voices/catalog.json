@@ -1,23 +1,160 @@
 {
-  "_note": "App voice catalog: merged with bakeoff_voices.json. Kokoro voices run on CPU. Parler/OmniVoice voices are PENDING until the M0 GPU run and native ratings. OmniVoice = DEMO ONLY (CC-BY-NC weights). Reference clips are model-generated or from consenting speakers only.",
+  "_note": "App voice catalog: merged with bakeoff_voices.json. Kokoro voices run on CPU. Parler/OmniVoice voices are PENDING until the M0 GPU run and native ratings. OmniVoice = DEMO ONLY (CC-BY-NC weights). Reference clips are model-generated or from consenting speakers only. MMS-TTS voices (facebook/mms-tts-*) are CC-BY-NC DEMO ONLY and robotic: for testing the Bengali/Kannada pipeline on CPU, never product voices.",
   "voices": [
-    {"id": "kokoro_en_michael", "language": "en", "engine": "kokoro", "display_name": "Michael (en)", "persona_tag": "calm_male", "license": "Apache-2.0", "params": {"voice": "am_michael"}},
-    {"id": "kokoro_en_bella", "language": "en", "engine": "kokoro", "display_name": "Bella (en)", "persona_tag": "energetic_young", "license": "Apache-2.0", "params": {"voice": "af_bella"}},
-    {"id": "kokoro_en_george", "language": "en", "engine": "kokoro", "display_name": "George (en, British)", "persona_tag": "formal_senior", "license": "Apache-2.0", "params": {"voice": "bm_george"}},
-    {"id": "kokoro_ja_nezumi", "language": "ja", "engine": "kokoro", "display_name": "Nezumi (ja)", "persona_tag": "energetic_young", "license": "Apache-2.0", "params": {"voice": "jf_nezumi"}},
-    {"id": "kokoro_hi_alpha", "language": "hi", "engine": "kokoro", "display_name": "Alpha (hi, Kokoro CPU)", "persona_tag": "warm_female", "license": "Apache-2.0", "params": {"voice": "hf_alpha"}, "unrated": true},
-    {"id": "kokoro_hi_omega", "language": "hi", "engine": "kokoro", "display_name": "Omega (hi, Kokoro CPU)", "persona_tag": "calm_male", "license": "Apache-2.0", "params": {"voice": "hm_omega"}, "unrated": true}
+    {
+      "id": "kokoro_en_michael",
+      "language": "en",
+      "engine": "kokoro",
+      "display_name": "Michael (en)",
+      "persona_tag": "calm_male",
+      "license": "Apache-2.0",
+      "params": {
+        "voice": "am_michael"
+      }
+    },
+    {
+      "id": "kokoro_en_bella",
+      "language": "en",
+      "engine": "kokoro",
+      "display_name": "Bella (en)",
+      "persona_tag": "energetic_young",
+      "license": "Apache-2.0",
+      "params": {
+        "voice": "af_bella"
+      }
+    },
+    {
+      "id": "kokoro_en_george",
+      "language": "en",
+      "engine": "kokoro",
+      "display_name": "George (en, British)",
+      "persona_tag": "formal_senior",
+      "license": "Apache-2.0",
+      "params": {
+        "voice": "bm_george"
+      }
+    },
+    {
+      "id": "kokoro_ja_nezumi",
+      "language": "ja",
+      "engine": "kokoro",
+      "display_name": "Nezumi (ja)",
+      "persona_tag": "energetic_young",
+      "license": "Apache-2.0",
+      "params": {
+        "voice": "jf_nezumi"
+      }
+    },
+    {
+      "id": "kokoro_hi_alpha",
+      "language": "hi",
+      "engine": "kokoro",
+      "display_name": "Alpha (hi, Kokoro CPU)",
+      "persona_tag": "warm_female",
+      "license": "Apache-2.0",
+      "params": {
+        "voice": "hf_alpha"
+      },
+      "unrated": true
+    },
+    {
+      "id": "kokoro_hi_omega",
+      "language": "hi",
+      "engine": "kokoro",
+      "display_name": "Omega (hi, Kokoro CPU)",
+      "persona_tag": "calm_male",
+      "license": "Apache-2.0",
+      "params": {
+        "voice": "hm_omega"
+      },
+      "unrated": true
+    },
+    {
+      "id": "mms_hi",
+      "language": "hi",
+      "engine": "mms-tts",
+      "display_name": "MMS Hindi (robotic, pipeline-testing)",
+      "persona_tag": null,
+      "license": "CC-BY-NC-4.0 (DEMO ONLY)",
+      "demo_only": true,
+      "unrated": true,
+      "params": {
+        "seed": 0
+      }
+    },
+    {
+      "id": "mms_bn",
+      "language": "bn",
+      "engine": "mms-tts",
+      "display_name": "MMS Bengali (robotic, pipeline-testing)",
+      "persona_tag": null,
+      "license": "CC-BY-NC-4.0 (DEMO ONLY)",
+      "demo_only": true,
+      "unrated": true,
+      "params": {
+        "seed": 0
+      }
+    },
+    {
+      "id": "mms_kn",
+      "language": "kn",
+      "engine": "mms-tts",
+      "display_name": "MMS Kannada (robotic, pipeline-testing)",
+      "persona_tag": null,
+      "license": "CC-BY-NC-4.0 (DEMO ONLY)",
+      "demo_only": true,
+      "unrated": true,
+      "params": {
+        "seed": 0
+      }
+    }
   ],
   "persona_tags": {
-    "kokoro_en_heart": "warm_female", "kokoro_ja_alpha": "warm_female", "kokoro_ja_kumo": "calm_male",
-    "parler_hi_divya": "warm_female", "parler_hi_rohit": "calm_male", "parler_bn_aditi": "warm_female",
-    "parler_bn_arjun": "calm_male", "parler_kn_anu": "warm_female", "parler_kn_suresh": "calm_male"
+    "kokoro_en_heart": "warm_female",
+    "kokoro_ja_alpha": "warm_female",
+    "kokoro_ja_kumo": "calm_male",
+    "parler_hi_divya": "warm_female",
+    "parler_hi_rohit": "calm_male",
+    "parler_bn_aditi": "warm_female",
+    "parler_bn_arjun": "calm_male",
+    "parler_kn_anu": "warm_female",
+    "parler_kn_suresh": "calm_male"
   },
   "persona_sets": {
-    "warm_female": {"en": "kokoro_en_heart", "ja": "kokoro_ja_alpha", "hi": "parler_hi_divya", "bn": "parler_bn_aditi", "kn": "parler_kn_anu"},
-    "calm_male": {"en": "kokoro_en_michael", "ja": "kokoro_ja_kumo", "hi": "parler_hi_rohit", "bn": "parler_bn_arjun", "kn": "parler_kn_suresh"},
-    "energetic_young": {"en": "kokoro_en_bella", "ja": "kokoro_ja_nezumi", "hi": "parler_hi_divya", "bn": "parler_bn_aditi", "kn": "parler_kn_anu"},
-    "formal_senior": {"en": "kokoro_en_george", "ja": "kokoro_ja_kumo", "hi": "parler_hi_rohit", "bn": "parler_bn_arjun", "kn": "parler_kn_suresh"},
-    "one_voice_demo": {"en": "omni_samelang_en", "ja": "omni_crossref_ja", "hi": "omni_crossref_hi", "bn": "omni_crossref_bn", "kn": "omni_crossref_kn"}
+    "warm_female": {
+      "en": "kokoro_en_heart",
+      "ja": "kokoro_ja_alpha",
+      "hi": "parler_hi_divya",
+      "bn": "parler_bn_aditi",
+      "kn": "parler_kn_anu"
+    },
+    "calm_male": {
+      "en": "kokoro_en_michael",
+      "ja": "kokoro_ja_kumo",
+      "hi": "parler_hi_rohit",
+      "bn": "parler_bn_arjun",
+      "kn": "parler_kn_suresh"
+    },
+    "energetic_young": {
+      "en": "kokoro_en_bella",
+      "ja": "kokoro_ja_nezumi",
+      "hi": "parler_hi_divya",
+      "bn": "parler_bn_aditi",
+      "kn": "parler_kn_anu"
+    },
+    "formal_senior": {
+      "en": "kokoro_en_george",
+      "ja": "kokoro_ja_kumo",
+      "hi": "parler_hi_rohit",
+      "bn": "parler_bn_arjun",
+      "kn": "parler_kn_suresh"
+    },
+    "one_voice_demo": {
+      "en": "omni_samelang_en",
+      "ja": "omni_crossref_ja",
+      "hi": "omni_crossref_hi",
+      "bn": "omni_crossref_bn",
+      "kn": "omni_crossref_kn"
+    }
   }
 }

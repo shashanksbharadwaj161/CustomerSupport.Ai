@@ -34,11 +34,13 @@ try {
     window.__shaon.messages.filter((m) => m.event === "transcript" && m.role === "agent" && !m.greeting).length >= n, want, { timeout: 240000, polling: 500 });
 } catch (e) { errors.push("timeout waiting for first turn"); }
 const data = await page.evaluate(() => window.__shaon);
-const user = data.messages.filter((m) => m.event === "transcript" && m.role === "user").map((m) => ({ text: m.text, lang: m.lang, reason: m.reason, stt_ms: m.stt_ms }));
+const user = data.messages.filter((m) => m.event === "transcript" && m.role === "user").map((m) => ({ text: m.text, lang: m.lang, reason: m.reason, stt_ms: m.stt_ms, engines: m.engines, routing: m.routing, fallbacks: m.fallbacks, lid: m.lid }));
 const agent = data.messages.filter((m) => m.event === "transcript" && m.role === "agent").map((m) => ({ text: m.text, lang: m.lang, greeting: !!m.greeting }));
-const tts = data.messages.filter((m) => m.event === "tts").map((m) => ({ lang: m.lang, voice: m.voice, gen_ms: m.gen_ms }));
+const tts = data.messages.filter((m) => m.event === "tts").map((m) => ({ lang: m.lang, voice: m.voice, engine: m.engine, gen_ms: m.gen_ms, audio_s: m.audio_s, demo_only: m.demo_only, fallbacks: m.fallbacks }));
+const ordered = data.messages.filter((m) => m.event === "transcript").map((m) => ({ role: m.role, text: m.text, lang: m.lang, greeting: !!m.greeting }));
+const tts_unavailable = data.messages.filter((m) => m.event === "tts_unavailable").map((m) => m.lang);
 const meta = data.messages.filter((m) => m.event === "turn_meta");
-result = { transport, effects, wall_s: (Date.now() - t0) / 1000, user, agent, tts, turns: data.turns, meta, errors };
+result = { transport, effects, wall_s: (Date.now() - t0) / 1000, user, agent, ordered, tts, tts_unavailable, turns: data.turns, meta, errors };
 const shot = process.env.SHOT;
 if (shot) await page.screenshot({ path: shot });
 await page.click("[data-testid=end-call]").catch(() => {});

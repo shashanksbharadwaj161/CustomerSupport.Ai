@@ -7,6 +7,7 @@ _REGISTRY = {
     "omnivoice": ("agent.tts.omnivoice_tts", "OmniVoiceTTS"),  # DEMO ONLY (CC-BY-NC weights)
     "indic-parler": ("agent.tts.parler_tts", "IndicParlerTTS"),
     "kokoro": ("agent.tts.kokoro_tts", "KokoroTTS"),
+    "mms-tts": ("agent.tts.mms_tts", "MMSTTS"),  # CC-BY-NC: DEMO ONLY, robotic pipeline-testing voices
 }
 
 

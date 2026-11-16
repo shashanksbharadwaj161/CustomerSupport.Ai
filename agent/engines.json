@@ -14,30 +14,72 @@
       }
     },
     "hi": {
-      "engine": "indicconformer",
-      "options": {
-        "decoding": "rnnt"
-      },
-      "fallback": "faster-whisper"
+      "order": [
+        {
+          "engine": "indicconformer",
+          "options": {
+            "decoding": "rnnt"
+          }
+        },
+        {
+          "engine": "mms",
+          "options": {}
+        },
+        {
+          "engine": "faster-whisper",
+          "options": {
+            "model": "large-v3"
+          }
+        }
+      ]
     },
     "bn": {
-      "engine": "indicconformer",
-      "options": {
-        "decoding": "rnnt"
-      }
+      "order": [
+        {
+          "engine": "indicconformer",
+          "options": {
+            "decoding": "rnnt"
+          }
+        },
+        {
+          "engine": "mms",
+          "options": {}
+        },
+        {
+          "engine": "faster-whisper",
+          "options": {
+            "model": "large-v3"
+          }
+        }
+      ]
     },
     "kn": {
-      "engine": "indicconformer",
-      "options": {
-        "decoding": "rnnt"
-      }
+      "order": [
+        {
+          "engine": "indicconformer",
+          "options": {
+            "decoding": "rnnt"
+          }
+        },
+        {
+          "engine": "mms",
+          "options": {}
+        },
+        {
+          "engine": "faster-whisper",
+          "options": {
+            "model": "large-v3"
+          }
+        }
+      ]
     }
   },
   "lid": {
     "engine": "faster-whisper",
-    "threshold": 0.5,
-    "prev_bias": 0.1,
-    "_status": "placeholder values until run_lid.py measures them (eval/results.md)"
+    "threshold": 0.3,
+    "prev_bias": 0.0,
+    "_status": "Proposed from FLEURS read speech on CPU (Whisper small LID, 250 clips, 5 languages): stay 100%, switch 100% in the sweep. ESTIMATE: re-measure on the demo PC with real call audio (python -m eval.runners.run_fleurs --lid, then run_lid on your recordings).",
+    "script_override_max_conf": 0.6
   },
   "tts_demo": {
     "en": "omnivoice",
@@ -57,32 +99,84 @@
     "en": {
       "engine": "faster-whisper",
       "options": {
-        "model": "small"
+        "model": "small",
+        "beam_size": 1,
+        "temperature": 0.0
       }
     },
     "ja": {
       "engine": "faster-whisper",
       "options": {
-        "model": "small"
+        "model": "small",
+        "beam_size": 1,
+        "temperature": 0.0
       }
     },
     "hi": {
-      "engine": "faster-whisper",
-      "options": {
-        "model": "small"
-      }
+      "order": [
+        {
+          "engine": "indicconformer",
+          "options": {
+            "decoding": "rnnt"
+          }
+        },
+        {
+          "engine": "mms",
+          "options": {}
+        },
+        {
+          "engine": "faster-whisper",
+          "options": {
+            "model": "small",
+            "beam_size": 1,
+            "temperature": 0.0
+          }
+        }
+      ]
     },
     "bn": {
-      "engine": "faster-whisper",
-      "options": {
-        "model": "small"
-      }
+      "order": [
+        {
+          "engine": "indicconformer",
+          "options": {
+            "decoding": "rnnt"
+          }
+        },
+        {
+          "engine": "mms",
+          "options": {}
+        },
+        {
+          "engine": "faster-whisper",
+          "options": {
+            "model": "small",
+            "beam_size": 1,
+            "temperature": 0.0
+          }
+        }
+      ]
     },
     "kn": {
-      "engine": "faster-whisper",
-      "options": {
-        "model": "small"
-      }
+      "order": [
+        {
+          "engine": "indicconformer",
+          "options": {
+            "decoding": "rnnt"
+          }
+        },
+        {
+          "engine": "mms",
+          "options": {}
+        },
+        {
+          "engine": "faster-whisper",
+          "options": {
+            "model": "small",
+            "beam_size": 1,
+            "temperature": 0.0
+          }
+        }
+      ]
     }
   },
   "default_voices": {
@@ -93,6 +187,17 @@
     "kn": "parler_kn_anu"
   },
   "cpu_fallback_voices": {
-    "hi": "kokoro_hi_alpha"
-  }
+    "hi": [
+      "kokoro_hi_alpha",
+      "mms_hi"
+    ],
+    "bn": [
+      "mms_bn"
+    ],
+    "kn": [
+      "mms_kn"
+    ]
+  },
+  "_routing_note": "Per-language STT 'order': the first usable engine wins; skipped/failed engines are logged per turn. Reorder from measurements with `python -m eval.routing_from_results --write` (sorts by measured CPU WER on FLEURS). mms = CC-BY-NC, eval/demo only.",
+  "_decoding_note": "CPU profile: Whisper greedy (beam_size 1, temperature 0, no fallback retries) for latency; GPU profile keeps faster-whisper defaults (beam 5 + temperature fallback)."
 }

@@ -136,12 +136,14 @@ _DEMO_MSG = {
     "kn": "ಇದು ಡೆಮೊ ಮೋಡ್. ಭಾಷಾ ಮಾದರಿಯ ಕೀ ಇನ್ನೂ ಹೊಂದಿಸಿಲ್ಲ, ಆದ್ದರಿಂದ ನಾನು ಉತ್ತರಿಸಲು ಸಾಧ್ಯವಿಲ್ಲ. ದಯವಿಟ್ಟು ಸೆಟ್ಟಿಂಗ್ಸ್‌ನಲ್ಲಿ ಕೀ ಸೇರಿಸಿ.",
 }
 
+# Scripted FAKE-model replies (machine-written; native-speaker review PENDING). Native script, numbers as words,
+# no echo of the caller (an echo could carry STT digits into speech). Used only by FakeProvider (tests / E2E).
 _FAKE_MSG = {
-    "en": "Test model reply. You said: {u}",
-    "ja": "テスト用の応答です。お話しの内容は、{u}",
-    "hi": "यह परीक्षण उत्तर है। आपने कहा: {u}",
-    "bn": "এটি পরীক্ষার উত্তর। আপনি বললেন: {u}",
-    "kn": "ಇದು ಪರೀಕ್ಷಾ ಉತ್ತರ. ನೀವು ಹೇಳಿದ್ದು: {u}",
+    "en": "Test model reply. Our branch opens at ten in the morning on Saturday.",
+    "ja": "テスト用の応答です。土曜日は午前十時に開店します。",
+    "hi": "यह परीक्षण उत्तर है। शनिवार को शाखा सुबह दस बजे खुलती है।",
+    "bn": "এটি পরীক্ষার উত্তর। শনিবার শাখা সকাল দশটায় খোলে।",
+    "kn": "ಇದು ಪರೀಕ್ಷಾ ಉತ್ತರ. ಶನಿವಾರ ಶಾಖೆ ಬೆಳಿಗ್ಗೆ ಹತ್ತು ಗಂಟೆಗೆ ತೆರೆಯುತ್ತದೆ.",
 }
 
 
@@ -198,7 +200,7 @@ class FakeProvider(LLMProvider):
             out = self.script(messages, system)
         else:
             lang, caller = _lang_from_messages(messages)
-            out = _FAKE_MSG.get(lang, _FAKE_MSG["en"]).format(u=caller[:160])
+            out = _FAKE_MSG.get(lang, _FAKE_MSG["en"])
         if isinstance(out, dict) and out.get("tool"):
             tc = ToolCall("toolu_fake_%d" % len(self.calls), out["tool"], out.get("input", {}))
             return LLMResult(text=out.get("text", ""), model="fake", stop_reason="tool_use", tool_calls=[tc],

@@ -44,6 +44,7 @@ def decide_language(
     prev_bias: float = 0.1,
     override: str | None = None,
     script_min_share: float = 0.6,
+    script_override_max_conf: float = 0.6,
 ) -> LangDecision:
     """Decide the turn language.
 
@@ -63,7 +64,9 @@ def decide_language(
         s_lang, share = dominant_language(transcript)
         # A clearly native non-Latin script is strong evidence; Latin is not
         # (romanized Hindi/Bengali looks like English), so it never flips.
-        if s_lang and s_lang != "en" and share >= script_min_share and s_lang != lid_lang:
+        # It may NOT override a confident LID: on FLEURS (CPU, Whisper small) hallucinated transcripts in the wrong
+        # script flipped 2 of 50 confidently-detected Bengali clips (eval/results.md).
+        if s_lang and s_lang != "en" and share >= script_min_share and s_lang != lid_lang and lid_conf < script_override_max_conf:
             return LangDecision(s_lang, "script_flip")
 
     if lid_lang and lid_conf >= threshold:

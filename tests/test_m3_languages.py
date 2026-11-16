@@ -32,6 +32,12 @@ class StubEngines:
             return "indicconformer", {"decoding": "rnnt"}
         return "faster-whisper", {"model": "small"}
 
+    def stt_route(self, lang):
+        name, opts = self.stt_choice(lang)
+        return name, opts, []
+
+    load_errors: dict = {}
+
     def get_stt(self, name, opts):
         return self.indic if name == "indicconformer" else self.whisper
 
@@ -92,15 +98,25 @@ def test_low_confidence_same_top_as_previous_keeps_it():
     assert info["lang"] == "hi"
 
 
-def test_script_flip_overrides_lid():
-    # LID says hi (confident) but the transcript comes back in Bengali script -> flip to bn and re-run bn STT
+def test_script_flip_only_when_lid_is_unsure():
+    # LID unsure between hi and bn; the transcript is clearly Bengali script -> flip to bn and re-run bn STT
     def script(lang):
         if lang is None:
-            return (TEXT["bn"], "hi", {"hi": 0.8, "bn": 0.2})
+            return (TEXT["bn"], "hi", {"hi": 0.55, "bn": 0.45})
         return (TEXT[lang], lang, {})
-    s = session(script, prev="en")
+    s = session(script, prev="hi")
     info = s.transcribe_turn(AUDIO)
     assert info["lang"] == "bn" and info["reason"] == "script_flip"
+
+
+def test_confident_lid_is_not_overridden_by_a_hallucinated_script():
+    # measured on FLEURS: Whisper small sometimes hallucinates in another script while LID was confidently right
+    def script(lang):
+        if lang is None:
+            return (TEXT["kn"], "bn", {"bn": 0.9, "kn": 0.1})
+        return (TEXT[lang], lang, {})
+    s = session(script, prev="en")
+    assert s.transcribe_turn(AUDIO)["lang"] == "bn"
 
 
 def test_manual_override_wins_and_disabled_languages_ignored():
@@ -181,5 +197,28 @@ def test_indic_engine_failure_falls_back_to_whisper_in_same_turn():
     s.engines.load_errors = {}
     orig = s.engines.stt_choice
     s.engines.stt_choice = lambda lang: ("faster-whisper", {"model": "small"}) if "indicconformer" in s.engines.load_errors else orig(lang)
+    s.engines.stt_route = lambda lang: (*s.engines.stt_choice(lang), [])
     info = s.transcribe_turn(AUDIO)
-    assert info["lang"] == "hi" and info["text"] == TEXT["hi"] and "whisper fallback" in info["fallbacks"][0]
+    assert info["lang"] == "hi" and info["text"] == TEXT["hi"] and "next in order" in info["fallbacks"][0]
+
+
+def test_engine_manager_routing_order_and_skip_reasons(monkeypatch):
+    from agent import engines as E
+    em = E.EngineManager()
+    em.cuda = False
+    em.cfg["stt_cpu"]["kn"] = {"order": [{"engine": "indicconformer", "options": {}}, {"engine": "mms", "options": {}},
+                                        {"engine": "faster-whisper", "options": {"model": "small"}}]}
+    monkeypatch.setattr(E, "installed", lambda n: True)
+    monkeypatch.setattr(E, "weights_cached", lambda repo: False)
+    monkeypatch.setattr(E, "_hf_token", lambda: False)
+    name, opts, skipped = em.stt_route("kn")
+    assert name == "mms" and skipped == ["indicconformer: gated weights not downloaded and no HF token"]
+    em.load_errors["mms"] = "OSError: out of memory"
+    name, opts, skipped = em.stt_route("kn")
+    assert name == "faster-whisper" and opts["model"] == "small" and len(skipped) == 2
+    monkeypatch.setattr(E, "_hf_token", lambda: True)
+    em.load_errors.clear()
+    assert em.stt_route("kn")[0] == "indicconformer"
+    # old single-engine entries still work, whisper is always appended as the last resort
+    em.cfg["stt_cpu"]["en"] = {"engine": "faster-whisper", "options": {"model": "small"}}
+    assert [n for n, _ in em.stt_candidates("en")] == ["faster-whisper"]
