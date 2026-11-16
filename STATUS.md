@@ -3,6 +3,19 @@
 Honest state of every milestone. VERIFIED = run and checked in this repo's tests or by a measured run.
 PENDING = cannot be done here; says who must do it.
 
+## At a glance (2026-11-16)
+
+| Area | Works now (verified in this VM: 4 CPU, no GPU, no API key) | PENDING - who |
+|---|---|---|
+| Voice calls | en + ja end to end on CPU, both transports, language switch mid-call, live voice switch (barge-in is implemented but not yet tested) | GPU latency on your PC - you; barge-in test - next session |
+| Languages hi / bn / kn | routing, LID, script checks, text replies; Hindi CPU voice (unrated) | Indic Parler / IndicConformer / OmniVoice GPU run + HF token - you |
+| Claude replies | provider, caching, spend cap, prompt builder (tested with a fake LLM) | real key in Settings + Test key - you |
+| Knowledge | crawl (robots, limits, JS), BGE-M3 retrieval hit@3 100% in 5 languages | site brief needs the key - you |
+| Guardrails | local layers 100% of local-layer attacks, 0 false positives | Claude red-team run - you (needs key) |
+| UI | all pages, tiers, reduced motion, axe 0 violations, 64 screenshots | Folded Signal moodboard + assets for final styling - you |
+| M0 numbers | harness, Kaggle runbook, recorder, rater | native recordings + ratings - native speakers; GPU run - you / Kaggle |
+| Remote demo | exposed mode with login + WebSocket verified locally | real Quick Tunnel + phone test - you |
+
 ## D0 - Design spike: BUILT
 - Built: Next.js 16 static export in `web/`, single tokens file `web/src/styles/tokens.css` (JS reads it back via `lib/tokens.ts`), self-hosted Noto fonts for all 5 scripts, effects tiers Auto/Full/Lite/Off + `prefers-reduced-motion` + pause when hidden (`lib/effects.tsx`), the Signal (R3F particles, 7 states, 5 language motifs, AnalyserNode-driven) with a static fallback, GPU ASCII post-process (Latin glyphs only), landing hero with the wordmark assembling from particles, Signal lab page.
 - Verified: build + typecheck; screenshots in `design/screens/` for full/lite/off on desktop and phone; lab page frame rate in this VM (software WebGL, no GPU): full 48 fps, lite/off 60 fps (lite is capped to 30 fps rendering by design; page rAF stays 60).
@@ -105,3 +118,18 @@ PENDING = cannot be done here; says who must do it.
   axe 0 violations, call E2E en WebRTC / en WebSocket / ja WebSocket (first audio 4.1-4.5 s on CPU, effects off).
   Found + fixed: Chrome ignores fake-mic paths containing "..".
 - PENDING (user): a real fallback video WITH audio, recorded on the demo machine with the key and GPU engines (OBS).
+
+## M10 - $0 remote demo (tunnel) + runbook: BUILT; tunnel itself PENDING (user)
+- Built: `deploy/tunnel.sh` (refuses to start without a 12+ character ADMIN_PASSWORD; sets SHAON_EXPOSED=1,
+  ALLOW_KEY_EDIT=false, crawl allowlist; starts the app and a Cloudflare Quick Tunnel), `deploy/CHECKLIST.md`
+  (phone test on mobile data, WebSocket test, polling check, fallback video), Knowledge progress defaults to polling
+  off-localhost (Quick Tunnels do not support SSE), `docs/RUNBOOK.md` (Windows + WSL2 + NVIDIA path, Kaggle-only path,
+  HF token, downloads, recording + rating, engine switching per language, troubleshooting).
+- Verified: exposed mode locally: API without token -> 401, WebSocket without token -> refused, password login -> token ->
+  full WebSocket call (in `scripts/test_all.sh`). WebSocket transport E2E on localhost.
+- PENDING (user): running the real Quick Tunnel and the phone test (no public tunnel was opened from this sandbox).
+
+## M9 - Eval report skeleton: BUILT
+- `python -m eval.make_eval_report` -> `docs/EVAL_REPORT.md`: per-language table (STT, LID, Claude, retrieval, TTS rating,
+  verdict), switching, guardrails, honest weak spots, product-track notes; built only from measured files, PENDING otherwise.
+- Currently measured in it: cross-lingual retrieval (all 5 languages), guardrails local layers, Kokoro en/ja speed.

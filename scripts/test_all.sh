@@ -23,5 +23,14 @@ step "accessibility (axe)"; (cd web && node scripts/a11y.mjs http://127.0.0.1:87
 kill $SERVER 2>/dev/null; trap - EXIT
 step "call E2E (fake mic -> STT -> fake LLM -> TTS -> browser)"
 CASES="en_question:smallwebrtc:off en_question:websocket:off ja_question:websocket:off" tests/e2e/run_e2e.sh || fail=1
+step "exposed (tunnel) mode: password login + token on the WebSocket upgrade"
+SHAON_DATA_DIR="$(mktemp -d)" SHAON_EXPOSED=1 ALLOW_KEY_EDIT=false ADMIN_PASSWORD=test-password-123 SHAON_SEED_DEMO=0 \
+  SHAON_PRELOAD="stt:en,tts:en" "$PY" -m uvicorn --factory api.main:create_app --port 8767 --log-level warning > /dev/null 2>&1 &
+EXP=$!; trap 'kill $EXP 2>/dev/null' EXIT
+for i in $(seq 1 60); do curl -sf localhost:8767/api/health >/dev/null && break; sleep 1; done; sleep 15
+code=$(curl -s -o /dev/null -w "%{http_code}" localhost:8767/api/settings); [ "$code" = 401 ] && echo "API without token: 401 (ok)" || { echo "API without token: $code"; fail=1; }
+(cd web && LOGIN_PASSWORD=test-password-123 node scripts/call_e2e.mjs http://127.0.0.1:8767 "$(realpath ../tests/e2e/audio/en_question.wav)" websocket off saturday "test model reply" > /dev/null) \
+  && echo "WebSocket call after login: OK" || { echo "WebSocket call after login: FAIL"; fail=1; }
+kill $EXP 2>/dev/null; trap - EXIT
 echo; [ $fail = 0 ] && echo "ALL PASSED" || echo "SOME CHECKS FAILED"
 exit $fail
