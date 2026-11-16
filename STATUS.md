@@ -20,3 +20,13 @@ PENDING = cannot be done here; says who must do it.
   Whisper small transcribed "What time does your branch open on Saturday?" exactly; fake LLM reply spoken by Kokoro and received by the browser.
   Time-to-first-audio with/without effects measured: design/perf.md (CPU-only VM: 3.9 s effects off, 5.2-6.0 s lite, 21-29 s full).
 - NOT verified: real Claude replies (no key in this session, by rule). PENDING (user): add key in Settings, press Test key.
+
+## M2 - Agent Studio core: BUILT + VERIFIED
+- Built: profiles as one JSON document, a new version on every save, rollback = new version copying an old one; 5 presets
+  (bank_support, tourism, ecommerce, clinic_frontdesk, custom) with persona, per-language greetings (AI disclosure enforced),
+  politeness, style, guardrails, disclaimers, handoff per language, tool allowlist per type; server-side validation;
+  prompt builder per profile (cached prefix) + live preview; Studio UI with 9 tabs and masked tab transitions;
+  auth + rate-limit layer (`api/auth.py`): no-op locally, shared password + signed token when `ADMIN_PASSWORD` is set,
+  WebSocket origin + token check, per-IP buckets for login / call start / crawl / preview.
+- Verified: 49 unit tests (versioning, rollback, validation, tool allowlist, prompt contents, auth on protected routes);
+  Playwright UI test edits, saves and rolls back an agent; screenshots in design/screens/.

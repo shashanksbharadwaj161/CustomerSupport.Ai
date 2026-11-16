@@ -8,6 +8,32 @@ from fastapi import FastAPI, HTTPException, Request
 from agent.presets import PRESETS
 
 
+def validate_config(cfg) -> list[str]:
+    """Shape checks before a profile is saved (the normalizer fills defaults afterwards)."""
+    from agent.presets import LANGS, TOOLS_BY_TYPE
+    errs = []
+    if not isinstance(cfg, dict):
+        return ["config must be an object"]
+    if cfg.get("type") not in TOOLS_BY_TYPE:
+        errs.append(f"type must be one of {sorted(TOOLS_BY_TYPE)}")
+    langs = (cfg.get("languages") or {}).get("enabled", [])
+    if not isinstance(langs, list) or not langs or any(l not in LANGS for l in langs):
+        errs.append(f"languages.enabled must be a non-empty subset of {LANGS}")
+    ms = (cfg.get("response_style") or {}).get("max_sentences", 2)
+    if not isinstance(ms, int) or not 1 <= ms <= 4:
+        errs.append("response_style.max_sentences must be 1-4")
+    for k in ("allowed_topics", "forbidden_topics", "banned_claims", "escalation_triggers"):
+        v = (cfg.get("guardrails") or {}).get(k, [])
+        if not isinstance(v, list) or not all(isinstance(x, str) for x in v):
+            errs.append(f"guardrails.{k} must be a list of strings")
+    bad = [t for t in cfg.get("tools", []) if t not in TOOLS_BY_TYPE.get(cfg.get("type"), [])]
+    if bad:
+        errs.append(f"tools not allowed for type {cfg.get('type')}: {bad}")
+    if len(str(cfg.get("custom_role_text", ""))) > 4000:
+        errs.append("custom_role_text too long (4000 chars max)")
+    return errs
+
+
 def register(app: FastAPI) -> None:
     st = app.state.app
     profiles = app.state.profiles
@@ -34,6 +60,10 @@ def register(app: FastAPI) -> None:
             cfg = body.get("config") or {}
         if body.get("name"):
             cfg["name"] = body["name"]
+        if not kind:
+            errs = validate_config(cfg)
+            if errs:
+                raise HTTPException(422, "; ".join(errs))
         return profiles.create(cfg, note=body.get("note", "created"))
 
     @app.get("/api/profiles/{pid}")
@@ -46,6 +76,9 @@ def register(app: FastAPI) -> None:
     @app.put("/api/profiles/{pid}")
     async def save_profile(pid: str, request: Request):
         body = await request.json()
+        errs = validate_config(body.get("config"))
+        if errs:
+            raise HTTPException(422, "; ".join(errs))
         try:
             return profiles.save(pid, body["config"], note=body.get("note", "saved"))
         except KeyError:
