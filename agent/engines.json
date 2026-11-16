@@ -1,13 +1,98 @@
 {
-  "_note": "Per-language engine selection. M0 candidates below; final picks and LID thresholds are written here after eval/results.md is filled. Values marked pending_m0 are placeholders, not measurements.",
+  "_note": "Per-language engine selection. 'stt' is used when a CUDA GPU is present, 'stt_cpu' otherwise. Picks marked pending_m0 are candidates until eval/results.md has measurements and native ratings.",
   "stt": {
-    "en": {"engine": "faster-whisper", "options": {"model": "large-v3"}},
-    "ja": {"engine": "faster-whisper", "options": {"model": "large-v3"}},
-    "hi": {"engine": "indicconformer", "options": {"decoding": "rnnt"}, "fallback": "faster-whisper"},
-    "bn": {"engine": "indicconformer", "options": {"decoding": "rnnt"}},
-    "kn": {"engine": "indicconformer", "options": {"decoding": "rnnt"}}
+    "en": {
+      "engine": "faster-whisper",
+      "options": {
+        "model": "large-v3"
+      }
+    },
+    "ja": {
+      "engine": "faster-whisper",
+      "options": {
+        "model": "large-v3"
+      }
+    },
+    "hi": {
+      "engine": "indicconformer",
+      "options": {
+        "decoding": "rnnt"
+      },
+      "fallback": "faster-whisper"
+    },
+    "bn": {
+      "engine": "indicconformer",
+      "options": {
+        "decoding": "rnnt"
+      }
+    },
+    "kn": {
+      "engine": "indicconformer",
+      "options": {
+        "decoding": "rnnt"
+      }
+    }
   },
-  "lid": {"engine": "faster-whisper", "threshold": "pending_m0", "prev_bias": "pending_m0"},
-  "tts_demo": {"en": "omnivoice", "ja": "omnivoice", "hi": "omnivoice", "bn": "omnivoice", "kn": "omnivoice"},
-  "tts_product": {"en": "kokoro", "ja": "kokoro", "hi": "indic-parler", "bn": "indic-parler", "kn": "indic-parler"}
+  "lid": {
+    "engine": "faster-whisper",
+    "threshold": 0.5,
+    "prev_bias": 0.1,
+    "_status": "placeholder values until run_lid.py measures them (eval/results.md)"
+  },
+  "tts_demo": {
+    "en": "omnivoice",
+    "ja": "omnivoice",
+    "hi": "omnivoice",
+    "bn": "omnivoice",
+    "kn": "omnivoice"
+  },
+  "tts_product": {
+    "en": "kokoro",
+    "ja": "kokoro",
+    "hi": "indic-parler",
+    "bn": "indic-parler",
+    "kn": "indic-parler"
+  },
+  "stt_cpu": {
+    "en": {
+      "engine": "faster-whisper",
+      "options": {
+        "model": "small"
+      }
+    },
+    "ja": {
+      "engine": "faster-whisper",
+      "options": {
+        "model": "small"
+      }
+    },
+    "hi": {
+      "engine": "faster-whisper",
+      "options": {
+        "model": "small"
+      }
+    },
+    "bn": {
+      "engine": "faster-whisper",
+      "options": {
+        "model": "small"
+      }
+    },
+    "kn": {
+      "engine": "faster-whisper",
+      "options": {
+        "model": "small"
+      }
+    }
+  },
+  "default_voices": {
+    "en": "kokoro_en_heart",
+    "ja": "kokoro_ja_alpha",
+    "hi": "parler_hi_divya",
+    "bn": "parler_bn_aditi",
+    "kn": "parler_kn_anu"
+  },
+  "cpu_fallback_voices": {
+    "hi": "kokoro_hi_alpha"
+  }
 }

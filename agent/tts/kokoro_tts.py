@@ -9,12 +9,12 @@ import numpy as np
 
 from agent.tts.base import TTS, Synthesis, Voice
 
-_LANG_CODE = {"en": "a", "ja": "j"}
+_LANG_CODE = {"en": "a", "ja": "j", "hi": "h"}  # Hindi voices exist (hf_*, hm_*): CPU candidate, quality unrated
 
 
 class KokoroTTS(TTS):
     name = "kokoro"
-    languages = ("en", "ja")
+    languages = ("en", "ja", "hi")
     license = "Apache-2.0"
     SAMPLE_RATE = 24000
 

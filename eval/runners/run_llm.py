@@ -23,6 +23,7 @@ import time
 from agent.lang import LANGS, dominant_language, find_digits, is_native_script
 from agent.llm.pricing import cost_usd
 from agent.llm.prompt import build_system
+from agent.presets import preset
 from eval.common import EVAL, OUT, load_lines, percentile, save
 
 PERSONA = "Name: Asha. Warm, calm, polite. Formal register in every language (Japanese: teineigo)."
@@ -56,7 +57,7 @@ class Runner:
         self.spent = 0.0
         brief = (EVAL / "fixtures" / "site_brief.md").read_text(encoding="utf-8")
         # cached prefix: stable bytes only (the M0 prompt may be below the minimum cacheable size)
-        self.system = [{"type": "text", "text": build_system(PERSONA, brief),
+        self.system = [{"type": "text", "text": build_system(preset("bank_support"), brief),
                         "cache_control": {"type": "ephemeral"}}]
 
     def ask(self, messages: list[dict]) -> dict:

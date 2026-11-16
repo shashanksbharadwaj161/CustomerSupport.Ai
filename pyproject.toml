@@ -8,6 +8,9 @@ dependencies = ["numpy", "soundfile"]
 # One extra per engine group. Engine deps can conflict (e.g. parler-tts pins its own
 # transformers): if pip reports a conflict, use one virtualenv per group (eval/README.md).
 [project.optional-dependencies]
+# the app server (FastAPI + Pipecat transports + Silero VAD + crawler/store); add engine extras below
+app = ["fastapi>=0.115", "uvicorn[standard]", "cryptography", "anthropic>=2", "httpx", "beautifulsoup4",
+       "chromadb", "pipecat-ai[webrtc,silero,websocket]>=1.16", "playwright==1.63.0"]
 stt-whisper = ["faster-whisper>=1.1"]
 stt-indic = ["torch", "torchaudio", "transformers", "onnx", "onnxruntime"]
 tts-parler = ["torch", "parler-tts @ git+https://github.com/huggingface/parler-tts.git"]
@@ -17,7 +20,7 @@ tts-kokoro = ["kokoro>=0.9.2", "misaki[ja]", "en_core_web_sm @ https://github.co
 tts-omnivoice = ["torch", "omnivoice"]
 llm = ["anthropic"]
 retrieval = ["sentence-transformers"]
-dev = ["pytest"]
+dev = ["pytest", "pytest-asyncio"]
 
 [build-system]
 requires = ["setuptools>=68"]

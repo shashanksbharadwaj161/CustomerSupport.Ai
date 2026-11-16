@@ -24,6 +24,18 @@ type Ctx = {
 };
 
 const EffectsContext = createContext<Ctx | null>(null);
+
+/** True when WebGL runs on the CPU (SwiftShader / llvmpipe): visuals would compete with the speech models. */
+export function softwareRenderer(): boolean {
+  try {
+    const c = document.createElement("canvas");
+    const gl = (c.getContext("webgl") || c.getContext("experimental-webgl")) as WebGLRenderingContext | null;
+    if (!gl) return true;
+    const ext = gl.getExtension("WEBGL_debug_renderer_info");
+    const r = String(ext ? gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER));
+    return /swiftshader|llvmpipe|software|softpipe/i.test(r);
+  } catch { return false; }
+}
 const KEY = "shaon.effects";
 
 function readChoice(): TierChoice {
@@ -42,9 +54,11 @@ export function EffectsProvider({ children }: { children: React.ReactNode }) {
   const [reducedMotion, setRM] = useState(false);
   const [hidden, setHidden] = useState(false);
   const [generating, setGenerating] = useState(false);
+  const [software, setSoftware] = useState(false);
 
   useEffect(() => {
     setChoiceState(readChoice());
+    setSoftware(softwareRenderer());
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
     setRM(mq.matches);
     const onMq = () => setRM(mq.matches);
@@ -72,9 +86,9 @@ export function EffectsProvider({ children }: { children: React.ReactNode }) {
     if (reducedMotion) return "off";
     if (choice !== "auto") return choice;
     let t: Tier = measuredFps === null ? "lite" : measuredFps >= 50 ? "full" : measuredFps >= 24 ? "lite" : "off";
-    if (generating && t === "full") t = "lite";
+    if ((generating || software) && t === "full") t = "lite"; // design/perf.md: software WebGL starves the models
     return t;
-  }, [choice, measuredFps, reducedMotion, generating]);
+  }, [choice, measuredFps, reducedMotion, generating, software]);
 
   useEffect(() => { document.documentElement.dataset.effects = tier; }, [tier]);
 
