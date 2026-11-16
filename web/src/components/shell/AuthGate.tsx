@@ -13,7 +13,7 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
   if (need === null) return null;
   if (!need) return <>{children}</>;
   return (
-    <form className="glass max-w-sm mx-auto mt-20 p-6 space-y-4" onSubmit={async (e) => {
+    <main id="main" className="px-[var(--gutter)]"><form className="glass max-w-sm mx-auto mt-20 p-6 space-y-4" onSubmit={async (e) => {
       e.preventDefault(); setErr(null);
       try { const r = await api<{ token: string }>("/api/auth/login", { method: "POST", json: { password: pw } }); setToken(r.token); setNeed(false); }
       catch (x: any) { setErr(x.message); }
@@ -24,6 +24,6 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
         <input type="password" className="btn" value={pw} onChange={(e) => setPw(e.target.value)} autoComplete="current-password" /></label>
       {err && <p role="alert" style={{ color: "var(--danger)" }}>{err}</p>}
       <button className="btn btn-primary" type="submit">Enter</button>
-    </form>
+    </form></main>
   );
 }

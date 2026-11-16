@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./fonts";
 import "./globals.css";
+import { AuthGate } from "@/components/shell/AuthGate";
 import { EffectsProvider } from "@/lib/effects";
 
 export const metadata: Metadata = {
@@ -14,7 +15,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en">
       <body>
         <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 btn">Skip to content</a>
-        <EffectsProvider>{children}</EffectsProvider>
+        <EffectsProvider><AuthGate>{children}</AuthGate></EffectsProvider>
       </body>
     </html>
   );

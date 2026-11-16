@@ -19,7 +19,7 @@ fail=0
 for c in $CASES; do
   IFS=: read -r wav transport effects <<< "$c"
   case $wav in en_*) U="saturday"; A="test model reply";; ja_*) U="土曜|支店"; A="テスト用";; esac
-  (cd web && node scripts/call_e2e.mjs http://127.0.0.1:8765 "$PWD/../$AUDIO/$wav.wav" "$transport" "$effects" "$U" "$A") > "$OUT/$wav-$transport-$effects.json" 2>&1 || fail=1
+  (cd web && node scripts/call_e2e.mjs http://127.0.0.1:8765 "$(realpath "../$AUDIO/$wav.wav")" "$transport" "$effects" "$U" "$A") > "$OUT/$wav-$transport-$effects.json" 2>&1 || fail=1
   python3 -c "import json;d=json.load(open('$OUT/$wav-$transport-$effects.json'));t=(d.get('turns') or [{}])[0];print('$c', 'OK' if d['ok'] else 'FAIL', 'first_audio_ms', t.get('first_audio_ms'))" || fail=1
 done
 exit $fail

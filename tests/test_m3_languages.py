@@ -163,3 +163,23 @@ def test_reply_language_from_script_not_model_claim():
         out.append(d)
     asyncio.run(TurnEngine(ctx, prov, "m").respond(TEXT["kn"], "kn", emit))
     assert out[0]["lang"] == "en"
+
+
+def test_indic_engine_failure_falls_back_to_whisper_in_same_turn():
+    def script(lang):
+        if lang is None:
+            return ("x", "hi", {"hi": 0.9, "en": 0.1})
+        return (TEXT[lang], lang, {})
+    s = session(script, indic=True)
+
+    class Boom:
+        options = {}
+
+        def transcribe(self, a, l):
+            raise OSError("gated repo: accept terms + HF_TOKEN")
+    s.engines.indic = Boom()
+    s.engines.load_errors = {}
+    orig = s.engines.stt_choice
+    s.engines.stt_choice = lambda lang: ("faster-whisper", {"model": "small"}) if "indicconformer" in s.engines.load_errors else orig(lang)
+    info = s.transcribe_turn(AUDIO)
+    assert info["lang"] == "hi" and info["text"] == TEXT["hi"] and "whisper fallback" in info["fallbacks"][0]

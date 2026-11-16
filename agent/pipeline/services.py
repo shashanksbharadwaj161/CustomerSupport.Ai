@@ -22,7 +22,7 @@ from pipecat.frames.frames import (
     VADUserStoppedSpeakingFrame,
 )
 from pipecat.processors.frame_processor import FrameDirection, FrameProcessor
-from pipecat.services.settings import TTSSettings
+from pipecat.services.settings import STTSettings, TTSSettings
 from pipecat.services.stt_service import SegmentedSTTService
 from pipecat.services.tts_service import TTSService
 from pipecat.utils.time import time_now_iso8601
@@ -41,7 +41,8 @@ class RouterSTT(SegmentedSTTService):
     """Utterance-level STT: language ID + routing per language (PLAN.md section 6)."""
 
     def __init__(self, session: CallSession, **kw):
-        super().__init__(sample_rate=16000, trailing_silence_secs=0.3, **kw)
+        super().__init__(sample_rate=16000, trailing_silence_secs=0.3,
+                         settings=STTSettings(model=None, language=None), **kw)  # model/language are routed per turn
         self.session = session
         self.last_info: dict | None = None
         self._stop_times: list[float] = []
@@ -216,7 +217,7 @@ class BrainProcessor(FrameProcessor):
                "lang_reason": info.get("reason"), "engine_json": {"stt": info.get("engines"), "lid": info.get("lid_probs"),
                                                                   "lid_ms": info.get("lid_ms"), "audio_s": info.get("audio_s")}}
         s.hooks.on_turn(s.ctx.call_id, row)
-        await self._send(msg("transcript", role="user", text=info["text"], lang=lang, reason=info.get("reason"),
+        await self._send(msg("transcript", role="user", text=info["text"], lang=lang, reason=info.get("reason"), fallbacks=info.get("fallbacks"),
                              stt_ms=info.get("stt_ms"), lid=info.get("lid_probs"), engines=info.get("engines")))
 
         async def emit(kind: str, data: dict):

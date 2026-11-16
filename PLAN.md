@@ -232,7 +232,7 @@ shaon-voice-ai/
   tests/      unit tests (pytest) for agent/ api/ eval/ code
   deploy/     added at M10 only: tunnel script + checklist (DEPLOY.md, $0 plan)
 ```
-Additions vs v3 (2026-11-16): DEPLOY.md (hosted demo plan), pyproject.toml (one Python project with optional extras per engine), tests/, deploy/ (M10).
+Additions vs v3 (2026-11-16): DEPLOY.md ($0 deployment plan), STATUS.md (honest milestone state), pyproject.toml (one Python project with optional extras per engine), tests/ (pytest + browser E2E), deploy/ (M10 tunnel script + checklist), docs/ (runbook, demo script, eval report, silent walkthrough video), eval/fixtures/sites/ (fake demo + test websites served at /demo-sites/).
 
 ---------------------------------------------------------------------
 

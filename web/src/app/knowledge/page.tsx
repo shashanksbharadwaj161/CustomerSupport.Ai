@@ -30,7 +30,12 @@ export default function Knowledge() {
   const load = useCallback(() => api<Source[]>("/api/knowledge").then(setSources).catch(() => {}), []);
   useEffect(() => {
     load(); api("/api/profiles").then(setProfiles).catch(() => {});
-    try { if (new URL(window.location.href).searchParams.get("poll") === "1") setMode("poll"); } catch {}
+    // Quick Tunnels do not support SSE (it may just buffer silently): poll unless we are on this machine
+    try {
+      const u = new URL(window.location.href);
+      const local = ["localhost", "127.0.0.1"].includes(u.hostname);
+      if (u.searchParams.get("poll") === "1" || (!local && u.searchParams.get("sse") !== "1")) setMode("poll");
+    } catch {}
     // suggest the local demo site
     setUrl(`${window.location.origin}/demo-sites/lotus-bank/`);
   }, [load]);

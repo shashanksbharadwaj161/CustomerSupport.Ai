@@ -1,6 +1,5 @@
 "use client";
 import Link from "next/link";
-import { AuthGate } from "./AuthGate";
 import { CapsuleNav } from "./CapsuleNav";
 import { StatusBanner } from "./StatusBanner";
 
@@ -13,7 +12,7 @@ export function AppShell({ children, wide = false }: { children: React.ReactNode
       </header>
       <StatusBanner />
       <main id="main" className="flex-1 w-full mx-auto" style={{ maxWidth: wide ? "none" : "var(--content-max)", padding: "0 var(--gutter) 48px" }}>
-        <AuthGate>{children}</AuthGate>
+        {children}
       </main>
     </div>
   );

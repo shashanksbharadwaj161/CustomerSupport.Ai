@@ -2,8 +2,11 @@
 // Usage: node tests/e2e/call_e2e.mjs <baseUrl> <wav> <transport> <effects> <expectUserRegex> <expectAgentRegex> [profile]
 // Prints JSON: transcripts, server first_audio_ms, client first-audio ms, tier. Exit 1 on failure.
 import { chromium } from "playwright";
+import path from "node:path";
 
-const [base, wav, transport, effects, userRe, agentRe, profile] = process.argv.slice(2);
+const [base, wavArg, transport, effects, userRe, agentRe, profile] = process.argv.slice(2);
+// Chrome silently ignores a fake-audio path containing "..": always pass a resolved absolute path
+const wav = path.resolve(wavArg);
 const browser = await chromium.launch({ args: [
   "--use-fake-ui-for-media-stream", "--use-fake-device-for-media-stream", `--use-file-for-fake-audio-capture=${wav}`,
   "--autoplay-policy=no-user-gesture-required", "--enable-unsafe-swiftshader"] });
@@ -13,6 +16,10 @@ const errors = [];
 page.on("pageerror", (e) => errors.push(String(e)));
 const q = new URLSearchParams({ transport, effects, ...(profile ? { profile } : {}) });
 await page.goto(`${base}/call/?${q}`, { waitUntil: "networkidle" });
+if (process.env.LOGIN_PASSWORD) {  // exposed / tunnel mode: shared-password login first
+  await page.fill("input[type=password]", process.env.LOGIN_PASSWORD);
+  await page.click("button[type=submit]");
+}
 await page.waitForSelector("[data-testid=start-call]:not([disabled])", { timeout: 20000 });
 const t0 = Date.now();
 await page.click("[data-testid=start-call]");

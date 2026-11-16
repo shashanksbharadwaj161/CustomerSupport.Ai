@@ -93,3 +93,15 @@ PENDING = cannot be done here; says who must do it.
   64 Playwright screenshots in design/screens/ (7 pages + call detail x full/lite/off/reduced x desktop/phone, plus scroll states);
   no page errors; time-to-first-audio with/without effects in design/perf.md.
 - PENDING (user): "Folded Signal" moodboard, reference inventory and assets -> final styling pass (tokens are provisional).
+
+## M8 - Demo hardening: BUILT + VERIFIED
+- Built: one-command start (`scripts/start.sh`: venv detection, dependency check, refuses non-local listening without a password,
+  port check, builds the UI when stale); first start seeds the two demo agents with their FAKE sites (bank + travel, crawled
+  from `/demo-sites/`); `scripts/doctor.py` checklist with exact fix commands; `scripts/test_all.sh` (everything, $0);
+  STT falls back to Whisper inside the same turn if a GPU engine fails to load (and says so); login gate moved to the root
+  layout (found by the exposed-mode E2E: pages fetched data before login); `docs/DEMO_SCRIPT.md` talk track + failure plays;
+  silent walkthrough video `docs/demo/walkthrough-silent.webm` (`web/scripts/record_demo.mjs`); README rewritten.
+- Verified: `scripts/test_all.sh` stages all green: 125 tests, typecheck, build, demo seeding (2 sources ready), 5 UI suites,
+  axe 0 violations, call E2E en WebRTC / en WebSocket / ja WebSocket (first audio 4.1-4.5 s on CPU, effects off).
+  Found + fixed: Chrome ignores fake-mic paths containing "..".
+- PENDING (user): a real fallback video WITH audio, recorded on the demo machine with the key and GPU engines (OBS).

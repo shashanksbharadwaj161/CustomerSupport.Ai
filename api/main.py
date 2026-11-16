@@ -25,7 +25,9 @@ def create_app(state: AppState | None = None) -> FastAPI:
     @asynccontextmanager
     async def lifespan(_app):
         _preload(st)
+        seed = asyncio.create_task(_seed_demo_knowledge(app))
         yield
+        seed.cancel()
 
     app = FastAPI(title="ShaOn Voice AI", version="0.1.0", docs_url="/api/docs", openapi_url="/api/openapi.json", lifespan=lifespan)
     app.state.app = st
@@ -151,6 +153,30 @@ def create_app(state: AppState | None = None) -> FastAPI:
         def no_web():
             return JSONResponse({"detail": "web UI not built: run `cd web && npm run build` (scripts/start.sh does it)"})
     return app
+
+
+async def _seed_demo_knowledge(app) -> None:
+    """First start: crawl the two bundled FAKE demo sites and attach them to the two demo agents (M8).
+    Disable with SHAON_SEED_DEMO=0. Uses the app's own URL so source links keep working."""
+    import os
+    st = app.state.app
+    ks = app.state.knowledge
+    if ks is None or (os.environ.get("SHAON_SEED_DEMO") or "1") == "0":
+        return
+    if st.db.one("SELECT id FROM knowledge_sources LIMIT 1"):
+        return
+    await asyncio.sleep(3)  # let the server start listening
+    base = (os.environ.get("SHAON_SELF_URL") or "http://127.0.0.1:8000").rstrip("/")
+    from agent.knowledge.crawler import Limits
+    for site, pid in (("lotus-bank", "lotus-bank"), ("lotus-travel", "lotus-travel")):
+        try:
+            sid = ks.start(f"{base}/demo-sites/{site}/", Limits(max_depth=2, max_pages=20, render_js="never", delay_s=0), pid, sid=f"demo_{site}")
+            p = app.state.profiles.get(pid)
+            if p and sid not in p["config"]["knowledge"]["source_ids"]:
+                p["config"]["knowledge"]["source_ids"].append(sid)
+                app.state.profiles.save(pid, p["config"], note=f"attach demo site {site}")
+        except Exception as e:
+            logging.getLogger("shaon").warning("demo seed %s failed: %s", site, e)
 
 
 def _preload(st) -> None:

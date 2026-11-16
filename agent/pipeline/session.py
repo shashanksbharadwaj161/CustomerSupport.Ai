@@ -110,9 +110,20 @@ class CallSession:
 
     def _stt(self, audio, lang, info) -> str:
         name, opts = self.engines.stt_choice(lang)
-        eng = self.engines.get_stt(name, opts)
+        try:
+            eng = self.engines.get_stt(name, opts)
+            text = eng.transcribe(audio, lang).text
+        except Exception as e:
+            if name == "faster-whisper":
+                raise
+            # e.g. gated IndicConformer weights missing: fall back to Whisper in the SAME turn and say so
+            info.setdefault("fallbacks", []).append(f"{name} failed ({type(e).__name__}): whisper fallback")
+            self.engines.load_errors[name] = f"{type(e).__name__}: {e}"[:300]
+            name, opts = self.engines.stt_choice(lang)
+            eng = self.engines.get_stt(name, opts)
+            text = eng.transcribe(audio, lang).text
         info["engines"].append(f"{name}:{opts.get('model') or opts.get('decoding') or ''}:{lang}")
-        return eng.transcribe(audio, lang).text
+        return text
 
     def _finish(self, text, lang, info, t0) -> dict:
         info.update(text=text.strip(), lang=lang, stt_ms=round((time.perf_counter() - t0) * 1000))
