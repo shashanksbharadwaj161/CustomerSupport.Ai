@@ -18,8 +18,9 @@ const t0 = Date.now();
 await page.click("[data-testid=start-call]");
 let result = null;
 try {
-  await page.waitForFunction(() => (window.__shaon?.turns?.length ?? 0) >= 1 &&
-    window.__shaon.messages.some((m) => m.event === "transcript" && m.role === "agent" && !m.greeting), null, { timeout: 180000, polling: 500 });
+  const want = Number(process.env.WAIT_TURNS || 1);
+  await page.waitForFunction((n) => (window.__shaon?.turns?.length ?? 0) >= n &&
+    window.__shaon.messages.filter((m) => m.event === "transcript" && m.role === "agent" && !m.greeting).length >= n, want, { timeout: 240000, polling: 500 });
 } catch (e) { errors.push("timeout waiting for first turn"); }
 const data = await page.evaluate(() => window.__shaon);
 const user = data.messages.filter((m) => m.event === "transcript" && m.role === "user").map((m) => ({ text: m.text, lang: m.lang, reason: m.reason, stt_ms: m.stt_ms }));

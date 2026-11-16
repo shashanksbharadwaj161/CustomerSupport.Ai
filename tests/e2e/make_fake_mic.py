@@ -25,6 +25,14 @@ def main():
         audio = np.concatenate([np.zeros(int(sr * 1.5)), s.audio, np.zeros(int(sr * 58))]).astype(np.float32)
         sf.write(OUT / f"{name}.wav", audio, sr, subtype="PCM_16")
         print(OUT / f"{name}.wav", round(len(audio) / sr, 1), "s")
+    # one call that switches language: English question, pause, Japanese question
+    import soundfile as sfr
+    en, sr = sfr.read(OUT / "en_question.wav")
+    ja, _ = sfr.read(OUT / "ja_question.wav")
+    cut = lambda a: a[: len(a) - int(sr * 50)]  # drop most of the trailing silence
+    sw = np.concatenate([cut(en), np.zeros(int(sr * 8)), ja]).astype(np.float32)
+    sf.write(OUT / "switch_en_ja.wav", sw, sr, subtype="PCM_16")
+    print(OUT / "switch_en_ja.wav", round(len(sw) / sr, 1), "s")
 
 
 if __name__ == "__main__":

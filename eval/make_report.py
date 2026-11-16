@@ -99,6 +99,21 @@ def section_lid(lines, data):
     lines.append("")
 
 
+def section_switch(lines, data):
+    lines.append("## Language switching (PLAN M3 rule: 3 consecutive switch directions per pair)\n")
+    real = [d for d in data if d.get("kind") == "switch" and not d.get("synthetic")]
+    synth = [d for d in data if d.get("kind") == "switch" and d.get("synthetic")]
+    if not real:
+        lines.append("PENDING: native recordings, then `python -m eval.runners.run_switch`\n")
+    for d in real:
+        lines.append(f"- languages {', '.join(d['langs'])}: pass rate {fmt(d['pass_rate'], True)}; "
+                     + ", ".join(f"{x['pair']} {'PASS' if x['pass'] else 'FAIL'}" for x in d["pairs"]))
+    for d in synth:
+        lines.append(f"- Synthetic pipeline check (Kokoro audio, not accuracy): {', '.join(d['langs'])}: "
+                     + ", ".join(f"{x['pair']} {'PASS' if x['pass'] else 'FAIL'}" for x in d["pairs"]))
+    lines.append("")
+
+
 def section_tts(lines, data, ratings):
     lines.append("## TTS\n")
     d = next((d for d in data if d.get("kind") == "tts"), None)
@@ -162,6 +177,7 @@ def main():
     section_hw(lines, data)
     section_stt(lines, data)
     section_lid(lines, data)
+    section_switch(lines, data)
     section_tts(lines, data, ratings)
     section_llm(lines, data, ratings)
     section_retrieval(lines, data)

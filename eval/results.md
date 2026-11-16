@@ -17,6 +17,12 @@ Pipeline checks on synthetic (TTS) audio, NOT accuracy results: stt_faster-whisp
 
 PENDING: `python -m eval.runners.run_lid --model large-v3`
 
+## Language switching (PLAN M3 rule: 3 consecutive switch directions per pair)
+
+PENDING: native recordings, then `python -m eval.runners.run_switch`
+
+- Synthetic pipeline check (Kokoro audio, not accuracy): en, ja: en->ja PASS, ja->en PASS
+
 ## TTS
 
 | voice | lang | engine | license | first audio p50 ms | p90 ms | RTF | peak GPU MB | round-trip CER | naturalness 1-5 (n) |

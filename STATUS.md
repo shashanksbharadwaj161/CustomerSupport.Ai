@@ -30,3 +30,15 @@ PENDING = cannot be done here; says who must do it.
   WebSocket origin + token check, per-IP buckets for login / call start / crawl / preview.
 - Verified: 49 unit tests (versioning, rollback, validation, tool allowlist, prompt contents, auth on protected routes);
   Playwright UI test edits, saves and rolls back an agent; screenshots in design/screens/.
+
+## M3 - Languages: BUILT; VERIFIED for en + ja on CPU; hi/bn/kn PENDING
+- Built: per-turn language ID (one Whisper pass gives probabilities + text), previous-language bias and threshold
+  (`agent/engines.json` -> `lid`), dual recognition on low confidence (keeps the transcript whose script fits), script-flip,
+  manual override from the Live Call page, per-language STT routing (IndicConformer for hi/bn/kn on GPU, Whisper fallback),
+  reply language decided from the reply's script, per-language voice, per-language Sonnet override in Studio.
+- Verified: 13 routing unit tests incl. 3 consecutive switch directions for 5 pairs (stub engines);
+  browser E2E: Japanese call (Whisper small ja -> Kokoro ja) and an English -> Japanese switch inside ONE call
+  (language and voice switched, first audio 3.9 s / 4.1 s on CPU); `run_switch` on synthetic Kokoro audio: en->ja PASS, ja->en PASS.
+- Known: Whisper small heard 支店 as 視点 (homophone) - CPU model quality; GPU large-v3 expected better (measure in M0).
+- PENDING (user): native recordings for all languages -> `python -m eval.runners.run_lid` (thresholds) and `run_switch`;
+  hi/bn/kn speech output needs Indic Parler / OmniVoice on GPU (adapters complete, never run here).
