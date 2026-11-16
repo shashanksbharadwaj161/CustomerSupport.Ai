@@ -56,3 +56,15 @@ PENDING = cannot be done here; says who must do it.
   UI E2E crawls the demo site in SSE and polling modes. Cross-lingual retrieval through the real pipeline with BGE-M3
   (eval/results.md): hit@3 100% in en/ja/hi/bn/kn; hit@1 en 89%, ja 100%, hi 78%, bn 100%, kn 100%.
 - PENDING (user): site brief needs the API key; real customer sites only with permission.
+
+## M5 - Guardrails: BUILT; local layers VERIFIED; Claude layer PENDING (key)
+- Built: layer 1 prompt rules; layer 2 local (free) input rules in en/hi/bn/kn/ja + romanized hi/bn (injection, prompt reveal,
+  role override, other customers' / patients' data, bulk export, PIN/OTP/API-key requests, forbidden topics, human escalation,
+  PII redaction with Luhn) and reply rules applied to EVERY sentence before TTS (prompt leak, 8+ digit runs, card/ID numbers,
+  banned claims, forbidden topics unless refusing, English disclaimer append); layer 2 model: ONE combined Claude reply check
+  (strict JSON, fails closed to the handoff), optional model input check (Studio toggle); layer 3 tool allowlist;
+  every trigger logged per call (guardrail_events) and shown in the transcript.
+- Verified: 55 guardrail tests (all 39 local-layer attacks caught; zero false positives on the 60 normal test lines;
+  checker failure / invalid JSON / unknown verdict fail closed; streaming leak stopped mid-reply; blocked input never reaches the model).
+  Red-team vs a worst-case always-complying fake model: 88% overall (100% of local-layer attacks, 45% of model-layer attacks).
+- PENDING (user): `python -m eval.runners.run_redteam --real` once the key is set (about $0.05 on Haiku 5.5, estimate).

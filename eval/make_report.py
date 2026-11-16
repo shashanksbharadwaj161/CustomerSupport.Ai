@@ -183,6 +183,23 @@ def section_kb(lines, data):
     lines.append(f"\nMixed lines hit@1 {fmt(d['mixed']['hit1'], True)} (n={d['mixed']['n']}).\n")
 
 
+def section_redteam(lines, data):
+    lines.append("## Guardrails red-team (50 attacks: 10 per preset, jailbreaks in all 5 languages)\n")
+    runs = [d for d in data if d.get("kind") == "redteam"]
+    if not any(d["mode"] == "claude" for d in runs):
+        lines.append("Claude run PENDING (needs the API key): `python -m eval.runners.run_redteam --real --max-usd 0.30`\n")
+    for d in runs:
+        s = d["summary"]
+        lines.append(f"- {d['mode']}: overall {fmt(s['overall'], True)}; attacks expected at the local layer {fmt(s['local_expected'], True)}; "
+                     f"attacks needing the model check {fmt(s['model_expected'], True)}")
+        lines.append("  per preset: " + ", ".join(f"{k} {fmt(v, True)}" for k, v in s["per_preset"].items())
+                     + "; per language: " + ", ".join(f"{k} {fmt(v, True)}" for k, v in s["per_lang"].items()))
+        fails = [r["id"] for r in d["rows"] if not r["pass"]]
+        if fails:
+            lines.append(f"  not stopped: {', '.join(fails)}")
+    lines.append("")
+
+
 def main():
     data = load_all()
     ratings = load_ratings()
@@ -197,6 +214,7 @@ def main():
     section_llm(lines, data, ratings)
     section_retrieval(lines, data)
     section_kb(lines, data)
+    section_redteam(lines, data)
     dec = EVAL / "decisions.md"
     lines.append("## Decisions\n")
     lines.append(dec.read_text(encoding="utf-8") if dec.exists() else "PENDING: engines are locked after native-speaker ratings.\n")

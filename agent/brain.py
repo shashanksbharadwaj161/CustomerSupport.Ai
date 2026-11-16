@@ -25,10 +25,11 @@ _SENT_END = re.compile(r"(.+?(?:[。！？]+|[.!?।॥]+(?=\s|$))[\"'」』)]*)
 
 @dataclass
 class GuardVerdict:
-    action: str = "allow"  # allow | block | handoff
+    action: str = "allow"  # allow | block | handoff | redact
     rule: str | None = None
     detail: str | None = None
     stage: str = "input"
+    text: str | None = None  # replacement text for action "redact"
 
 
 class Guard(Protocol):
@@ -101,6 +102,15 @@ class TurnEngine:
         user_text = scrub(user_text)
 
         g = self.guard.check_input(user_text, lang, p)
+        if g.action == "redact":
+            self.log_guard(g)
+            await emit("guardrail", {k: v for k, v in g.__dict__.items() if k != "text"})
+            meta["guard"].append({k: v for k, v in g.__dict__.items() if k != "text"})
+            user_text, g = g.text or user_text, GuardVerdict(stage="input")
+        if g.action == "allow" and getattr(self.guard, "needs_input_model_check", lambda *a: False)(p, self.provider):
+            tg0 = time.perf_counter()
+            g = await self.guard.check_input_model(user_text, lang, p, self.provider, self.ctx.call_id)
+            meta["guard_ms"] += round((time.perf_counter() - tg0) * 1000)
         meta["guard"].append(g.__dict__)
         if g.action != "allow":
             self.log_guard(g)
@@ -129,6 +139,7 @@ class TurnEngine:
         spoken: list[str] = []
         buf = ""
         first_text_t = None
+        stopped: list[GuardVerdict] = []
 
         async def on_text(chunk: str):
             nonlocal buf, first_text_t
@@ -138,7 +149,11 @@ class TurnEngine:
             sents, buf = split_sentences(buf)
             for s in sents:
                 spoken.append(s)
-                if not buffered:
+                if not buffered and not stopped:
+                    v = self.guard.check_reply_local(s, lang, p, user_text)  # local rules BEFORE the sentence reaches TTS
+                    if v.action != "allow":
+                        stopped.append(v)
+                        continue
                     await self._emit_sentence(s, lang, emit, meta)
 
         tools = specs_for(p.get("tools", [])) or None
@@ -160,8 +175,12 @@ class TurnEngine:
         tail = buf.strip()
         if tail:
             spoken.append(tail)
-            if not buffered:
-                await self._emit_sentence(tail, lang, emit, meta)
+            if not buffered and not stopped:
+                v = self.guard.check_reply_local(tail, lang, p, user_text)
+                if v.action != "allow":
+                    stopped.append(v)
+                else:
+                    await self._emit_sentence(tail, lang, emit, meta)
         meta["llm_ms"] = round((time.perf_counter() - t0) * 1000)
         meta["llm_ttft_ms"] = round((first_text_t - t0) * 1000) if first_text_t else None
         reply = " ".join(spoken).strip()
@@ -177,7 +196,7 @@ class TurnEngine:
             return meta
 
         tg = time.perf_counter()
-        v = self.guard.check_reply_local(reply, lang, p, user_text)
+        v = stopped[0] if stopped else self.guard.check_reply_local(reply, lang, p, user_text)
         if v.action == "allow" and buffered:
             v = await self.guard.check_reply_model(reply, lang, p, user_text, passages, self.provider, self.ctx.call_id)
         meta["guard_ms"] = round((time.perf_counter() - tg) * 1000)
@@ -194,6 +213,13 @@ class TurnEngine:
         if buffered:
             for s in spoken:
                 await self._emit_sentence(s, lang, emit, meta)
+        missing = getattr(self.guard, "missing_disclaimers", lambda *a: [])(reply, user_text, meta.get("reply_lang") or dominant_language(reply)[0] or lang, p)
+        for d in missing:  # required disclaimer appended (logged)
+            dv = GuardVerdict("append", "reply.disclaimer_added", d[:80], "reply")
+            self.log_guard(dv)
+            meta["guard"].append(dv.__dict__)
+            await self._emit_sentence(d, lang, emit, meta)
+            reply += " " + d
         self._remember(user_text, reply)
         meta["reply"] = reply
         meta["reply_lang"] = dominant_language(reply)[0] or lang
