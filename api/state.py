@@ -71,7 +71,8 @@ class AppState:
         if not any(eng[e]["installed"] for e in ("kokoro", "indic-parler", "omnivoice")):
             reasons.append("no TTS engine installed")
         if not st["cuda"]:
-            notes.append("No CUDA GPU: CPU profile (Whisper small, Kokoro). Bengali/Kannada speech output needs the GPU engines (PENDING).")
+            notes.append("No CUDA GPU: CPU profile. en/ja: Whisper small + Kokoro. hi/bn/kn: MMS STT + MMS/Kokoro voices "
+                         "(MMS = CC-BY-NC, DEMO ONLY, robotic pipeline-testing voices). Product voices need the GPU engines (PENDING).")
         for e, v in eng.items():
             if v.get("pending"):
                 notes.append(f"{e}: PENDING - {v['pending']}")

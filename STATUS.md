@@ -8,7 +8,7 @@ PENDING = cannot be done here; says who must do it.
 | Area | Works now (verified in this VM: 4 CPU, no GPU, no API key) | PENDING - who |
 |---|---|---|
 | Voice calls | en + ja end to end on CPU, both transports, language switch mid-call, live voice switch (barge-in is implemented but not yet tested) | GPU latency on your PC - you; barge-in test - next session |
-| Languages hi / bn / kn | routing, LID, script checks, text replies; Hindi CPU voice (unrated) | Indic Parler / IndicConformer / OmniVoice GPU run + HF token - you |
+| Languages hi / bn / kn | REAL speech (FLEURS) end to end on CPU: LID 100% (n=50 each), MMS STT WER hi 19.6% / bn 30.9% / kn 26.1% (n=20), live calls + switches 6/6 pass, first audio 5.2-7.1 s; MMS voices are robotic demo-only | IndicConformer (HF token), Indic Parler / OmniVoice (GPU), native ratings - you / native speakers |
 | Claude replies | provider, caching, spend cap, prompt builder (tested with a fake LLM) | real key in Settings + Test key - you |
 | Knowledge | crawl (robots, limits, JS), BGE-M3 retrieval hit@3 100% in 5 languages | site brief needs the key - you |
 | Guardrails | local layers 100% of local-layer attacks, 0 false positives | Claude red-team run - you (needs key) |
@@ -133,3 +133,27 @@ PENDING = cannot be done here; says who must do it.
 - `python -m eval.make_eval_report` -> `docs/EVAL_REPORT.md`: per-language table (STT, LID, Claude, retrieval, TTS rating,
   verdict), switching, guardrails, honest weak spots, product-track notes; built only from measured files, PENDING otherwise.
 - Currently measured in it: cross-lingual retrieval (all 5 languages), guardrails local layers, Kokoro en/ja speed.
+
+
+## Indic real-audio pass (hi / bn / kn): MEASURED on CPU with FLEURS read speech; product engines PENDING
+Data: google/fleurs test split (CC-BY-4.0, Conneau et al. 2022), seed 20261116, clips cached outside the repo (~100 MB).
+**Caveat:** clean read Wikipedia-style speech, not phone calls - optimistic. Whisper small/base are CPU stand-ins. MMS = CC-BY-NC.
+
+| lang | STT engine (CPU, routed) | WER / CER (n) | LID app decision (n=50) | TTS voice (CPU) | RTF | round-trip CER (proxy) | live-call E2E | license status |
+|---|---|---|---|---|---|---|---|---|
+| hi | mms-1b-all adapter hin | 19.6% / 7.1% (20) | 100% | Kokoro hf_alpha (MMS hin as 2nd) | 0.33 (MMS 0.22) | 6.0% (MMS 9.7%) | pass (3/3 turns) | MMS CC-BY-NC demo; Kokoro Apache-2.0 |
+| bn | mms-1b-all adapter ben | 30.9% / 9.1% (20) | 100% | MMS ben (robotic) | 0.18 | 8.0% | pass (2/2) | CC-BY-NC demo only |
+| kn | mms-1b-all adapter kan | 26.1% / 3.9% (20) | 100% | MMS kan (robotic) | 0.18 | 8.4% | pass (2/2) | CC-BY-NC demo only |
+| en | Whisper small (greedy) | 5.3% / 2.4% (50) | 100% | Kokoro af_heart | 0.28 | - | pass (1/1) | MIT / Apache-2.0 |
+| ja | Whisper small (greedy) | CER 12.7% (50) | 100% | Kokoro jf_alpha | 0.33 | - | pass (1/1) | MIT / Apache-2.0 |
+
+- Whisper small on CPU is unusable for Indic: WER hi 78%, bn 103%, kn 100% (repetition loops, wrong-script output); base worse.
+- Found + fixed: CPU Whisper now greedy without temperature-fallback retries (retries took ~1.6 min per Kannada clip);
+  script flip may no longer override a confident LID (it mislabelled 2/50 Bengali clips); LID probabilities renormalized over
+  enabled languages (Whisper puts Hindi mass on Urdu); language ID is detection-only, so a Hindi/Bengali/Kannada turn is
+  transcribed once: first audio hi 8.7 -> 5.8 s, bn 8.6 -> 5.3 s, kn 12.1 -> 6.7 s (median, same calls).
+- LID thresholds proposed from the sweep (threshold 0.3, prev_bias 0, script flip below 0.6): CPU / read-speech ESTIMATES.
+- Per-language STT order is configurable (`agent/engines.json`), derived from measurements by `python -m eval.routing_from_results --write`;
+  every skip / fallback is logged per turn.
+- PENDING (user): IndicConformer (gated: HF token), Indic Parler + OmniVoice + Whisper large-v3 on the GPU, real call audio,
+  native-speaker review of the machine-written reply lines and ratings of every voice.
