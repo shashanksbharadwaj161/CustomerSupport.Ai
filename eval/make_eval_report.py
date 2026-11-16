@@ -51,7 +51,10 @@ def main():
                 if m is not None and (best is None or m < best[0]):
                     best = (m, d["engine"], v["n"], "CER" if lang == "ja" else "WER")
         stt_s = f"{best[1]}: {best[3]} {fmt(best[0], True)} (n={best[2]})" if best else "PENDING"
-        lid_s = fmt(flid["per_lang"][lang]["app_from_en"], True) + f" (n={flid['per_lang'][lang]['n']})" if flid else "PENDING"
+        lid_s = "PENDING"
+        if flid:
+            v = flid["per_lang"][lang]
+            lid_s = f"{fmt(v.get('app_current_rules'), True)} current rules (recomputed); {fmt(v['app_from_en'], True)} measured with old rules (n={v['n']})"
         tts_s = "PENDING"
         if tcpu:
             vs = [(vid, v) for vid, v in tcpu["voices"].items() if v["lang"] == lang]
