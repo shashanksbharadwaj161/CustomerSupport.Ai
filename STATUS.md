@@ -68,3 +68,16 @@ PENDING = cannot be done here; says who must do it.
   checker failure / invalid JSON / unknown verdict fail closed; streaming leak stopped mid-reply; blocked input never reaches the model).
   Red-team vs a worst-case always-complying fake model: 88% overall (100% of local-layer attacks, 45% of model-layer attacks).
 - PENDING (user): `python -m eval.runners.run_redteam --real` once the key is set (about $0.05 on Haiku 5.5, estimate).
+
+## M6 - Voices: BUILT; Kokoro (en/ja) VERIFIED; Parler/OmniVoice PENDING
+- Built: voice registry (catalog + bake-off voices + user clips in DB) with engine status, license and demo-only flags;
+  persona sets (warm_female, calm_male, energetic_young, formal_senior, one_voice_demo) mapping a voice per language;
+  `POST /api/voices/preview` (5-second language-appropriate sample, honest 503 PENDING when an engine is missing);
+  adding a persona reference clip requires consent + transcript (OmniVoice clone, always demo-only);
+  OmniVoice `ref_from` voices get model-generated reference clips on demand (never a real person);
+  voice picker in Settings (preview, set default per agent = new profile version, add/delete clips);
+  live switching from the Live Call dock (applies from the next sentence); demo-only badge in transcript and picker.
+- Verified: 5 voice tests (real Kokoro preview WAV, pending engine honesty, consent enforcement, live switch);
+  UI E2E previews a Kokoro voice and gets the PENDING message for Indic Parler; call E2E switches en voice mid-call
+  (greeting kokoro_en_heart -> reply kokoro_en_michael).
+- PENDING (user): Indic Parler and OmniVoice voices need the GPU run + native-speaker ratings (M0).

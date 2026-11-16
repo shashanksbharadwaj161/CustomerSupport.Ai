@@ -133,6 +133,8 @@ def create_app(state: AppState | None = None) -> FastAPI:
     app.include_router(calls_router(app))
     from api.routes import register
     register(app)
+    from api.voices import register as register_voices
+    register_voices(app)
     if app.state.knowledge is not None:
         from api.knowledge import register as register_knowledge
         register_knowledge(app)

@@ -17,6 +17,10 @@ await page.waitForSelector("[data-testid=start-call]:not([disabled])", { timeout
 const t0 = Date.now();
 await page.click("[data-testid=start-call]");
 let result = null;
+if (process.env.SWITCH_VOICE) {  // live voice switch from the dock: applies from the next sentence
+  await page.waitForFunction(() => window.__shaon?.messages?.some((m) => m.event === "hello"), null, { timeout: 60000 });
+  await page.click(`[data-testid=voice-dock] >> text=${process.env.SWITCH_VOICE}`);
+}
 try {
   const want = Number(process.env.WAIT_TURNS || 1);
   await page.waitForFunction((n) => (window.__shaon?.turns?.length ?? 0) >= n &&

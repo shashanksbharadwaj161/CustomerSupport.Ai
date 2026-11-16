@@ -103,6 +103,8 @@ class RouterTTS(TTSService):
             if v is None:
                 continue
             try:
+                if v.params.get("ref_from") and s.ensure_reference:
+                    await asyncio.to_thread(s.ensure_reference, v)  # OmniVoice: model-generated reference clip
                 eng = await asyncio.to_thread(s.engines.get_tts, v.engine)
                 synth = await asyncio.to_thread(eng.synthesize, text, v)
                 voice = v

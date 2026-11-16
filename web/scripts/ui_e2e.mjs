@@ -47,6 +47,18 @@ await run("settings", async (page) => {
   if (!spent.includes("7.50")) throw new Error("cap not shown: " + spent);
 });
 
+await run("voices", async (page) => {
+  await page.goto(`${base}/settings/?effects=off`, { waitUntil: "networkidle" });
+  await page.waitForSelector("[data-testid=voice-kokoro_en_heart]");
+  await page.click("[data-testid=preview-kokoro_en_heart]");
+  await page.waitForSelector("[data-testid=voices-msg]", { timeout: 120000 });
+  const m = await page.textContent("[data-testid=voices-msg]");
+  if (!/s preview/.test(m)) throw new Error("preview failed: " + m);
+  await page.getByRole("tab", { name: "ಕನ್ನಡ" }).click();
+  await page.click("[data-testid=preview-parler_kn_anu]");
+  await page.waitForFunction(() => /PENDING|preview/.test(document.querySelector("[data-testid=voices-msg]")?.textContent || ""), null, { timeout: 60000 });
+});
+
 for (const mode of ["sse", "poll"]) {
   await run(`knowledge-${mode}`, async (page) => {
     await page.goto(`${base}/knowledge/?effects=off${mode === "poll" ? "&poll=1" : ""}`, { waitUntil: "networkidle" });

@@ -42,6 +42,7 @@ class CallSession:
     t_turn_tts_start: float | None = None
     pending_first_audio_turn: int | None = None
     tts_first_ms: int | None = None
+    ensure_reference: Any = None  # callable(voice) for OmniVoice ref_from voices (set by the API layer)
     lid_threshold: float = 0.5
     lid_bias: float = 0.1
 

@@ -115,15 +115,11 @@ def register(app: FastAPI) -> None:
     # ---- voices (M6 extends: preview, add clip, personas)
     @app.get("/api/voices")
     def voices(lang: str | None = None):
-        from agent.engines import installed
+        from api.voices import voice_status
         cat = st.voices()
-        out = []
-        for v in cat.list(lang):
-            ok = installed(v["engine"]) and v["engine"] == "kokoro"
-            out.append({**{k: v.get(k) for k in ("id", "language", "engine", "display_name", "persona_tag", "license")},
-                        "demo_only": bool(v.get("demo_only")), "unrated": bool(v.get("unrated")),
-                        "status": "ready" if ok else "pending"})
-        return out
+        return [{**{k: v.get(k) for k in ("id", "language", "engine", "display_name", "persona_tag", "license", "source")},
+                 "demo_only": bool(v.get("demo_only")), "unrated": bool(v.get("unrated")), "status": voice_status(v),
+                 "user_added": v["id"].startswith("user_")} for v in cat.list(lang)]
 
     # ---- calls / logs
     @app.get("/api/calls")

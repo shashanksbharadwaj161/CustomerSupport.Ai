@@ -28,6 +28,8 @@ def make_session(state: AppState, profile_id: str | None, transport: str, app) -
                   on_turn=state.log_turn, on_turn_update=state.update_turn, on_guard=state.log_guard,
                   on_call_end=state.end_call)
     sess = CallSession(ctx=ctx, engines=state.engines, voices=voices, hooks=hooks, transport=transport)
+    from api.voices import ensure_reference
+    sess.ensure_reference = lambda v: ensure_reference(state, v)
     state.active_calls[call_id] = {"transport": transport, "profile_id": prof.get("_id")}
     return sess
 
