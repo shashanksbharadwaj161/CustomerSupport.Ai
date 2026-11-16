@@ -45,7 +45,7 @@ Copy the recommended threshold and prev_bias into `agent/engines.json` -> `lid`.
 ## 4. TTS (no recordings needed)
 
 ```bash
-pip install -e ".[tts-kokoro]"   # English G2P also needs espeak-ng (apt install espeak-ng)
+pip install -e ".[tts-kokoro]"   # also: apt install espeak-ng; python -m unidic download (Japanese)
 pip install -e ".[tts-parler]"   # gated: accept terms on HF, export HF_TOKEN
 pip install -e ".[tts-omnivoice]"  # DEMO ONLY (CC-BY-NC weights)
 python -m eval.runners.run_tts --engines kokoro indic-parler   # first: refs for OmniVoice clones

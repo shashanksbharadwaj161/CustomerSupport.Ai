@@ -28,7 +28,7 @@ os.environ["HF_TOKEN"] = UserSecretsClient().get_secret("HF_TOKEN")
 !python -m eval.runners.run_lid --model large-v3
 !pip -q install -e ".[stt-indic]" && python -m eval.runners.run_stt --engine indicconformer --decoding rnnt
 !python -m eval.runners.run_stt --engine indicconformer --decoding ctc
-!pip -q install -e ".[tts-kokoro]" ".[tts-parler]" && python -m eval.runners.run_tts --engines kokoro indic-parler
+!pip -q install -e ".[tts-kokoro]" ".[tts-parler]" && python -m unidic download && python -m eval.runners.run_tts --engines kokoro indic-parler
 !pip -q install -e ".[tts-omnivoice]" && python -m eval.runners.run_tts --engines omnivoice
 !pip -q install -e ".[retrieval]" && python -m eval.runners.run_retrieval
 !cd eval && zip -qr /kaggle/working/m0_out.zip out

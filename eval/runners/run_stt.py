@@ -60,6 +60,7 @@ def main(argv=None):
             tr = engine.transcribe(audio, line["lang"])
             ms = (time.perf_counter() - t) * 1000
             row = {"id": line["id"], "lang": line["lang"], "category": line["category"],
+                   "numbers": line["numbers"],
                    "ref": line["text"], "hyp": tr.text, "latency_ms": round(ms),
                    "audio_s": round(len(audio) / 16000, 2)}
             if not line["romanized"]:  # romanized refs cannot be compared to native-script output
@@ -74,6 +75,9 @@ def main(argv=None):
         lat = [r["latency_ms"] for r in rs]
         per_lang[lang] = {
             "n": len(rs), **aggregate(mono),
+            # recognizers often write numbers as digits while references spell them out:
+            # this excludes the two number lines so formatting does not mask recognition
+            "no_numbers": aggregate([r for r in mono if not r["numbers"]]),
             "mixed": aggregate([r for r in rs if r["category"] != "mono"]),
             "latency_p50_ms": percentile(lat, 0.5), "latency_p90_ms": percentile(lat, 0.9),
             "rtf_mean": round(sum(r["latency_ms"] / 1000 / max(r["audio_s"], 0.01) for r in rs) / len(rs), 3),

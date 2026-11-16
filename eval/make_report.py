@@ -68,14 +68,15 @@ def section_stt(lines, data):
     if not runs:
         lines.append("PENDING: record lines (eval/tools/recorder.html), then `python -m eval.runners.run_stt --engine ...` (see eval/README.md)\n")
     else:
-        lines.append("| engine | lang | n | WER | CER | p50 ms | p90 ms | RTF | load s | peak GPU MB |")
-        lines.append("|---|---|---|---|---|---|---|---|---|---|")
+        lines.append("| engine | lang | n | WER | CER | WER excl. number lines | p50 ms | p90 ms | RTF | load s | peak GPU MB |")
+        lines.append("|---|---|---|---|---|---|---|---|---|---|---|")
         for d in runs:
             name = f"{d['engine']} {json.dumps(d['options'])}"
             for lang in LANGS:
                 v = d["per_lang"].get(lang)
                 if v:
                     lines.append(f"| {name} | {lang} | {v['n']} | {fmt(v.get('wer'), True)} | {fmt(v.get('cer'), True)} | "
+                                 f"{fmt(v.get('no_numbers', {}).get('wer' if lang != 'ja' else 'cer'), True)} | "
                                  f"{fmt(v['latency_p50_ms'])} | {fmt(v['latency_p90_ms'])} | {v['rtf_mean']} | {d['load_s']} | {fmt(d['peak_gpu_mb'])} |")
         lines.append("")
     if synth:

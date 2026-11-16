@@ -2,7 +2,7 @@
 name = "shaon-voice-ai"
 version = "0.0.1"
 description = "Local multilingual voice agent demo (en, ja, hi, bn, kn)"
-requires-python = ">=3.10"
+requires-python = ">=3.10,<3.13"  # kokoro requires < 3.13
 dependencies = ["numpy", "soundfile"]
 
 # One extra per engine group. Engine deps can conflict (e.g. parler-tts pins its own
@@ -11,7 +11,8 @@ dependencies = ["numpy", "soundfile"]
 stt-whisper = ["faster-whisper>=1.1"]
 stt-indic = ["torch", "torchaudio", "transformers", "onnx", "onnxruntime"]
 tts-parler = ["torch", "parler-tts @ git+https://github.com/huggingface/parler-tts.git"]
-tts-kokoro = ["kokoro>=0.9.2", "misaki[ja]"]
+# en_core_web_sm: Kokoro English G2P otherwise downloads it at runtime via pip (fails in uv venvs)
+tts-kokoro = ["kokoro>=0.9.2", "misaki[ja]", "en_core_web_sm @ https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl"]
 # DEMO ONLY: OmniVoice weights are CC-BY-NC (non-commercial).
 tts-omnivoice = ["torch", "omnivoice"]
 llm = ["anthropic"]
