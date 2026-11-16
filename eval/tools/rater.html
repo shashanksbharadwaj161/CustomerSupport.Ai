@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>M0 Native Rater</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;600&family=Noto+Sans+Bengali&family=Noto+Sans+Devanagari&family=Noto+Sans+Kannada&family=Noto+Sans+JP&display=swap">
+<style>
+  :root { --bg:#f7f7f5; --ink:#1b1b1b; --muted:#666; --accent:#2a5bd7; --card:#fff; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#141414; --ink:#eee; --muted:#aaa; --accent:#7aa2ff; --card:#1f1f1f; } }
+  body { margin:0; background:var(--bg); color:var(--ink);
+         font-family:"Noto Sans","Noto Sans Bengali","Noto Sans Devanagari","Noto Sans Kannada","Noto Sans JP",sans-serif; }
+  main { max-width:760px; margin:0 auto; padding:16px; }
+  .card { background:var(--card); border-radius:10px; padding:16px; margin:12px 0; }
+  .text { font-size:1.3rem; line-height:1.8; }
+  .meta { color:var(--muted); font-size:.9rem; }
+  button, select, input, textarea { font:inherit; padding:8px 12px; border-radius:8px; border:1px solid #8884; background:var(--card); color:var(--ink); }
+  button.primary { background:var(--accent); color:#fff; border:none; }
+  :focus-visible { outline:3px solid var(--accent); outline-offset:2px; }
+  .scale { display:flex; gap:12px; flex-wrap:wrap; margin-top:8px; }
+  textarea { width:100%; box-sizing:border-box; }
+</style>
+</head>
+<body>
+<main>
+  <h1>M0 native-speaker rating</h1>
+  <p class="meta">Items are shuffled and engine names are hidden. Rate how natural and correct each one sounds or reads to a native speaker: 1 = unusable, 3 = understandable but clearly off, 5 = like a fluent native speaker.</p>
+  <div class="card">
+    <label>Nickname <input id="who" size="10" placeholder="rater1"></label>
+    <label>Language <select id="lang"><option>en</option><option>ja</option><option>hi</option><option>bn</option><option>kn</option></select></label>
+    <label>Type <select id="type"><option value="tts">Voice (TTS)</option><option value="llm">Reply text (Claude)</option></select></label>
+    <button id="load" class="primary">Load items</button>
+    <span id="status" class="meta"></span>
+  </div>
+  <div id="items"></div>
+  <div class="card"><button id="export" class="primary">Download CSV</button>
+    <span class="meta">Save as <code>eval/ratings/&lt;nickname&gt;_&lt;lang&gt;_&lt;type&gt;.csv</code></span></div>
+</main>
+<script>
+const $ = id => document.getElementById(id);
+let items = [];
+async function manifests(type) {
+  if (type === "tts") return fetch("../out/tts/manifest.json").then(r => r.ok ? r.json() : []);
+  const listing = await fetch("../out/").then(r => r.text());
+  const names = [...listing.matchAll(/href="(llm_[^"]+_manifest\.json)"/g)].map(m => m[1]);
+  const all = await Promise.all(names.map(n => fetch("../out/" + n).then(r => r.json())));
+  return all.flat();
+}
+function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+$("load").onclick = async () => {
+  const lang = $("lang").value, type = $("type").value;
+  items = shuffle((await manifests(type)).filter(m => m.lang === lang));
+  $("status").textContent = `${items.length} items`;
+  $("items").innerHTML = "";
+  items.forEach((m, i) => {
+    const d = document.createElement("div"); d.className = "card";
+    const head = document.createElement("div"); head.className = "meta"; head.textContent = `Item ${i + 1}`;
+    d.append(head);
+    if (type === "llm") {
+      const p = document.createElement("div"); p.className = "meta"; p.lang = lang; p.textContent = "Caller: " + m.prompt; d.append(p);
+    }
+    const t = document.createElement("div"); t.className = "text"; t.lang = lang; t.textContent = m.text; d.append(t);
+    if (type === "tts") { const a = document.createElement("audio"); a.controls = true; a.preload = "none"; a.src = "../out/" + m.audio; d.append(a); }
+    const s = document.createElement("div"); s.className = "scale"; s.setAttribute("role", "radiogroup");
+    for (let k = 1; k <= 5; k++) {
+      const l = document.createElement("label");
+      l.innerHTML = `<input type="radio" name="r${i}" value="${k}"> ${k}`;
+      l.querySelector("input").onchange = e => m.score = e.target.value;
+      s.append(l);
+    }
+    d.append(s);
+    const n = document.createElement("textarea"); n.rows = 2; n.placeholder = "Notes (wrong word, accent, pronunciation of numbers...)";
+    n.oninput = e => m.notes = e.target.value; d.append(n);
+    $("items").append(d);
+  });
+};
+$("export").onclick = () => {
+  const who = ($("who").value || "rater").replace(/[^\w-]/g, ""), lang = $("lang").value, type = $("type").value;
+  const esc = v => `"${String(v ?? "").replace(/"/g, '""')}"`;
+  const rows = [["rater","type","item_id","lang","score","notes"]].concat(
+    items.filter(m => m.score).map(m => [who, m.type, m.item_id, m.lang, m.score, m.notes || ""]));
+  const blob = new Blob([rows.map(r => r.map(esc).join(",")).join("\n")], { type: "text/csv" });
+  const a = document.createElement("a"); a.href = URL.createObjectURL(blob);
+  a.download = `${who}_${lang}_${type}.csv`; a.click();
+};
+</script>
+</body>
+</html>

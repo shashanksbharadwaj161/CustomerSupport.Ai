@@ -1,0 +1,13 @@
+{"id": "c_hours", "topic": "branch_hours", "text": "Branch opening hours: Monday to Friday 9:30 to 16:30. Saturday 10:00 to 13:00. All branches are closed on Sundays and public holidays."}
+{"id": "c_balance", "topic": "balance", "text": "Checking your account balance: verify with your registered phone number and date of birth, then hear your savings or current account balance. Balances are also shown in the mobile app."}
+{"id": "c_card", "topic": "card_block", "text": "Lost or stolen debit or credit card: we block the card immediately after verifying your registered phone number. A replacement card is delivered in 5 to 7 working days."}
+{"id": "c_fd", "topic": "fd_rate", "text": "Fixed deposit interest rates: 1 year 6.5% per annum, 2 years 6.8% per annum. Senior citizens receive an additional 0.5%."}
+{"id": "c_transfer", "topic": "transfer", "text": "Money transfers to another account or a family member are done in the mobile app or at a branch. Phone agents cannot move money."}
+{"id": "c_double", "topic": "double_charge", "text": "Duplicate or double charges: raise a dispute and the extra charge is refunded within 7 working days. Hotel and travel bookings charged twice are covered."}
+{"id": "c_tour", "topic": "tour_booking", "text": "Old city heritage tour: two days, 8,000 rupees per adult, children under 10 half price. Bookings need the names of all travellers. Flights and hotels can be added to a tour booking."}
+{"id": "c_cruise", "topic": "cruise_food", "text": "Evening river cruise: departs 18:30, two hours. Vegetarian and vegan meals available on request when booking."}
+{"id": "c_human", "topic": "human_agent", "text": "Speak to a person: human colleagues are available Monday to Saturday 9:00 to 19:00. Ask the assistant to transfer you."}
+{"id": "c_atm", "topic": "distractor", "text": "ATM fees: the first five withdrawals per month at other banks' ATMs are free, then 21 rupees per withdrawal."}
+{"id": "c_loan", "topic": "loan", "text": "Personal loans: up to 15 lakh rupees, tenure 1 to 5 years, EMI calculator available in the app."}
+{"id": "c_visa", "topic": "distractor", "text": "Visa assistance for international tours: we help with documents for Japan, Thailand and Singapore visas. Processing takes 10 to 15 days."}
+{"id": "c_pickup", "topic": "distractor", "text": "Airport pickup: available for all tour packages, book at least 48 hours ahead."}

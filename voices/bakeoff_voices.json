@@ -1,0 +1,38 @@
+{
+  "_note": "M0 bake-off voices. Reference clips for OmniVoice are MODEL-GENERATED (Kokoro / Indic Parler), never a real person's voice. OmniVoice voices are DEMO ONLY (CC-BY-NC weights).",
+  "ref_text": {
+    "en": "Hello, thank you for calling. I am an AI assistant and I am happy to help you today.",
+    "ja": "お電話ありがとうございます。AIアシスタントが本日ご案内いたします。",
+    "hi": "नमस्ते, कॉल करने के लिए धन्यवाद। मैं एक एआई सहायक हूँ और आज आपकी मदद करूँगी।",
+    "bn": "নমস্কার, ফোন করার জন্য ধন্যবাদ। আমি একজন এআই সহকারী, আজ আপনাকে সাহায্য করব।",
+    "kn": "ನಮಸ್ಕಾರ, ಕರೆ ಮಾಡಿದ್ದಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಾನು ಎಐ ಸಹಾಯಕಿ, ಇಂದು ನಿಮಗೆ ಸಹಾಯ ಮಾಡುತ್ತೇನೆ."
+  },
+  "voices": [
+    {"id": "kokoro_en_heart", "language": "en", "engine": "kokoro", "display_name": "Heart (en)", "license": "Apache-2.0", "params": {"voice": "af_heart"}},
+    {"id": "kokoro_ja_alpha", "language": "ja", "engine": "kokoro", "display_name": "Alpha (ja)", "license": "Apache-2.0", "params": {"voice": "jf_alpha"}},
+    {"id": "kokoro_ja_kumo", "language": "ja", "engine": "kokoro", "display_name": "Kumo (ja)", "license": "Apache-2.0", "params": {"voice": "jm_kumo"}},
+    {"id": "parler_hi_divya", "language": "hi", "engine": "indic-parler", "display_name": "Divya (hi)", "license": "Apache-2.0", "params": {"description": "Divya's voice is clear and warm, with a moderate pace, and a very close recording with no background noise."}},
+    {"id": "parler_hi_rohit", "language": "hi", "engine": "indic-parler", "display_name": "Rohit (hi)", "license": "Apache-2.0", "params": {"description": "Rohit's voice is calm and clear, with a moderate pace, and a very close recording with no background noise."}},
+    {"id": "parler_bn_aditi", "language": "bn", "engine": "indic-parler", "display_name": "Aditi (bn)", "license": "Apache-2.0", "params": {"description": "Aditi's voice is clear and warm, with a moderate pace, and a very close recording with no background noise."}},
+    {"id": "parler_bn_arjun", "language": "bn", "engine": "indic-parler", "display_name": "Arjun (bn)", "license": "Apache-2.0", "params": {"description": "Arjun's voice is calm and clear, with a moderate pace, and a very close recording with no background noise."}},
+    {"id": "parler_kn_anu", "language": "kn", "engine": "indic-parler", "display_name": "Anu (kn)", "license": "Apache-2.0", "params": {"description": "Anu's voice is clear and warm, with a moderate pace, and a very close recording with no background noise."}},
+    {"id": "parler_kn_suresh", "language": "kn", "engine": "indic-parler", "display_name": "Suresh (kn)", "license": "Apache-2.0", "params": {"description": "Suresh's voice is calm and clear, with a moderate pace, and a very close recording with no background noise."}},
+
+    {"id": "omni_auto_en", "language": "en", "engine": "omnivoice", "display_name": "OmniVoice auto (en)", "license": "CC-BY-NC weights", "demo_only": true, "params": {}},
+    {"id": "omni_auto_ja", "language": "ja", "engine": "omnivoice", "display_name": "OmniVoice auto (ja)", "license": "CC-BY-NC weights", "demo_only": true, "params": {}},
+    {"id": "omni_auto_hi", "language": "hi", "engine": "omnivoice", "display_name": "OmniVoice auto (hi)", "license": "CC-BY-NC weights", "demo_only": true, "params": {}},
+    {"id": "omni_auto_bn", "language": "bn", "engine": "omnivoice", "display_name": "OmniVoice auto (bn)", "license": "CC-BY-NC weights", "demo_only": true, "params": {}},
+    {"id": "omni_auto_kn", "language": "kn", "engine": "omnivoice", "display_name": "OmniVoice auto (kn)", "license": "CC-BY-NC weights", "demo_only": true, "params": {}},
+
+    {"id": "omni_samelang_en", "language": "en", "engine": "omnivoice", "display_name": "OmniVoice clone, en ref", "license": "CC-BY-NC weights", "demo_only": true, "params": {"ref_from": "kokoro_en_heart"}},
+    {"id": "omni_samelang_ja", "language": "ja", "engine": "omnivoice", "display_name": "OmniVoice clone, ja ref", "license": "CC-BY-NC weights", "demo_only": true, "params": {"ref_from": "kokoro_ja_alpha"}},
+    {"id": "omni_samelang_hi", "language": "hi", "engine": "omnivoice", "display_name": "OmniVoice clone, hi ref", "license": "CC-BY-NC weights", "demo_only": true, "params": {"ref_from": "parler_hi_divya"}},
+    {"id": "omni_samelang_bn", "language": "bn", "engine": "omnivoice", "display_name": "OmniVoice clone, bn ref", "license": "CC-BY-NC weights", "demo_only": true, "params": {"ref_from": "parler_bn_aditi"}},
+    {"id": "omni_samelang_kn", "language": "kn", "engine": "omnivoice", "display_name": "OmniVoice clone, kn ref", "license": "CC-BY-NC weights", "demo_only": true, "params": {"ref_from": "parler_kn_anu"}},
+
+    {"id": "omni_crossref_ja", "language": "ja", "engine": "omnivoice", "display_name": "OmniVoice clone, en ref (one persona)", "license": "CC-BY-NC weights", "demo_only": true, "params": {"ref_from": "kokoro_en_heart"}},
+    {"id": "omni_crossref_hi", "language": "hi", "engine": "omnivoice", "display_name": "OmniVoice clone, en ref (one persona)", "license": "CC-BY-NC weights", "demo_only": true, "params": {"ref_from": "kokoro_en_heart"}},
+    {"id": "omni_crossref_bn", "language": "bn", "engine": "omnivoice", "display_name": "OmniVoice clone, en ref (one persona)", "license": "CC-BY-NC weights", "demo_only": true, "params": {"ref_from": "kokoro_en_heart"}},
+    {"id": "omni_crossref_kn", "language": "kn", "engine": "omnivoice", "display_name": "OmniVoice clone, en ref (one persona)", "license": "CC-BY-NC weights", "demo_only": true, "params": {"ref_from": "kokoro_en_heart"}}
+  ]
+}

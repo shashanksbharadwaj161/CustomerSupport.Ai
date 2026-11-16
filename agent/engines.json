@@ -1,0 +1,13 @@
+{
+  "_note": "Per-language engine selection. M0 candidates below; final picks and LID thresholds are written here after eval/results.md is filled. Values marked pending_m0 are placeholders, not measurements.",
+  "stt": {
+    "en": {"engine": "faster-whisper", "options": {"model": "large-v3"}},
+    "ja": {"engine": "faster-whisper", "options": {"model": "large-v3"}},
+    "hi": {"engine": "indicconformer", "options": {"decoding": "rnnt"}, "fallback": "faster-whisper"},
+    "bn": {"engine": "indicconformer", "options": {"decoding": "rnnt"}},
+    "kn": {"engine": "indicconformer", "options": {"decoding": "rnnt"}}
+  },
+  "lid": {"engine": "faster-whisper", "threshold": "pending_m0", "prev_bias": "pending_m0"},
+  "tts_demo": {"en": "omnivoice", "ja": "omnivoice", "hi": "omnivoice", "bn": "omnivoice", "kn": "omnivoice"},
+  "tts_product": {"en": "kokoro", "ja": "kokoro", "hi": "indic-parler", "bn": "indic-parler", "kn": "indic-parler"}
+}
