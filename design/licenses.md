@@ -32,6 +32,9 @@ particle hero, ASCII) are re-implemented from scratch.
 | IndicConformer 600M (ai4bharat) | MIT (gated on HF) | STT hi/bn/kn |
 | Indic Parler-TTS (ai4bharat) | Apache-2.0 (gated on HF) | TTS product track hi/bn/kn |
 | Kokoro-82M | Apache-2.0 | TTS product track en/ja |
+| Mithi v2 Flash (Oomni/mithi-v2-flash) | Apache-2.0 (built on Maya2-native Apache-2.0, Kokoro-82M Apache-2.0, indic-bert MIT) | CPU TTS for hi/bn/kn (default CPU voices); its self-contained run.py was reviewed before use (no network, no subprocess, safetensors) |
+| sentencepiece | Apache-2.0 | tokenizer needed by Mithi's indic encoder |
+| Indic-Speak (newer AI4Bharat model) | restricted licence | NOT used (licence not compatible with the project rules) |
 | OmniVoice | code Apache-2.0, **weights CC-BY-NC** | **TTS demo only** |
 | BGE-M3 | MIT | embeddings |
 | Crawl4AI | Apache-2.0 | JS rendering for the crawler (our own BFS, robots check and limits) |

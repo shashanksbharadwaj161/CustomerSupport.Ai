@@ -45,7 +45,8 @@ mark("record_start");
 
 const msgs = () => page.evaluate(() => (window.__shaon?.messages || []).map((m) => ({ event: m.event, role: m.role, text: m.text, lang: m.lang,
   greeting: !!m.greeting, state: m.state, first_audio_ms: m.first_audio_ms, voice: m.voice, engine: m.engine, gen_ms: m.gen_ms,
-  stt_ms: m.stt_ms, model: m.model, model_served: m.model_served, reason: m.reason, detail: m.detail, stage: m.stage })));
+  stt_ms: m.stt_ms, model: m.model, model_served: m.model_served, reason: m.reason, detail: m.detail, stage: m.stage,
+  engines: m.engines, fallbacks: m.fallbacks, demo_only: m.demo_only, audio_s: m.audio_s, at: m.__t })));
 const agentLines = async () => (await msgs()).filter((m) => m.event === "transcript" && m.role === "agent").length;
 
 /** Wait until the agent has produced `n` agent lines AND has gone through `n` complete speaking cycles (state

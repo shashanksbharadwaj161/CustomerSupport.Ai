@@ -30,6 +30,23 @@ Then in **Settings**: paste the key, press **Save key**, choose the model (Haiku
 press **Test key** (one tiny paid call with the selected model). Set the spend cap there too.
 Advanced: `scripts\local.ps1 -Port 8010`, `-NoBrowser`.
 
+### Voices and recognition on CPU (2026-11-17)
+| Language | Agent voice (TTS) | Recognition (STT) | Download |
+|---|---|---|---|
+| English | Kokoro `af_heart` (Apache-2.0) | Whisper small | in the base install |
+| Japanese | Kokoro `jf_alpha` | Whisper small | base install; UniDic (0.5 GB) optional: without it Japanese uses the bundled pyopenjtalk dictionary |
+| Hindi | Mithi v2 Flash `ahana` (Apache-2.0), then Kokoro `hf_alpha`, then MMS | MMS-1B-all (CC-BY-NC, demo only) | Mithi 0.2 GB + MMS 4 GB |
+| Bengali | Mithi v2 Flash `ahana`, then MMS (robotic) | MMS-1B-all | Mithi + MMS |
+| Kannada | Mithi v2 Flash `ahana`, then MMS (robotic) | MMS-1B-all | Mithi + MMS |
+
+`ShaOn-Install.bat` (or `python scripts/fetch_models.py`) downloads all of these; `ShaOn-Local.bat` reinstalls Python
+packages if `sentencepiece` (needed by Mithi) is missing. Indic Parler-TTS stays optional: it is gated (Hugging Face token
+with accepted terms) and was not run on the cloud test machine. Measurements: `eval/out/tts_compare.json`, eval/results.md.
+
+If the agent voice was missing or very slow and the server log showed `RouterTTS ... completed with no audio`: that was a
+pipeline bug (pipecat ended an audio context after 3 s while a sentence was still being synthesised, then gave up on the
+voice). Fixed on 2026-11-17: update with `git pull` and start ShaOn-Local.bat again.
+
 ---------------------------------------------------------------------------------------------------
 
 ## Path A - Windows + WSL2 + NVIDIA GPU
