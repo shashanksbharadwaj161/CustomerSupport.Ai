@@ -24,14 +24,39 @@ def build_task(transport, session: CallSession, idle_timeout_secs: float = 300) 
                         enable_rtvi=False, idle_timeout_secs=idle_timeout_secs)
 
 
-async def run_call(transport, session: CallSession, idle_timeout_secs: float = 300) -> None:
+async def call_timer(task, seconds: float, notify) -> None:
+    """Hard limit per call: tell the client why, give it a moment to receive the message, then end the call."""
+    import asyncio
+
+    await asyncio.sleep(seconds)
+    try:
+        await notify()
+        await asyncio.sleep(1.0)
+    finally:
+        await task.cancel()
+
+
+async def run_call(transport, session: CallSession, idle_timeout_secs: float = 300, max_call_seconds: float | None = None) -> None:
+    import asyncio
+
+    from pipecat.frames.frames import OutputTransportMessageUrgentFrame
+
     task = build_task(transport, session, idle_timeout_secs)
 
     @transport.event_handler("on_client_disconnected")
     async def _gone(*_):
         await task.cancel()
 
+    timer = None
+    if max_call_seconds:
+        async def notify():
+            await task.queue_frames([OutputTransportMessageUrgentFrame(message={
+                "type": "shaon", "event": "ended", "reason": "max_length", "seconds": max_call_seconds})])
+        timer = asyncio.create_task(call_timer(task, max_call_seconds, notify))
     try:
         await PipelineRunner(handle_sigint=False).run(task)
     finally:
-        session.hooks.on_call_end(session.ctx.call_id, {"languages_used": sorted(session.languages_used)})
+        if timer:
+            timer.cancel()
+        session.hooks.on_call_end(session.ctx.call_id, {"languages_used": sorted(session.languages_used),
+                                                         "end_reason": "max_length" if timer and timer.done() and not timer.cancelled() else None})

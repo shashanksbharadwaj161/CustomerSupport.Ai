@@ -81,6 +81,42 @@ class AppState:
                 "engines": eng, "transport": self.cfg.transport, "exposed": self.cfg.exposed,
                 "auth_required": bool(self.cfg.admin_password)}
 
+    # ---- readiness per language (Get-ready screen, launcher status)
+    def readiness(self) -> dict:
+        from agent.engines import installed
+        import statistics
+        langs = ["en", "ja", "hi", "bn", "kn"]
+        out = {}
+        cat = self.voices()
+        for lang in langs:
+            name, opts, skipped = self.engines.stt_route(lang)
+            stt = self.engines.peek_stt(name, opts)
+            stt_state = "ready" if stt is not None and stt._loaded else ("loading" if installed(name) else "unavailable")
+            vids = [self.engines.cfg.get("default_voices", {}).get(lang)]
+            fb = self.engines.cfg.get("cpu_fallback_voices", {}).get(lang) or []
+            vids += [fb] if isinstance(fb, str) else fb
+            voice, tts_state = None, "unavailable"
+            for vid in [v for v in vids if v]:
+                v = cat.voice(vid)
+                if not v or not installed(v.engine) or v.engine in self.engines.load_errors:
+                    continue
+                voice = v
+                tts_state = "ready" if self.engines.tts_ready(v.engine, lang) else "loading"
+                if v.engine not in ("indic-parler", "omnivoice") or tts_state == "ready":
+                    break
+            states = {stt_state, tts_state}
+            state = "unavailable" if "unavailable" in states else ("loading" if "loading" in states else "ready")
+            fa = [r["first_audio_ms"] for r in self.db.all(
+                "SELECT first_audio_ms FROM turns WHERE role='agent' AND language=? AND first_audio_ms IS NOT NULL ORDER BY id DESC LIMIT 20", (lang,))]
+            out[lang] = {"state": state, "stt": name, "stt_state": stt_state, "tts_voice": voice.id if voice else None,
+                         "tts_engine": voice.engine if voice else None, "tts_state": tts_state,
+                         "robotic": bool(voice and voice.engine == "mms-tts"), "demo_only": bool(voice and voice.demo_only),
+                         "first_audio_median_ms": round(statistics.median(fa)) if fa else None, "first_audio_n": len(fa)}
+        prov = self.provider()
+        return {"languages": out, "cuda": self.engines.cuda, "provider": prov.name, "real_llm": prov.is_real,
+                "active_calls": len(self.active_calls), "max_calls": self.cfg.max_calls,
+                "max_call_seconds": self.cfg.max_call_seconds, "busy": len(self.active_calls) >= self.cfg.max_calls}
+
     # ---- calls / turns logging
     def new_call(self, profile_id: str | None, version_id: int | None, transport: str) -> str:
         cid = "call_" + uuid.uuid4().hex[:12]
@@ -109,12 +145,16 @@ class AppState:
                         (call_id, d.get("stage"), d.get("action"), d.get("rule"), d.get("detail"), now()))
 
     def end_call(self, call_id: str, info: dict) -> None:
-        self.db.execute("UPDATE calls SET ended_at=?, languages_used=? WHERE id=?",
-                        (now(), ",".join(info.get("languages_used", [])), call_id))
+        self.db.execute("UPDATE calls SET ended_at=?, languages_used=?, end_reason=? WHERE id=?",
+                        (now(), ",".join(info.get("languages_used", [])), info.get("end_reason"), call_id))
         self.active_calls.pop(call_id, None)
 
 
 def is_loopback(request: Request) -> bool:
+    # behind the Quick Tunnel every visitor's TCP peer is 127.0.0.1: forwarded requests are NEVER "this machine"
+    from api.auth import has_forwarding_headers
+    if has_forwarding_headers(request.headers):
+        return False
     host = request.client.host if request.client else ""
     try:
         return ipaddress.ip_address(host).is_loopback
@@ -130,6 +170,9 @@ def require_admin(state: AppState, request: Request, for_key: bool = False) -> N
     if pw:
         import hmac
 
+        auth = getattr(request.app.state, "auth", None)
+        if auth is not None and auth.role_of_token(auth.token_from(request)) == "admin":
+            return
         given = request.headers.get("x-admin-password", "")
         if not hmac.compare_digest(given.encode(), pw.encode()):
             raise HTTPException(401, "Admin password required.")

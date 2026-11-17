@@ -145,6 +145,22 @@ class EngineManager:
             raise
         return eng
 
+    def peek_stt(self, name: str, opts: dict):
+        """Existing engine instance (no loading) or None."""
+        return self._stt.get(name + json.dumps(opts, sort_keys=True))
+
+    def tts_ready(self, name: str, lang: str) -> bool:
+        eng = self._tts.get(name)
+        if eng is None or not eng._loaded:
+            return False
+        models = getattr(eng, "models", None)  # per-language model engines (MMS-TTS)
+        if isinstance(models, dict):
+            return lang in models
+        pipes = getattr(eng, "pipelines", None)  # Kokoro: one pipeline per language
+        if isinstance(pipes, dict) and name == "kokoro":
+            return {"en": "a", "ja": "j", "hi": "h"}.get(lang) in pipes or lang in pipes
+        return True
+
     def lid_engine(self):
         name, opts = self.stt_choice("en") if self.stt_choice("en")[0] == "faster-whisper" else ("faster-whisper", {"model": "small"})
         return self.get_stt(name, opts)

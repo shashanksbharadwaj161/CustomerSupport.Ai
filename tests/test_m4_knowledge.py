@@ -146,10 +146,5 @@ def test_exposed_mode_requires_allowlist(data_dir, sites, monkeypatch):
     _, app = make_client()
     with TestClient(app) as c:
         h = {"Authorization": "Bearer " + c.post("/api/auth/login", json={"password": "pw"}).json()["token"]}
-        sid = c.post("/api/knowledge", json={"url": "https://elsewhere.example/", "permission_confirmed": True}, headers=h).json()["id"]
-        for _ in range(50):
-            r = c.get(f"/api/knowledge/{sid}/events?mode=poll", headers=h).json()
-            if r["status"] == "error":
-                break
-            time.sleep(0.1)
-        assert r["status"] == "error" and "allowlist" in r["events"][-1]["data"]["error"]
+        r = c.post("/api/knowledge", json={"url": "https://elsewhere.example/", "permission_confirmed": True}, headers=h)
+        assert r.status_code == 400 and "allowlist" in r.json()["detail"]

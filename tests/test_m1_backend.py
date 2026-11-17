@@ -36,12 +36,13 @@ def test_key_edit_disabled_and_admin_password(data_dir, monkeypatch):
     c, _ = make_client(ALLOW_KEY_EDIT="false")
     assert c.put("/api/settings/key", json={"key": FAKE_KEY}).status_code == 403
     os.environ["ALLOW_KEY_EDIT"] = ""
-    c, _ = make_client(ADMIN_PASSWORD="pw123")
-    tok = c.post("/api/auth/login", json={"password": "pw123"}).json()["token"]
-    h = {"Authorization": f"Bearer {tok}"}
-    assert c.put("/api/settings/key", json={"key": FAKE_KEY}, headers=h).status_code == 401  # admin password missing
-    assert c.put("/api/settings/key", json={"key": FAKE_KEY}, headers={**h, "X-Admin-Password": "pw123"}).status_code == 200
+    c, _ = make_client(ADMIN_PASSWORD="pw123", VISITOR_PASSCODE="visit-me")
+    vis = {"Authorization": "Bearer " + c.post("/api/auth/login", json={"passcode": "visit-me"}).json()["token"]}
+    assert c.put("/api/settings/key", json={"key": FAKE_KEY}, headers=vis).status_code == 403  # visitors never touch the key
+    adm = {"Authorization": "Bearer " + c.post("/api/auth/login", json={"passcode": "pw123"}).json()["token"]}
+    assert c.put("/api/settings/key", json={"key": FAKE_KEY}, headers=adm).status_code == 200  # admin-role token
     os.environ["ADMIN_PASSWORD"] = ""
+    os.environ["VISITOR_PASSCODE"] = ""
 
 
 def test_bad_key_rejected(data_dir):
@@ -90,7 +91,7 @@ def test_auth_tokens_and_rate_limit(data_dir):
     tok = c.post("/api/auth/login", json={"password": "pw"}).json()["token"]
     assert c.get("/api/profiles", headers={"Authorization": f"Bearer {tok}"}).status_code == 200
     assert not app.state.auth.token_ok(tok[:-2] + "xx")
-    codes = [c.post("/api/auth/login", json={"password": "nope"}).status_code for _ in range(6)]
+    codes = [c.post("/api/auth/login", json={"password": "nope"}).status_code for _ in range(10)]
     assert 429 in codes
     os.environ["ADMIN_PASSWORD"] = ""
 

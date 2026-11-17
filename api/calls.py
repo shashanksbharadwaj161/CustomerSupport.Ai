@@ -49,12 +49,19 @@ def router(app) -> APIRouter:
         if t not in ("both", kind):
             raise HTTPException(409, f"Transport '{kind}' is disabled (TRANSPORT={t}).")
 
+    def busy() -> bool:
+        st = app.state.app
+        return len(st.active_calls) >= st.cfg.max_calls
+
     @r.post("/api/calls/offer")
     async def offer(request: Request):
         allowed("smallwebrtc")
         app.state.auth.check_request(request)
         app.state.auth.rate_limit(request, "call_start")
         body = await request.json()
+        if not body.get("pc_id") and busy():
+            from fastapi.responses import JSONResponse
+            return JSONResponse({"detail": "busy", "busy": True, "max_calls": app.state.app.cfg.max_calls}, status_code=503)
         req_data = body.get("requestData") or body.get("request_data") or {}
         req = SmallWebRTCRequest(sdp=body["sdp"], type=body["type"], pc_id=body.get("pc_id"),
                                  restart_pc=body.get("restart_pc"), request_data=req_data)
@@ -64,7 +71,7 @@ def router(app) -> APIRouter:
             transport = SmallWebRTCTransport(webrtc_connection=conn, params=TransportParams(
                 audio_in_enabled=True, audio_out_enabled=True, audio_out_sample_rate=24000))
             sess = make_session(app.state.app, req_data.get("profile_id"), "smallwebrtc", app)
-            t = asyncio.create_task(run_call(transport, sess))
+            t = asyncio.create_task(run_call(transport, sess, max_call_seconds=app.state.app.cfg.max_call_seconds))
             tasks.add(t)
             t.add_done_callback(tasks.discard)
 
@@ -80,6 +87,35 @@ def router(app) -> APIRouter:
         await handler.handle_patch_request(SmallWebRTCPatchRequest(pc_id=body["pc_id"], candidates=cands))
         return {"ok": True}
 
+    def ws_refusal(websocket: WebSocket) -> int | None:
+        """CORS does not cover WebSockets: check Host, Origin, role token and rate limit ourselves (DEPLOY.md)."""
+        from api.auth import client_ip
+        a = app.state.auth
+        if not a.host_ok(websocket.headers.get("host")):
+            return 4421
+        if not a.origin_ok(websocket.headers.get("origin"), websocket.headers.get("host")):
+            return 4403
+        if not a.token_ok(a.token_from(websocket), "visitor"):
+            return 4401
+        if not a.rate_limit_key(client_ip(websocket), "call_start"):
+            return 4429
+        return None
+
+    @r.websocket("/api/ws-check")
+    async def ws_check(websocket: WebSocket):
+        """Get-ready screen: proves a WebSocket survives the tunnel and the passcode works. Echoes one message."""
+        reason = ws_refusal(websocket)
+        if reason:
+            await websocket.close(code=reason)
+            return
+        await websocket.accept()
+        try:
+            msg = await asyncio.wait_for(websocket.receive_text(), timeout=10)
+            await websocket.send_text(msg)
+        except Exception:
+            pass
+        await websocket.close()
+
     @r.websocket("/api/calls/ws")
     async def ws(websocket: WebSocket):
         from pipecat.transports.websocket.fastapi import FastAPIWebsocketParams, FastAPIWebsocketTransport
@@ -89,15 +125,14 @@ def router(app) -> APIRouter:
         if st.cfg.transport not in ("both", "websocket"):
             await websocket.close(code=4409)
             return
-        # CORS does not cover WebSockets: check Origin and the auth token ourselves (DEPLOY.md)
-        if not app.state.auth.origin_ok(websocket.headers.get("origin"), websocket.headers.get("host")):
-            await websocket.close(code=4403)
+        reason = ws_refusal(websocket)
+        if reason:
+            await websocket.close(code=reason)
             return
-        if not app.state.auth.token_ok(websocket.query_params.get("token")):
-            await websocket.close(code=4401)
-            return
-        if not app.state.auth.rate_limit_key(websocket.client.host if websocket.client else "?", "call_start"):
-            await websocket.close(code=4429)
+        if busy():
+            await websocket.accept()
+            await websocket.send_text('{"type": "shaon", "event": "busy"}')
+            await websocket.close(code=4503)
             return
         await websocket.accept()
         transport = FastAPIWebsocketTransport(websocket, FastAPIWebsocketParams(
@@ -105,7 +140,7 @@ def router(app) -> APIRouter:
             audio_in_sample_rate=16000, audio_out_sample_rate=24000, session_timeout=60 * 30, allowed_origins=[]))
         sess = make_session(st, websocket.query_params.get("profile_id"), "websocket", app)
         try:
-            await run_call(transport, sess)
+            await run_call(transport, sess, max_call_seconds=st.cfg.max_call_seconds)
         except Exception:
             logger.exception("websocket call failed")
 

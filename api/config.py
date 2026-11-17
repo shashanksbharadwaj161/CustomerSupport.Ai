@@ -40,6 +40,10 @@ class Config:
     crawl_allowlist: list[str] = field(default_factory=list)
     web_dir: pathlib.Path = ROOT / "web" / "out"
     preload: list[str] = field(default_factory=list)
+    visitor_passcode: str = ""      # share mode: visitors may call; admin passcode needed for everything else
+    max_calls: int = 2              # concurrent calls (busy screen beyond this)
+    max_call_seconds: int = 300     # hard limit per call
+    share_host_file: pathlib.Path | None = None  # public tunnel host learned at launch (written by scripts/share.ps1)
 
 
 def load_config() -> Config:
@@ -59,4 +63,8 @@ def load_config() -> Config:
         allowed_origins=origins,
         crawl_allowlist=[d.strip().lower() for d in os.environ.get("CRAWL_ALLOWLIST", "").split(",") if d.strip()],
         preload=[p.strip() for p in os.environ.get("SHAON_PRELOAD", "").split(",") if p.strip()],
+        visitor_passcode=os.environ.get("VISITOR_PASSCODE", ""),
+        max_calls=int(os.environ.get("SHAON_MAX_CALLS") or 2),
+        max_call_seconds=int(os.environ.get("SHAON_MAX_CALL_SECONDS") or 300),
+        share_host_file=pathlib.Path(os.environ.get("SHAON_SHARE_HOST_FILE") or data / "share_host.txt"),
     )

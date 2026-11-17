@@ -42,6 +42,15 @@ class KnowledgeService:
             return None
         return self.st.cfg.crawl_allowlist + ["127.0.0.1", "localhost"]
 
+    def guard(self):
+        """SSRF guard while exposed (None locally: the PC owner may ingest an intranet site)."""
+        if not self.st.cfg.exposed:
+            return None
+        import os
+        from agent.knowledge.netguard import make_guard
+        own = (os.environ.get("SHAON_SELF_URL") or "http://127.0.0.1:8000").rstrip("/")
+        return make_guard((own + "/demo-sites/",))
+
     def start(self, url: str, limits: Limits, profile_id: str | None = None, sid: str | None = None) -> str:
         sid = sid or "src_" + uuid.uuid4().hex[:10]
         if not self.db.one("SELECT id FROM knowledge_sources WHERE id=?", (sid,)):
@@ -62,7 +71,10 @@ class KnowledgeService:
         try:
             upd(status="crawling")
             await emit("started", {"url": url, "limits": limits.__dict__})
-            pages = await crawl(url, limits, emit, allowlist=self.allowlist())
+            if self.st.cfg.exposed and limits.render_js != "never":
+                limits.render_js = "never"  # a headless browser could be steered to internal addresses via subresources
+                await emit("warning", {"reason": "JavaScript rendering is off while the app is shared publicly (SSRF safety)"})
+            pages = await crawl(url, limits, emit, allowlist=self.allowlist(), guard=self.guard())
             upd(status="cleaning", pages=len(pages))
             clean = [html_to_text(p.html, p.url) for p in pages]
             clean, removed = dedupe(clean)
@@ -174,6 +186,19 @@ def register(app: FastAPI) -> None:
             raise HTTPException(400, "URL must start with http:// or https://")
         if not body.get("permission_confirmed"):
             raise HTTPException(400, "Confirm you own this site or have permission to crawl it.")
+        al = ks.allowlist()
+        if al is not None:
+            from urllib.parse import urlparse
+            host = (urlparse(url).hostname or "").lower()
+            if not any(host == d or host.endswith("." + d) for d in al):
+                raise HTTPException(400, f"{host} is not on the crawl allowlist (CRAWL_ALLOWLIST).")
+        g = ks.guard()
+        if g:
+            from agent.knowledge.netguard import Blocked
+            try:
+                g(url)
+            except Blocked as e:
+                raise HTTPException(400, f"URL refused: {e}")
         lim = body.get("limits") or {}
         limits = Limits(max_depth=max(0, min(int(lim.get("max_depth", 3)), 5)), max_pages=max(1, min(int(lim.get("max_pages", 50)), 200)),
                         render_js=lim.get("render_js", "auto") if lim.get("render_js") in ("auto", "always", "never") else "auto")

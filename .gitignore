@@ -34,3 +34,6 @@ web/test-results/
 web/playwright-report/
 tests/e2e/results/
 tests/e2e/audio/
+share-link.txt
+share-qr.png
+data/share/

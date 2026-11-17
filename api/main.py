@@ -12,7 +12,7 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from agent import logscrub
-from api.auth import PUBLIC, Auth
+from api.auth import Auth, client_ip, has_forwarding_headers, required_role
 from api.profiles import ProfileStore
 from api.state import AppState, require_admin
 
@@ -31,17 +31,31 @@ def create_app(state: AppState | None = None) -> FastAPI:
 
     app = FastAPI(title="ShaOn Voice AI", version="0.1.0", docs_url="/api/docs", openapi_url="/api/openapi.json", lifespan=lifespan)
     app.state.app = st
-    app.state.auth = Auth(st.cfg.admin_password, st.secrets.key_file.read_bytes(), st.cfg.allowed_origins)
+    app.state.auth = Auth(st.cfg.admin_password, st.secrets.key_file.read_bytes(), st.cfg.allowed_origins,
+                          visitor_passcode=st.cfg.visitor_passcode, exposed=st.cfg.exposed, share_host_file=st.cfg.share_host_file)
+    for s in (st.cfg.admin_password, st.cfg.visitor_passcode):
+        logscrub.register_secret(s)  # passcodes never appear in logs
     app.state.profiles = ProfileStore(st.db)
     app.state.profiles.seed()
     _optional_modules(app)
 
     @app.middleware("http")
     async def auth_mw(request: Request, call_next):
+        auth: Auth = app.state.auth
         p = request.url.path
-        if p.startswith("/api/") and p not in PUBLIC and not p.startswith("/api/docs") and p != "/api/openapi.json":
-            if app.state.auth.enabled and not app.state.auth.token_ok(Auth.token_from(request)):
-                return JSONResponse({"detail": "Login required."}, status_code=401)
+        # exposed: Host must be localhost or the tunnel host learned at launch (blocks DNS-rebinding / stray hosts),
+        # and browser-sent Origin on state-changing requests must match too
+        if not auth.host_ok(request.headers.get("host")):
+            return JSONResponse({"detail": "Unknown host."}, status_code=421)
+        if auth.exposed and request.method not in ("GET", "HEAD", "OPTIONS") and \
+                not auth.origin_ok(request.headers.get("origin"), request.headers.get("host")):
+            return JSONResponse({"detail": "Origin not allowed."}, status_code=403)
+        need = required_role(request.method, p)
+        if need in ("visitor", "admin") and auth.enabled and not auth.token_ok(Auth.token_from(request), need):
+            known = auth.role_from(request) is not None
+            return JSONResponse({"detail": "Admin passcode required." if known else "Login required."}, status_code=403 if known else 401)
+        if auth.exposed and p.startswith("/api/") and not auth.rate_limit_key(client_ip(request), "api"):
+            return JSONResponse({"detail": "Too many requests."}, status_code=429)
         resp = await call_next(request)
         resp.headers.setdefault("X-Content-Type-Options", "nosniff")
         return resp
@@ -54,26 +68,52 @@ def create_app(state: AppState | None = None) -> FastAPI:
     # ---- auth
     @app.get("/api/auth/status")
     def auth_status(request: Request):
-        return {"required": app.state.auth.enabled, "ok": app.state.auth.token_ok(Auth.token_from(request))}
+        a: Auth = app.state.auth
+        role = a.role_from(request)
+        return {"required": a.enabled, "ok": role is not None, "role": role, "visitor_mode": a.roles_on,
+                "share": st.cfg.exposed}
 
     @app.post("/api/auth/login")
     async def login(request: Request):
         app.state.auth.rate_limit(request, "login")
         body = await request.json()
-        token = app.state.auth.login(str(body.get("password", "")))
-        resp = JSONResponse({"token": token, "required": app.state.auth.enabled})
+        token, role = app.state.auth.login(str(body.get("passcode", body.get("password", ""))))
+        resp = JSONResponse({"token": token, "role": role, "required": app.state.auth.enabled})
         if token:
             resp.set_cookie("shaon_token", token, httponly=True, samesite="strict", max_age=12 * 3600,
-                            secure=request.url.scheme == "https")
+                            secure=request.url.scheme == "https" or has_forwarding_headers(request.headers))
         return resp
 
-    # ---- health / engines
+    @app.post("/api/auth/logout")
+    def logout():
+        resp = JSONResponse({"ok": True})
+        resp.delete_cookie("shaon_token")
+        return resp
+
+    # ---- health / readiness
+    @app.get("/health")
+    def health_public():
+        return {"ok": True, "share": st.cfg.exposed}
+
     @app.get("/api/health")
     def health():
         h = st.health()
         if app.state.auth.enabled:  # public endpoint: keep it minimal when auth is on
-            return {"mode": h["mode"], "reasons": h["reasons"], "auth_required": True}
+            return {"mode": h["mode"], "reasons": h["reasons"], "auth_required": True, "notes": h["notes"][:1]}
         return h
+
+    @app.get("/api/ready")
+    def ready():
+        return st.readiness()
+
+    @app.get("/api/share/status")
+    def share_status(request: Request):
+        """For the launcher only: direct loopback, no tunnel headers."""
+        peer = request.client.host if request.client else ""
+        if has_forwarding_headers(request.headers) or peer not in ("127.0.0.1", "::1", "localhost", "testclient"):
+            raise HTTPException(404, "Not found")
+        r = st.readiness()
+        return {**r, "spend": st.spend.summary(), "share_host": app.state.auth.share_host()}
 
     @app.get("/api/engines")
     def engines():

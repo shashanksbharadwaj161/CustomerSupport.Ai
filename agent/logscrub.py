@@ -5,6 +5,7 @@ import logging
 import re
 
 _PATTERN = re.compile(r"sk-ant-[A-Za-z0-9_\-]{8,}")
+_TOKEN = re.compile(r"(token=)[A-Za-z0-9_\-.%]+")  # signed session tokens in WebSocket URLs
 _extra: set[str] = set()
 
 
@@ -17,6 +18,7 @@ def scrub(text: str) -> str:
     if not text:
         return text
     text = _PATTERN.sub("sk-ant-***REDACTED***", text)
+    text = _TOKEN.sub(r"\1***", text)
     for s in _extra:
         text = text.replace(s, "***REDACTED***")
     return text

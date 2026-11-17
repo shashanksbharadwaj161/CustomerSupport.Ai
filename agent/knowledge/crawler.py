@@ -138,8 +138,21 @@ class Renderer:
             pass
 
 
+async def _get(client, url: str, guard, max_hops: int = 5):
+    """GET with redirects followed MANUALLY so every hop passes the SSRF guard."""
+    for _ in range(max_hops + 1):
+        if guard:
+            guard(url)
+        resp = await client.get(url)
+        if resp.status_code in (301, 302, 303, 307, 308) and resp.headers.get("location"):
+            url = urljoin(str(resp.url), resp.headers["location"])
+            continue
+        return resp
+    raise httpx.TooManyRedirects("too many redirects")
+
+
 async def crawl(start_url: str, limits: Limits, emit: Event, allowlist: list[str] | None = None,
-                renderer: Renderer | None = None) -> list[Page]:
+                renderer: Renderer | None = None, guard=None, transport=None) -> list[Page]:
     start_url = normalize(start_url)
     host = (urlparse(start_url).hostname or "").lower()
     if urlparse(start_url).scheme not in ("http", "https"):
@@ -151,15 +164,21 @@ async def crawl(start_url: str, limits: Limits, emit: Event, allowlist: list[str
     pages: list[Page] = []
     seen = {start_url}
     queue: list[tuple[str, int]] = [(start_url, 0)]
-    async with httpx.AsyncClient(headers={"User-Agent": USER_AGENT}, follow_redirects=True,
-                                 timeout=limits.timeout_s) as client:
+    if guard:
+        from agent.knowledge.netguard import Blocked
+        try:
+            guard(start_url)
+        except Blocked as e:
+            raise CrawlNotAllowed(str(e))
+    async with httpx.AsyncClient(headers={"User-Agent": USER_AGENT}, follow_redirects=False,
+                                 timeout=limits.timeout_s, transport=transport) as client:
         robots = urllib.robotparser.RobotFileParser()
         robots_url = f"{urlparse(start_url).scheme}://{urlparse(start_url).netloc}/robots.txt"
         try:
-            r = await client.get(robots_url)
+            r = await _get(client, robots_url, guard)
             robots.parse(r.text.splitlines() if r.status_code == 200 else [])
             await emit("robots", {"url": robots_url, "status": r.status_code})
-        except httpx.HTTPError as e:
+        except Exception as e:  # incl. a blocked redirect: treat as "no robots.txt"
             robots.parse([])
             await emit("robots", {"url": robots_url, "status": None, "error": str(e)[:120]})
 
@@ -170,9 +189,12 @@ async def crawl(start_url: str, limits: Limits, emit: Event, allowlist: list[str
                     await emit("skipped", {"url": url, "reason": "robots.txt disallows"})
                     continue
                 try:
-                    resp = await client.get(url)
+                    resp = await _get(client, url, guard)
                 except httpx.HTTPError as e:
                     await emit("skipped", {"url": url, "reason": f"fetch error {type(e).__name__}"})
+                    continue
+                except Exception as e:  # SSRF guard refused this hop
+                    await emit("skipped", {"url": url, "reason": str(e)[:160]})
                     continue
                 ctype = resp.headers.get("content-type", "")
                 if resp.status_code != 200 or "html" not in ctype:
