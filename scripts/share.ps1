@@ -13,7 +13,8 @@ param(
   [string]$Cloudflared = "",
   [string]$PublicUrlOverride = "",   # testing only: check this base URL instead of the tunnel URL
   [int]$RunSeconds = 0,              # testing only: stop after N seconds
-  [switch]$SkipWarmup
+  [switch]$SkipWarmup,
+  [string]$OutDir = ""               # where share-link.txt / share-qr.png go (default: project folder)
 )
 $ErrorActionPreference = "Stop"
 $Root = Split-Path -Parent $PSScriptRoot
@@ -22,8 +23,9 @@ $OnWindows = ($PSVersionTable.PSEdition -eq "Desktop") -or ($IsWindows -eq $true
 $ShareDir = Join-Path $Root "data/share"
 New-Item -ItemType Directory -Force -Path $ShareDir | Out-Null
 $HostFile = Join-Path $ShareDir "share_host.txt"
-$LinkFile = Join-Path $Root "share-link.txt"
-$QrFile = Join-Path $Root "share-qr.png"
+if (-not $OutDir) { $OutDir = $Root }
+$LinkFile = Join-Path $OutDir "share-link.txt"
+$QrFile = Join-Path $OutDir "share-qr.png"
 
 function Say([string]$msg, [string]$color = "Gray") { Write-Host ("[{0}] {1}" -f (Get-Date -Format "HH:mm:ss"), $msg) -ForegroundColor $color }
 function Fail([string]$msg) { Write-Host ""; Write-Host "  $msg" -ForegroundColor Red; Write-Host ""; exit 1 }
