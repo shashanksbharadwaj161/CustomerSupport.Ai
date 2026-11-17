@@ -29,6 +29,9 @@ ENGINE_INFO = {
                 "repo": "facebook/mms-tts-ben"},
     "kokoro": {"kind": "tts", "module": "kokoro", "license": "Apache-2.0", "demo_only": False,
                "verified_here": "en, ja on CPU: E2E browser test (Hindi voices: unrated)", "repo": "hexgrad/Kokoro-82M"},
+    "mithi": {"kind": "tts", "module": "sentencepiece", "license": "Apache-2.0", "demo_only": False,
+              "verified_here": "hi, bn, kn on CPU: synthesis benchmark + round-trip recognition + browser call (no human rating)",
+              "repo": "Oomni/mithi-v2-flash"},
     "indic-parler": {"kind": "tts", "module": "parler_tts", "license": "Apache-2.0 (gated)", "demo_only": False,
                      "verified_here": None, "repo": "ai4bharat/indic-parler-tts",
                      "pending": "Needs HF token + GPU run + native ratings (M0). Adapter complete, never run here."},
@@ -169,6 +172,9 @@ class EngineManager:
         models = getattr(eng, "models", None)  # per-language model engines (MMS-TTS)
         if isinstance(models, dict):
             return lang in models
+        warmed = getattr(eng, "warmed", None)  # Mithi: first sentence per language is a ~20 s warm-up
+        if isinstance(warmed, set) and name == "mithi":
+            return lang in warmed
         pipes = getattr(eng, "pipelines", None)  # Kokoro: one pipeline per language
         if isinstance(pipes, dict) and name == "kokoro":
             return {"en": "a", "ja": "j", "hi": "h"}.get(lang) in pipes or lang in pipes

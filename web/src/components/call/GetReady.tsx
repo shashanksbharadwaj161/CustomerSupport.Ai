@@ -134,12 +134,12 @@ export function DemoBanner({ ready }: { ready: Ready | null }) {
   return (
     <details role="note" className="notice notice-warn" data-testid="demo-banner-call" style={{ display: "block", color: "var(--ink)" }}>
       <summary style={{ cursor: "pointer" }}>
-        <strong style={{ color: "var(--warn)" }}>Demo</strong> · {ready.cuda ? "GPU" : "CPU"} · {ready.real_llm ? "Claude replies" : ready.provider === "fake" ? "scripted test replies" : "no key: demo notice"} · first audio {delayText}
+        <strong style={{ color: "var(--warn)" }}>Demo</strong> · {ready.cuda ? "GPU" : "CPU"} · {ready.real_llm ? "Claude replies" : (ready.provider === "fake" || ready.provider === "scripted") ? "SCRIPTED replies, not Claude" : "no key: demo notice"} · first audio {delayText}
         {robotic.length > 0 && <> · robotic {robotic.map((l) => l.toUpperCase()).join("/")} voices</>}
         <span className="faint"> (details)</span>
       </summary>
       <p className="mt-2">You are talking to an AI assistant running on {ready.cuda ? "a PC with a GPU" : "an ordinary PC without a GPU (CPU mode)"}.
-      {" "}{!ready.real_llm && <>Replies come from a {ready.provider === "fake" ? "scripted test model" : "demo-mode notice (no language model key)"}, not a real assistant. </>}
+      {" "}{!ready.real_llm && <>Replies come from a {(ready.provider === "fake" || ready.provider === "scripted") ? "scripted test model" : "demo-mode notice (no language model key)"}, not a real assistant. </>}
       Expect a pause before each reply: {delays.length ? delays.map(([l, v]) => `${l.toUpperCase()} about ${(v! / 1000).toFixed(1)} s`).join(", ") + " (measured on this PC)"
         : "several seconds on CPU (not measured on this PC yet)"}.
       {robotic.length > 0 && <> Voices for {robotic.map((l) => LANG_NAMES[l].latin).join(", ")} are <strong>robotic pipeline-testing voices</strong> (MMS, CC-BY-NC, demo only), not natural voices.</>}

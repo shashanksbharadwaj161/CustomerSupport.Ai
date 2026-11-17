@@ -26,6 +26,7 @@ os.environ.setdefault("HF_HUB_DISABLE_TELEMETRY", "1")
 
 GB = 1024 ** 3
 KOKORO_VOICES = ["af_heart", "af_bella", "am_michael", "bm_george", "jf_alpha", "jm_kumo", "jf_nezumi", "hf_alpha", "hm_omega"]
+# (Mithi v2 Flash ships a reviewed, self-contained run.py: no network, no subprocess, safetensors weights; see agent/tts/mithi_tts.py)
 TOKENIZER = ["config.json", "tokenizer_config.json", "special_tokens_map.json", "vocab.json"]
 
 # (repo, files, approx bytes when the size cannot be fetched, what it is for)
@@ -38,6 +39,10 @@ MANIFEST = [
     ("facebook/mms-tts-hin", ["model.safetensors"] + TOKENIZER, 0.15 * GB, "MMS-TTS Hindi fallback voice (CC-BY-NC, DEMO ONLY)"),
     ("facebook/mms-tts-ben", ["model.safetensors"] + TOKENIZER, 0.15 * GB, "MMS-TTS Bengali voice (CC-BY-NC, DEMO ONLY, robotic)"),
     ("facebook/mms-tts-kan", ["model.safetensors"] + TOKENIZER, 0.15 * GB, "MMS-TTS Kannada voice (CC-BY-NC, DEMO ONLY, robotic)"),
+    ("Oomni/mithi-v2-flash", ["run.py", "config.json", "LICENSE", "decoder.safetensors", "writer.safetensors", "voices.safetensors",
+                              "indic_encoder/config.json", "indic_encoder/model.safetensors", "indic_encoder/old2new.npy",
+                              "indic_encoder/spiece.model"], 0.21 * GB,
+     "Mithi v2 Flash: Hindi/Bengali/Kannada voices on CPU (Apache-2.0)"),
     ("hexgrad/Kokoro-82M", ["config.json", "kokoro-v1_0.pth"] + [f"voices/{v}.pt" for v in KOKORO_VOICES], 0.33 * GB,
      "Kokoro: English, Japanese, Hindi voices (Apache-2.0)"),
     ("BAAI/bge-m3", ["pytorch_model.bin", "config.json", "tokenizer.json", "tokenizer_config.json", "special_tokens_map.json",

@@ -38,9 +38,9 @@ Write-Host "  -----------------------------------------------------------" -Fore
 if ($OnWindows) { $Py = Join-Path $Root ".venv\Scripts\python.exe" } else { $Py = Join-Path $Root ".venv/bin/python" }
 if ($env:PYTHON) { $Py = $env:PYTHON }
 if (-not (Test-Path $Py)) { Fail "No Python environment in this folder (.venv). Run ShaOn-Install.bat once first." }
-if ((Quiet $Py @("-c", "import fastapi, pipecat, cryptography, segno, anthropic")) -ne 0) {
+if ((Quiet $Py @("-c", "import fastapi, pipecat, cryptography, segno, anthropic, sentencepiece")) -ne 0) {
   Say "Python packages are missing or outdated; installing the pinned set (a few minutes) ..." "Yellow"
-  $code = Quiet $Py @("-m", "pip", "install", "--disable-pip-version-check", "-c", "deploy/requirements-cpu.txt", "-e", ".[app,stt-whisper,mms,tts-kokoro,retrieval]")
+  $code = Quiet $Py @("-m", "pip", "install", "--disable-pip-version-check", "-c", "deploy/requirements-cpu.txt", "-e", ".[app,stt-whisper,mms,tts-kokoro,tts-mithi,retrieval]")
   if ($code -ne 0) { Fail "pip install failed. Details: data\local\launcher.log  (or run ShaOn-Install.bat)" }
 }
 Say "Python: $Py" "Green"

@@ -241,16 +241,20 @@
   },
   "cpu_fallback_voices": {
     "hi": [
+      "mithi_hi_ahana",
       "kokoro_hi_alpha",
       "mms_hi"
     ],
     "bn": [
+      "mithi_bn_ahana",
       "mms_bn"
     ],
     "kn": [
+      "mithi_kn_ahana",
       "mms_kn"
     ]
   },
   "_routing_note": "Per-language STT 'order': the first usable engine wins; skipped/failed engines are logged per turn. Reorder from measurements with `python -m eval.routing_from_results --write` (sorts by measured CPU WER on FLEURS). mms = CC-BY-NC, eval/demo only.",
-  "_decoding_note": "CPU profile: Whisper greedy (beam_size 1, temperature 0, no fallback retries) for latency; GPU profile keeps faster-whisper defaults (beam 5 + temperature fallback)."
+  "_decoding_note": "CPU profile: Whisper greedy (beam_size 1, temperature 0, no fallback retries) for latency; GPU profile keeps faster-whisper defaults (beam 5 + temperature fallback).",
+  "_cpu_voice_note": "CPU voice order from eval/out/tts_compare.json (2026-11-17, 4 CPU threads): all listed voices pass the round-trip recognition check; Mithi v2 Flash (Apache-2.0) is preferred for hi/bn/kn over MMS (CC-BY-NC, robotic). Kokoro Hindi is faster (RTF 0.31 vs 0.75) and stays the first fallback. No human naturalness rating yet."
 }

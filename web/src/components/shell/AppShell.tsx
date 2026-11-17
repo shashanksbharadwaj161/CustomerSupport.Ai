@@ -88,7 +88,7 @@ function StatusStrip() {
   const path = usePathname() || "/";
   const section = NAV.find((n) => (n.href === "/" ? path === "/" : path.startsWith(n.href.replace(/\/$/, ""))))?.label || "";
   const mode = h?.local_preview ? { t: "Local preview", c: "chip-live" } : h?.exposed ? { t: "Shared link", c: "chip-warn" } : { t: "Local", c: "" };
-  const llm = !h ? "…" : h.provider === "anthropic" ? h.model || "claude" : h.provider === "fake" ? "fake test model" : "no key: demo replies";
+  const llm = !h ? "…" : h.provider === "anthropic" ? h.model || "claude" : h.provider === "fake" ? "fake test model" : h.provider === "scripted" ? "scripted replies · not Claude" : "no key: demo replies";
   return (
     <div className="topbar" role="banner">
       <Link href="/" className="display lg:hidden" style={{ fontSize: 18, letterSpacing: "-0.06em" }} aria-label="ShaOn home">ShaOn<span style={{ color: "var(--signal)" }}>.</span></Link>

@@ -75,4 +75,4 @@ def test_live_voice_switch_applies_to_next_sentence():
     assert s.voice_for("en").id == "kokoro_en_heart"
     s.ctx.voice_by_lang["en"] = "kokoro_en_michael"  # what the 'set_voice' client message does
     assert s.voice_for("en").id == "kokoro_en_michael"
-    assert s.fallback_voice("hi").id == "kokoro_hi_alpha"
+    assert s.fallback_voice("hi").id == "mithi_hi_ahana"  # CPU order from eval/out/tts_compare.json (Mithi, then Kokoro, then MMS)

@@ -87,9 +87,31 @@ class RouterTTS(TTSService):
     """Speaks each sentence with the voice for the language of its SCRIPT (never the model's claim)."""
 
     def __init__(self, session: CallSession, out_rate: int = 24000, **kw):
+        # Pipecat closes an audio context that gets no audio for `stop_frame_timeout_s` (default 3 s) and, after 3 such
+        # contexts, marks the service unusable. A whole-sentence local synthesis can take longer than 3 s (cold model,
+        # slow CPU), which produced "TTS context ... completed with no audio" and then no agent voice at all (the Windows
+        # bug). So: keep the context alive while synthesising (keepalive below) and never retire the service because one
+        # language had no voice. The idle timeout itself stays short: it is also how long pipecat waits after the last
+        # audio before "bot stopped speaking", i.e. the turn hand-over delay.
+        kw.setdefault("max_consecutive_zero_audio_contexts", 0)
+        kw.setdefault("stop_frame_timeout_s", 1.5)  # snappier hand-over; synthesis time is covered by the keepalive
         super().__init__(push_start_frame=True, push_stop_frames=True, sample_rate=out_rate,
                          settings=TTSSettings(model=None, voice="router", language=None), **kw)
         self.session = session
+
+    async def _synthesize_keepalive(self, fn, context_id: str):
+        """Run a blocking synthesis in a thread while refreshing the audio context every second."""
+        job = asyncio.ensure_future(asyncio.to_thread(fn))
+        while True:
+            done, _ = await asyncio.wait({job}, timeout=1.0)
+            if done:
+                return job.result()
+            refresh = getattr(self, "_refresh_audio_context", None)
+            if refresh:
+                try:
+                    refresh(context_id)
+                except Exception:  # context not created yet / already gone: nothing to keep alive
+                    pass
 
     def can_generate_metrics(self) -> bool:
         return False
@@ -106,9 +128,9 @@ class RouterTTS(TTSService):
                 continue
             try:
                 if v.params.get("ref_from") and s.ensure_reference:
-                    await asyncio.to_thread(s.ensure_reference, v)  # OmniVoice: model-generated reference clip
-                eng = await asyncio.to_thread(s.engines.get_tts, v.engine)
-                synth = await asyncio.to_thread(eng.synthesize, text, v)
+                    await self._synthesize_keepalive(lambda v=v: s.ensure_reference(v), context_id)  # OmniVoice reference
+                eng = await self._synthesize_keepalive(lambda v=v: s.engines.get_tts(v.engine), context_id)
+                synth = await self._synthesize_keepalive(lambda eng=eng, v=v: eng.synthesize(text, v), context_id)
                 voice = v
                 break
             except Exception as e:  # engine missing / weights missing: try the next fallback voice

@@ -1,5 +1,5 @@
 {
-  "_note": "App voice catalog: merged with bakeoff_voices.json. Kokoro voices run on CPU. Parler/OmniVoice voices are PENDING until the M0 GPU run and native ratings. OmniVoice = DEMO ONLY (CC-BY-NC weights). Reference clips are model-generated or from consenting speakers only. MMS-TTS voices (facebook/mms-tts-*) are CC-BY-NC DEMO ONLY and robotic: for testing the Bengali/Kannada pipeline on CPU, never product voices.",
+  "_note": "App voice catalog: merged with bakeoff_voices.json. Kokoro voices run on CPU. Parler/OmniVoice voices are PENDING until the M0 GPU run and native ratings. OmniVoice = DEMO ONLY (CC-BY-NC weights). Reference clips are model-generated or from consenting speakers only. MMS-TTS voices (facebook/mms-tts-*) are CC-BY-NC DEMO ONLY and robotic: for testing the Bengali/Kannada pipeline on CPU, never product voices. Mithi v2 Flash voices (Apache-2.0, CPU) cover hi/bn/kn/en: measured in eval/results.md, not rated by listeners.",
   "voices": [
     {
       "id": "kokoro_en_michael",
@@ -107,6 +107,94 @@
       "params": {
         "seed": 0
       }
+    },
+    {
+      "id": "mithi_hi_ahana",
+      "language": "hi",
+      "engine": "mithi",
+      "display_name": "Ahana (hi, Mithi)",
+      "license": "Apache-2.0",
+      "params": {
+        "voice": "ahana",
+        "lang": "hi"
+      }
+    },
+    {
+      "id": "mithi_hi_nakul",
+      "language": "hi",
+      "engine": "mithi",
+      "display_name": "Nakul (hi, Mithi)",
+      "license": "Apache-2.0",
+      "params": {
+        "voice": "nakul",
+        "lang": "hi"
+      }
+    },
+    {
+      "id": "mithi_bn_ahana",
+      "language": "bn",
+      "engine": "mithi",
+      "display_name": "Ahana (bn, Mithi)",
+      "license": "Apache-2.0",
+      "params": {
+        "voice": "ahana",
+        "lang": "bn"
+      }
+    },
+    {
+      "id": "mithi_bn_nakul",
+      "language": "bn",
+      "engine": "mithi",
+      "display_name": "Nakul (bn, Mithi)",
+      "license": "Apache-2.0",
+      "params": {
+        "voice": "nakul",
+        "lang": "bn"
+      }
+    },
+    {
+      "id": "mithi_kn_ahana",
+      "language": "kn",
+      "engine": "mithi",
+      "display_name": "Ahana (kn, Mithi)",
+      "license": "Apache-2.0",
+      "params": {
+        "voice": "ahana",
+        "lang": "kn"
+      }
+    },
+    {
+      "id": "mithi_kn_nakul",
+      "language": "kn",
+      "engine": "mithi",
+      "display_name": "Nakul (kn, Mithi)",
+      "license": "Apache-2.0",
+      "params": {
+        "voice": "nakul",
+        "lang": "kn"
+      }
+    },
+    {
+      "id": "mithi_en_ahana",
+      "language": "en",
+      "engine": "mithi",
+      "display_name": "Ahana (en, Mithi)",
+      "license": "Apache-2.0",
+      "params": {
+        "voice": "ahana",
+        "lang": "en"
+      }
+    },
+    {
+      "id": "mithi_en_nakul",
+      "language": "en",
+      "engine": "mithi",
+      "display_name": "Nakul (en, Mithi)",
+      "license": "Apache-2.0",
+      "params": {
+        "voice": "nakul",
+        "lang": "en"
+      }
     }
   ],
   "persona_tags": {
@@ -118,7 +206,13 @@
     "parler_bn_aditi": "warm_female",
     "parler_bn_arjun": "calm_male",
     "parler_kn_anu": "warm_female",
-    "parler_kn_suresh": "calm_male"
+    "parler_kn_suresh": "calm_male",
+    "mithi_hi_ahana": "warm_female",
+    "mithi_bn_ahana": "warm_female",
+    "mithi_kn_ahana": "warm_female",
+    "mithi_hi_nakul": "calm_male",
+    "mithi_bn_nakul": "calm_male",
+    "mithi_kn_nakul": "calm_male"
   },
   "persona_sets": {
     "warm_female": {

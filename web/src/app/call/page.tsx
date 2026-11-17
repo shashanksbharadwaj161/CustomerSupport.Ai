@@ -168,6 +168,8 @@ export default function LiveCall() {
       if (e instanceof ApiError && e.status === 429) setScreen({ kind: "busy", text: "Too many call attempts from your network in the last minute. Please wait a minute, then try again." });
       else if (e instanceof ApiError && e.status === 503) setScreen({ kind: "busy", text: "The agent is busy with another caller right now. Please try again in a minute." });
       else if (e?.name === "NotAllowedError") setError("Microphone permission was blocked. Allow it in the browser's site settings, then try again.");
+      else if (e?.name === "NotFoundError" || e?.name === "OverconstrainedError") setError("No microphone was found. Plug one in (or pick it in Windows sound settings), then press Start call again.");
+      else if (e?.name === "NotReadableError" || e?.name === "AbortError") setError("The microphone is busy or blocked by another app (or Windows privacy settings). Close the other app, then try again.");
       else if (e instanceof ApiError && (e.status === 401 || e.status === 403)) setError("Your passcode session expired. Reload the page and enter the passcode again.");
       else setScreen({ kind: "lost", text: "Could not reach the agent. The host PC may be offline or the link may have changed." });
     }

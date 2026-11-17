@@ -320,13 +320,13 @@ if (-not (Test-Path $Py)) {
   Say "Creating the virtual environment (.venv) ..." "Yellow"
   if ((Run-Quiet $Py312.Path @("-m", "venv", (Join-Path $Root ".venv"))) -ne 0 -or -not (Test-Path $Py)) { Stop-Install "could not create the Python environment." @("Details: $Log") }
 }
-$Extras = "app,stt-whisper,mms,tts-kokoro,retrieval"
+$Extras = "app,stt-whisper,mms,tts-kokoro,tts-mithi,retrieval"
 $hfTokenFile = Join-Path $State "hf_token_asked"
 $wantIndic = (Get-FileText $hfTokenFile).Trim() -eq "given"
 if ($wantIndic) { $Extras = "$Extras,stt-indic" }
 $depsSha = Get-Sha ((Get-FileText (Join-Path $Root "pyproject.toml")) + (Get-FileText (Join-Path $Root "deploy/requirements-cpu.txt")) + $Extras)
 $depsMark = Join-Path $Root ".venv/shaon-deps.sha256"
-$importOk = (Run-Quiet $Py @("-c", "import fastapi, pipecat, faster_whisper, kokoro, transformers, torch, segno, huggingface_hub")) -eq 0
+$importOk = (Run-Quiet $Py @("-c", "import fastapi, pipecat, faster_whisper, kokoro, transformers, torch, segno, huggingface_hub, sentencepiece")) -eq 0
 if ($importOk -and ((Get-FileText $depsMark).Trim() -eq $depsSha)) {
   Say "Python packages already installed (pinned set unchanged) - skipped." "Green"
 } else {
@@ -338,7 +338,7 @@ if ($importOk -and ((Get-FileText $depsMark).Trim() -eq $depsSha)) {
   Say "Installing ShaOn's Python packages ($Extras) ..." "Yellow"
   $code = Run-Live $Py @("-m", "pip", "install", "--disable-pip-version-check", "-c", "deploy/requirements-cpu.txt", "-e", ".[$Extras]")
   if ($code -ne 0) { Stop-Install "Python packages did not install (pip exit $code)." @("Scroll up for the first red 'ERROR' line from pip.", "Network problems: just run again. Disk full: free space and run again.") }
-  if ((Run-Quiet $Py @("-c", "import fastapi, pipecat, faster_whisper, kokoro, transformers, torch, segno, huggingface_hub")) -ne 0) { Stop-Install "Python packages installed but do not import." @("Details: $Log") }
+  if ((Run-Quiet $Py @("-c", "import fastapi, pipecat, faster_whisper, kokoro, transformers, torch, segno, huggingface_hub, sentencepiece")) -ne 0) { Stop-Install "Python packages installed but do not import." @("Details: $Log") }
   Write-NoBom $depsMark $depsSha
   Say "Python packages ready." "Green"
 }

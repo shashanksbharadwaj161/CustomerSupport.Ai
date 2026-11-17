@@ -13,6 +13,8 @@ app = ["fastapi>=0.115", "uvicorn[standard]", "python-multipart", "segno>=1.6", 
        "chromadb", "pipecat-ai[webrtc,silero,websocket]>=1.16", "playwright==1.63.0", "crawl4ai>=0.9"]
 stt-whisper = ["faster-whisper>=1.1"]
 stt-indic = ["torch", "torchaudio", "transformers", "onnx", "onnxruntime"]
+# Mithi v2 Flash TTS (Apache-2.0; its run.py needs sentencepiece on top of the Kokoro deps)
+tts-mithi = ["torch", "transformers", "sentencepiece", "misaki", "espeakng-loader", "phonemizer-fork", "num2words"]
 # MMS-1B-all STT + MMS-TTS on CPU (CC-BY-NC weights: DEMO ONLY). What scripts/install.ps1 installs, without the IndicConformer extras.
 mms = ["torch", "transformers"]
 tts-parler = ["torch", "parler-tts @ git+https://github.com/huggingface/parler-tts.git"]

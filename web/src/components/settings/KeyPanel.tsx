@@ -62,7 +62,7 @@ function KeyModule({ s, reload }: { s: S; reload: () => Promise<unknown> }) {
       <dl className="rows" data-testid="key-status">
         <dt>Status</dt><dd>{s.key_present ? <span className="num">sk-ant-••••••••{s.key_last4}</span> : "Not set: calls get a fixed demo-mode notice"}</dd>
         <dt>Source</dt><dd>{source}</dd>
-        <dt>Answering</dt><dd>{s.provider === "anthropic" ? <span className="mono">{s.active_model}</span> : s.provider === "fake" ? "fake test model (test mode)" : "nothing (demo mode)"}</dd>
+        <dt>Answering</dt><dd>{s.provider === "anthropic" ? <span className="mono">{s.active_model}</span> : s.provider === "fake" ? "fake test model (test mode)" : s.provider === "scripted" ? "SCRIPTED test replies (not Claude)" : "nothing (demo mode)"}</dd>
       </dl>
       {s.key_edit_allowed ? (
         <form className="grid gap-3 mt-5" autoComplete="off"

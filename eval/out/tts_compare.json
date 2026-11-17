@@ -1,0 +1,335 @@
+{
+  "generated_at": "2026-11-17T13:26:26",
+  "host": "vm",
+  "kind": "tts_compare",
+  "note": "CPU, 4 threads. Round-trip CER = recognition proxy, not naturalness.",
+  "engine_load_s": {
+    "kokoro": 2.84,
+    "mithi": 0.79,
+    "mms-tts": 0.0
+  },
+  "rows": [
+    {
+      "lang": "en",
+      "voice": "kokoro_en_heart",
+      "engine": "kokoro",
+      "license": "Apache-2.0",
+      "stt": "faster-whisper",
+      "ok": true,
+      "load_s": 2.84,
+      "cold_gen_s": 13.34,
+      "warm_gen_s": 0.92,
+      "audio_s": 3.2,
+      "rtf": 0.288,
+      "peak": 0.38,
+      "clipped_pct": 0.0,
+      "quiet_pct": 71.4,
+      "roundtrip_cer": 0.037,
+      "heard": [
+        "Hello, thank you for calling Lotus Bay Bank.",
+        "Our branch opens at 10 in the morning on Saturday."
+      ]
+    },
+    {
+      "lang": "en",
+      "voice": "kokoro_en_michael",
+      "engine": "kokoro",
+      "license": "Apache-2.0",
+      "stt": "faster-whisper",
+      "ok": true,
+      "load_s": 2.84,
+      "cold_gen_s": 1.15,
+      "warm_gen_s": 0.88,
+      "audio_s": 3.59,
+      "rtf": 0.245,
+      "peak": 0.511,
+      "clipped_pct": 0.0,
+      "quiet_pct": 81.3,
+      "roundtrip_cer": 0.037,
+      "heard": [
+        "Hello, thank you for calling Lotus Bay Bank.",
+        "Our branch opens at 10 in the morning on Saturday."
+      ]
+    },
+    {
+      "lang": "en",
+      "voice": "mithi_en_ahana",
+      "engine": "mithi",
+      "license": "Apache-2.0",
+      "stt": "faster-whisper",
+      "ok": true,
+      "load_s": 0.79,
+      "cold_gen_s": 2.01,
+      "warm_gen_s": 1.49,
+      "audio_s": 2.84,
+      "rtf": 0.525,
+      "peak": 0.85,
+      "clipped_pct": 0.0,
+      "quiet_pct": 54.5,
+      "roundtrip_cer": 0.037,
+      "heard": [
+        "Hello, thank you for calling Lotus Bay Bank.",
+        "Our branch opens at 10 in the morning on Saturday."
+      ]
+    },
+    {
+      "lang": "ja",
+      "voice": "kokoro_ja_alpha",
+      "engine": "kokoro",
+      "license": "Apache-2.0",
+      "stt": "faster-whisper",
+      "ok": true,
+      "load_s": 2.84,
+      "cold_gen_s": 16.53,
+      "warm_gen_s": 2.7,
+      "audio_s": 3.17,
+      "rtf": 0.849,
+      "peak": 0.335,
+      "clipped_pct": 0.0,
+      "quiet_pct": 63.7,
+      "roundtrip_cer": 0.125,
+      "heard": [
+        "お電話ありがとうございます。",
+        "土曜日は午前10時に回転いたします。"
+      ]
+    },
+    {
+      "lang": "ja",
+      "voice": "kokoro_ja_kumo",
+      "engine": "kokoro",
+      "license": "Apache-2.0",
+      "stt": "faster-whisper",
+      "ok": true,
+      "load_s": 2.84,
+      "cold_gen_s": 0.8,
+      "warm_gen_s": 0.72,
+      "audio_s": 3.04,
+      "rtf": 0.238,
+      "peak": 0.632,
+      "clipped_pct": 0.0,
+      "quiet_pct": 83.1,
+      "roundtrip_cer": 0.125,
+      "heard": [
+        "お電話ありがとうございます。",
+        "土曜日は午前10時に回転いたします。"
+      ]
+    },
+    {
+      "lang": "hi",
+      "voice": "kokoro_hi_alpha",
+      "engine": "kokoro",
+      "license": "Apache-2.0",
+      "stt": "mms",
+      "ok": true,
+      "load_s": 2.84,
+      "cold_gen_s": 2.37,
+      "warm_gen_s": 1.49,
+      "audio_s": 4.78,
+      "rtf": 0.311,
+      "peak": 0.85,
+      "clipped_pct": 0.0,
+      "quiet_pct": 69.2,
+      "roundtrip_cer": 0.0,
+      "heard": [
+        "नमस्ते लोटस बे बैंक में कौल करने के लिए धन्यवाद",
+        "शनीवार को हमारी शाखा सुबह दस बजे खुलती है"
+      ]
+    },
+    {
+      "lang": "hi",
+      "voice": "mithi_hi_ahana",
+      "engine": "mithi",
+      "license": "Apache-2.0",
+      "stt": "mms",
+      "ok": true,
+      "load_s": 0.79,
+      "cold_gen_s": 3.33,
+      "warm_gen_s": 2.62,
+      "audio_s": 3.49,
+      "rtf": 0.752,
+      "peak": 0.85,
+      "clipped_pct": 0.0,
+      "quiet_pct": 55.4,
+      "roundtrip_cer": 0.0,
+      "heard": [
+        "नमस्ते लोटस बे बैंक में कौल करने के लिए धन्यवाद",
+        "शनीवार को हमारी शाखा सुबह दस बजे खुलती है"
+      ]
+    },
+    {
+      "lang": "hi",
+      "voice": "mithi_hi_nakul",
+      "engine": "mithi",
+      "license": "Apache-2.0",
+      "stt": "mms",
+      "ok": true,
+      "load_s": 0.79,
+      "cold_gen_s": 2.83,
+      "warm_gen_s": 2.67,
+      "audio_s": 3.24,
+      "rtf": 0.824,
+      "peak": 0.85,
+      "clipped_pct": 0.0,
+      "quiet_pct": 54.9,
+      "roundtrip_cer": 0.0,
+      "heard": [
+        "नमस्ते लोटस बे बैंक में कौल करने के लिए धन्यवाद",
+        "शनीवार को हमारी शाखा सुबह दस बजे खुलती है"
+      ]
+    },
+    {
+      "lang": "hi",
+      "voice": "mms_hi",
+      "engine": "mms-tts",
+      "license": "CC-BY-NC-4.0 (DEMO ONLY)",
+      "stt": "mms",
+      "ok": true,
+      "load_s": 0.0,
+      "cold_gen_s": 9.77,
+      "warm_gen_s": 0.89,
+      "audio_s": 3.54,
+      "rtf": 0.25,
+      "peak": 0.908,
+      "clipped_pct": 0.0,
+      "quiet_pct": 69.9,
+      "roundtrip_cer": 0.068,
+      "heard": [
+        "नमस्ते लोटस बे बैंक में कौल करने के लिए धन्यवा",
+        "शिनीवार को हमारी शाका सुबहदस बजे खोरती है"
+      ]
+    },
+    {
+      "lang": "bn",
+      "voice": "mithi_bn_ahana",
+      "engine": "mithi",
+      "license": "Apache-2.0",
+      "stt": "mms",
+      "ok": true,
+      "load_s": 0.79,
+      "cold_gen_s": 2.65,
+      "warm_gen_s": 1.68,
+      "audio_s": 3.26,
+      "rtf": 0.514,
+      "peak": 0.85,
+      "clipped_pct": 0.0,
+      "quiet_pct": 57.1,
+      "roundtrip_cer": 0.145,
+      "heard": [
+        "নমস্কার লোটাশ বে ব্যাঙকে ফোন করার জন্য ধন্যবাদ",
+        "শুনিবার আমাদের সাক্ষা সকাল দসটায় খুলে"
+      ]
+    },
+    {
+      "lang": "bn",
+      "voice": "mithi_bn_nakul",
+      "engine": "mithi",
+      "license": "Apache-2.0",
+      "stt": "mms",
+      "ok": true,
+      "load_s": 0.79,
+      "cold_gen_s": 2.14,
+      "warm_gen_s": 1.7,
+      "audio_s": 3.09,
+      "rtf": 0.549,
+      "peak": 0.85,
+      "clipped_pct": 0.0,
+      "quiet_pct": 55.5,
+      "roundtrip_cer": 0.073,
+      "heard": [
+        "নমস্কার লোটাস বে ব্যাঙ্কে ফোন করার জন্য ধন্যবাদ",
+        "শনীবার আমাদের সাখা সকাল দসটায় খলে"
+      ]
+    },
+    {
+      "lang": "bn",
+      "voice": "mms_bn",
+      "engine": "mms-tts",
+      "license": "CC-BY-NC-4.0 (DEMO ONLY)",
+      "stt": "mms",
+      "ok": true,
+      "load_s": 0.0,
+      "cold_gen_s": 8.77,
+      "warm_gen_s": 0.76,
+      "audio_s": 4.58,
+      "rtf": 0.166,
+      "peak": 0.945,
+      "clipped_pct": 0.0,
+      "quiet_pct": 71.9,
+      "roundtrip_cer": 0.133,
+      "heard": [
+        "নমস্কার লোটাআসবে ব্াঙকে ফোন করার জন্য ধন্যমাত",
+        "শনীবার আমাদের সাখা সকাল দশতায়ে খলে"
+      ]
+    },
+    {
+      "lang": "kn",
+      "voice": "mithi_kn_ahana",
+      "engine": "mithi",
+      "license": "Apache-2.0",
+      "stt": "mms",
+      "ok": true,
+      "load_s": 0.79,
+      "cold_gen_s": 3.01,
+      "warm_gen_s": 2.33,
+      "audio_s": 3.91,
+      "rtf": 0.596,
+      "peak": 0.85,
+      "clipped_pct": 0.0,
+      "quiet_pct": 54.9,
+      "roundtrip_cer": 0.04,
+      "heard": [
+        "ನಮಸ್ಕಾರ ಲೋಟಸ್ ಬೇ ಬ್ಯಾಂಕ್ಗೆ ಕರೆಮಾಡಿದ್ದಕ್ಕೆ ಧನ್ಯವಾದಗಳು",
+        "ಶನಿವಾರ ನಮ್ಮ ಶಾಕೆ ಬೆಳಿಗೆ ಹತ್ತು ಗಂಟೆಗೆ ತೆರೆಯುತ್ತದೆ"
+      ]
+    },
+    {
+      "lang": "kn",
+      "voice": "mithi_kn_nakul",
+      "engine": "mithi",
+      "license": "Apache-2.0",
+      "stt": "mms",
+      "ok": true,
+      "load_s": 0.79,
+      "cold_gen_s": 2.29,
+      "warm_gen_s": 2.21,
+      "audio_s": 3.58,
+      "rtf": 0.618,
+      "peak": 0.85,
+      "clipped_pct": 0.0,
+      "quiet_pct": 52.9,
+      "roundtrip_cer": 0.0,
+      "heard": [
+        "ನಮಸ್ಕಾರ ಲೋಟಸ್ ಬೇ ಬ್ಯಾಂಕ್ಗೆ ಕರೆಮಾಡಿದ್ದಕ್ಕೆ ಧನ್ಯವಾದಗಳು",
+        "ಶನಿವಾರ ನಮ್ಮ ಶಾಖೆ ಬೆಳಿಗ್ಗೆ ಹತ್ತು ಗಂಟೆಗೆ ತೆರೆಯುತ್ತದೆ"
+      ]
+    },
+    {
+      "lang": "kn",
+      "voice": "mms_kn",
+      "engine": "mms-tts",
+      "license": "CC-BY-NC-4.0 (DEMO ONLY)",
+      "stt": "mms",
+      "ok": true,
+      "load_s": 0.0,
+      "cold_gen_s": 9.52,
+      "warm_gen_s": 0.81,
+      "audio_s": 5.28,
+      "rtf": 0.154,
+      "peak": 0.872,
+      "clipped_pct": 0.0,
+      "quiet_pct": 61.7,
+      "roundtrip_cer": 0.109,
+      "heard": [
+        "ನಮಸ್ಕಾರ ಲೋತಸ್ ಬೇ ದ್ಯಾನ್ಕೆಕರೆ ಮಾಡಿದ್ದಕ್ಕೆ ಧನ್ಯವಾದಗರು",
+        "ಶನಿವಾರ ನಮ್ಮ ಶಾಕೆ ಬೆಳಿಗ್ಗೆ ಹತ್ತು ಗಂಟೆಗೆ ತೆರೆಯುತ್ತದೆ"
+      ]
+    },
+    {
+      "lang": "hi/bn/kn",
+      "voice": "indic-parler (any)",
+      "engine": "indic-parler",
+      "ok": false,
+      "pending": "gated weights (ai4bharat/indic-parler-tts) need an HF token with accepted terms; not run here"
+    }
+  ]
+}

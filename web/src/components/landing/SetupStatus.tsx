@@ -32,7 +32,7 @@ export function SetupStatus() {
             <div className="module-head"><span className={`light ${real ? "light-ok" : "light-warn"}`} /><span className="ttl">Language model</span></div>
             <div className="module-body">
               <dl className="rows">
-                <dt>Key</dt><dd>{!h ? "…" : h.provider === "anthropic" ? "configured (encrypted)" : h.provider === "fake" ? "test mode (fake model)" : "not set: replies are a fixed demo notice"}</dd>
+                <dt>Key</dt><dd>{!h ? "…" : h.provider === "anthropic" ? "configured (encrypted)" : h.provider === "fake" ? "test mode (fake model)" : h.provider === "scripted" ? "none: SCRIPTED test replies (not Claude)" : "not set: replies are a fixed demo notice"}</dd>
                 <dt>Model</dt><dd className="mono">{real ? h?.model : "—"}</dd>
                 <dt>Spend</dt><dd className="num">{h?.spend ? `$${h.spend.spent_usd.toFixed(2)} of $${h.spend.cap_usd.toFixed(2)}` : "—"}</dd>
               </dl>

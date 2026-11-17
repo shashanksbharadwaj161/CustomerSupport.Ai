@@ -1,0 +1,13 @@
+{
+  "_note": "Synthetic CUSTOMER lines for the two-speaker website recordings (fake Lotus Bay Bank demo data, no real people). Machine-written; native-speaker review PENDING. The customer voice is always a different speaker (and gender) from the agent voice.",
+  "en": {"customer_voice": "kokoro_en_michael", "agent_voice": "kokoro_en_heart",
+         "turns": ["Hi, what time does your branch open on Saturday?", "Thanks. I also lost my debit card. Can you block it?"]},
+  "hi": {"customer_voice": "kokoro_hi_omega", "agent_voice": "mithi_hi_ahana",
+         "turns": ["नमस्ते, शनिवार को आपकी शाखा कितने बजे खुलती है?", "धन्यवाद। मेरा डेबिट कार्ड खो गया है, क्या आप उसे ब्लॉक कर सकती हैं?"]},
+  "bn": {"customer_voice": "mithi_bn_nakul", "agent_voice": "mithi_bn_ahana",
+         "turns": ["নমস্কার, শনিবার আপনাদের শাখা কটায় খোলে?", "ধন্যবাদ। আমার ডেবিট কার্ড হারিয়ে গেছে, কার্ডটা ব্লক করতে পারবেন?"]},
+  "kn": {"customer_voice": "mithi_kn_nakul", "agent_voice": "mithi_kn_ahana",
+         "turns": ["ನಮಸ್ಕಾರ, ಶನಿವಾರ ನಿಮ್ಮ ಶಾಖೆ ಎಷ್ಟು ಗಂಟೆಗೆ ತೆರೆಯುತ್ತದೆ?", "ಧನ್ಯವಾದ. ನನ್ನ ಡೆಬಿಟ್ ಕಾರ್ಡ್ ಕಳೆದುಹೋಗಿದೆ, ಅದನ್ನು ಬ್ಲಾಕ್ ಮಾಡಬಹುದೇ?"]},
+  "ja": {"customer_voice": "kokoro_ja_kumo", "agent_voice": "kokoro_ja_alpha",
+         "turns": ["すみません、土曜日は何時に開きますか。", "ありがとうございます。デビットカードをなくしてしまいました。止めていただけますか。"]}
+}

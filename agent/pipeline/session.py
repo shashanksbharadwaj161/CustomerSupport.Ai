@@ -109,6 +109,13 @@ class CallSession:
             if first is not None and first.language == lang and self._same_engine(lid, lang):
                 info["engines"].append(f"faster-whisper:{lid.options.get('model', '')}:{lang}:reused")
                 return self._post_script_check(audio, first.text, lang, info, t0, enabled)
+        lid = self.engines.lid_engine() if info["reason"] not in ("override", "single_language") else None
+        if lid is not None and hasattr(lid, "take_pending") and self._same_engine(lid, lang):
+            text = lid.take_pending(audio, lang)  # decode from the detection pass: no second Whisper encoder pass
+            if text is not None:
+                info["engines"].append(f"faster-whisper:{lid.options.get('model', '')}:{lang}:one-pass")
+                self.engines.warmed.add(("faster-whisper", lang)) if hasattr(self.engines, "warmed") else None
+                return self._post_script_check(audio, text, lang, info, t0, enabled)
         text = self._stt(audio, lang, info)
         return self._post_script_check(audio, text, lang, info, t0, enabled)
 
@@ -157,11 +164,21 @@ class CallSession:
 
     # ---- TTS side ----
     def voice_for(self, lang: str):
+        """The agent's chosen voice; if its engine is not installed on this machine (e.g. Indic Parler without a GPU
+        setup), the first installed CPU fallback, so a call does not try (and log) a missing engine every sentence."""
         vid = self.ctx.voice_by_lang.get(lang) or self.engines.cfg.get("default_voices", {}).get(lang)
         v = self.voices.voice(vid) if vid else None
+        if v is not None:
+            from agent.engines import installed
+            try:
+                ok = installed(v.engine)
+            except KeyError:
+                ok = False
+            if not ok:
+                return next((f for f in self.fallback_voices(lang) if _installed(f.engine)), v)
         return v
 
-    def fallback_voices(self, lang: str) -> list:
+    def fallback_voices(self, lang: str) -> list:  # noqa: D401
         ids = self.engines.cfg.get("cpu_fallback_voices", {}).get(lang) or []
         ids = [ids] if isinstance(ids, str) else ids
         return [v for v in (self.voices.voice(i) for i in ids) if v]
@@ -169,3 +186,11 @@ class CallSession:
     def fallback_voice(self, lang: str):
         vs = self.fallback_voices(lang)
         return vs[0] if vs else None
+
+
+def _installed(engine: str) -> bool:
+    from agent.engines import installed
+    try:
+        return installed(engine)
+    except KeyError:
+        return False

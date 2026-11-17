@@ -35,6 +35,20 @@ def _short_espeak_data_path() -> None:
     EspeakWrapper.set_data_path(dst)
 
 
+def unidic_ready() -> bool:
+    """True when fugashi can open the UniDic dictionary that misaki's default Japanese mode needs."""
+    try:
+        import os
+        import unidic
+        return os.path.exists(os.path.join(unidic.DICDIR, "mecabrc"))
+    except Exception:
+        try:
+            import unidic_lite  # noqa: F401  (fugashi also accepts the small unidic-lite package)
+            return True
+        except Exception:
+            return False
+
+
 class KokoroTTS(TTS):
     name = "kokoro"
     languages = ("en", "ja", "hi")
@@ -54,7 +68,22 @@ class KokoroTTS(TTS):
 
     def _pipe(self, lang: str):
         if lang not in self.pipelines:
-            self.pipelines[lang] = self._KPipeline(lang_code=_LANG_CODE[lang])
+            if lang == "ja" and not unidic_ready():
+                # Kokoro builds misaki's JAG2P() in "cutlet" mode, which needs the UniDic dictionary (a separate 526 MB
+                # download, `python -m unidic download`). Without it Japanese speech failed outright (Windows report).
+                # pyopenjtalk mode works with the dictionary bundled in pyopenjtalk-plus.
+                from misaki import ja
+                orig = ja.JAG2P
+                ja.JAG2P = lambda *a, **k: orig(version="pyopenjtalk")
+                try:
+                    self.pipelines[lang] = self._KPipeline(lang_code=_LANG_CODE[lang])
+                finally:
+                    ja.JAG2P = orig
+                self.ja_mode = "pyopenjtalk (UniDic not downloaded)"
+            else:
+                self.pipelines[lang] = self._KPipeline(lang_code=_LANG_CODE[lang])
+                if lang == "ja":
+                    self.ja_mode = "cutlet (UniDic)"
         return self.pipelines[lang]
 
     def synthesize(self, text: str, voice: Voice) -> Synthesis:

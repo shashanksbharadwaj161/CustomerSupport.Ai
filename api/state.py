@@ -91,6 +91,9 @@ class AppState:
             return self.provider_override
         if self.cfg.llm_provider == "fake":
             return FakeProvider()
+        if self.cfg.llm_provider == "scripted":  # recordings / tests without a key: labelled, NOT Claude
+            from agent.llm.scripted import ScriptedDemoProvider
+            return ScriptedDemoProvider()
         key, _ = self.secrets.api_key()
         if not key:
             return DemoProvider()
@@ -109,6 +112,8 @@ class AppState:
         reasons, notes = [], []
         if prov.name == "fake":
             reasons.append("FAKE language model active (test mode, SHAON_LLM_PROVIDER=fake): replies are scripted")
+        elif prov.name == "scripted":
+            reasons.append("SCRIPTED test replies (SHAON_LLM_PROVIDER=scripted): fixed answers from the fake demo site, not Claude")
         elif prov.name == "demo":
             reasons.append("no Anthropic API key: add one in Settings (replies are a fixed demo-mode notice)")
         try:

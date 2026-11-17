@@ -21,26 +21,45 @@ class FasterWhisperSTT(STT):
         self.model = WhisperModel(model, device=device, compute_type=compute,
                                   download_root=self.options.get("download_root"))
 
-    def transcribe(self, audio: np.ndarray, language: str | None) -> Transcript:
-        self.ensure_loaded()
+    def _kw(self) -> dict:
         # beam_size / temperature come from engines.json options. CPU profile: greedy (beam 1) with NO temperature-fallback
         # retries: on CPU the retries made Kannada/Bengali clips take ~1.6 min each (measured). GPU profile: beam 5 + fallback.
         temp = self.options.get("temperature")
-        kw = {} if temp is None else {"temperature": temp}
-        segments, info = self.model.transcribe(
-            audio, language=language, beam_size=self.options.get("beam_size", 5),
-            vad_filter=False, condition_on_previous_text=False, **kw)
+        kw = {"beam_size": self.options.get("beam_size", 5), "vad_filter": False, "condition_on_previous_text": False}
+        if temp is not None:
+            kw["temperature"] = temp
+        return kw
+
+    def transcribe(self, audio: np.ndarray, language: str | None) -> Transcript:
+        self.ensure_loaded()
+        segments, info = self.model.transcribe(audio, language=language, **self._kw())
         text = " ".join(s.text.strip() for s in segments).strip()
         probs = dict(info.all_language_probs or []) if language is None else {}
         return Transcript(text=text, language=info.language, lid_probs=probs,
                           meta={"language_probability": info.language_probability})
 
     def detect_language(self, audio: np.ndarray) -> dict[str, float]:
+        """Language probabilities from ONE encoder pass. transcribe() detects before its lazy segment generator runs, so
+        nothing is decoded here; the generator is kept (per thread) so take_pending() can decode the same audio in the
+        detected language WITHOUT a second encoder pass (measured: the double pass cost ~1.4-2 s per en/ja turn on CPU)."""
         self.ensure_loaded()
-        # transcribe() computes language info before the lazy segment generator runs,
-        # so not iterating segments keeps this to the detection pass only.
-        _segments, info = self.model.transcribe(audio, language=None)
+        segments, info = self.model.transcribe(audio, language=None, **self._kw())
+        self._tls().pending = (id(audio), info.language, segments)
         return dict(info.all_language_probs or [])
+
+    def take_pending(self, audio: np.ndarray, language: str) -> str | None:
+        """Decode the audio passed to the last detect_language() call if `language` is the language it detected."""
+        pend = getattr(self._tls(), "pending", None)
+        self._tls().pending = None
+        if not pend or pend[0] != id(audio) or pend[1] != language:
+            return None
+        return " ".join(s.text.strip() for s in pend[2]).strip()
+
+    def _tls(self):
+        import threading
+        if not hasattr(self, "_local"):
+            self._local = threading.local()
+        return self._local
 
 
 def _cuda() -> bool:
