@@ -144,7 +144,7 @@ $rows += [pscustomobject]@{ Check = "Internet"; Value = $(if ($F.internet) { "gi
 $rows | Format-Table -AutoSize | Out-String -Width 200 | Write-Host
 if ($rows | Where-Object { $_.Result -like "STOP*" -and $_.Check -eq "Windows" }) { Stop-Install "this Windows version is too old for winget." @("Update Windows (Settings > Windows Update), or use Windows 10 version 1809 or newer.") }
 if ($diskRes -like "STOP*") {
-  Stop-Install "not enough free disk space ($($F.free_gb) GB free)." @("ShaOn needs about 20 GB: Python packages ~5 GB, speech models ~6 GB, tools ~2 GB, plus room to work.",
+  Stop-Install "not enough free disk space ($($F.free_gb) GB free)." @("ShaOn needs about 20 GB: speech models ~8 GB, Python packages ~3.5 GB, web app + tools ~1.5 GB, plus room to work.",
     "Free space (Settings > System > Storage > Cleanup recommendations), or install elsewhere:  scripts\install.ps1 -InstallDir D:\ShaOn")
 }
 if (-not $F.internet) { Stop-Install "no internet connection." @("Connect to the internet (and allow PowerShell through any firewall), then run again.") }
