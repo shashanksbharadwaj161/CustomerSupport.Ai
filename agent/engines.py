@@ -95,6 +95,7 @@ class EngineManager:
         self._tts: dict[str, object] = {}
         self._lock = threading.Lock()
         self.load_errors: dict[str, str] = {}
+        self.warmed: set[tuple[str, str]] = set()  # (engine, lang) that completed a real transcription
 
     def stt_candidates(self, lang: str) -> list[tuple[str, dict]]:
         """Ordered STT candidates for a language from engines.json ('stt' on CUDA, 'stt_cpu' otherwise).
@@ -144,6 +145,15 @@ class EngineManager:
             self.load_errors[name] = f"{type(e).__name__}: {e}"[:300]
             raise
         return eng
+
+    def warm_stt(self, lang: str) -> None:
+        """Load AND exercise the STT a call would use for `lang` (1 s of silence): loads per-language adapters
+        (MMS) and first-run kernels, so the first caller does not pay ~100 s (measured on CPU before this existed)."""
+        import numpy as np
+        name, opts, _ = self.stt_route(lang)
+        eng = self.get_stt(name, opts)
+        eng.transcribe(np.zeros(16000, dtype=np.float32), lang)
+        self.warmed.add((name, lang))
 
     def peek_stt(self, name: str, opts: dict):
         """Existing engine instance (no loading) or None."""

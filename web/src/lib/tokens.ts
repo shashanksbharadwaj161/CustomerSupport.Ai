@@ -40,3 +40,10 @@ export function easePath(name: "enter" | "exit" | "emphasis"): string {
   const [x1, y1, x2, y2] = token.ease(name);
   return `M0,0 C${x1},${y1} ${x2},${y2} 1,1`;
 }
+
+/** "20 seconds" / "5 minutes": human duration for limits shown to visitors. */
+export function humanDuration(seconds: number): string {
+  if (seconds < 90) return `${Math.round(seconds)} seconds`;
+  const m = Math.round(seconds / 60);
+  return `${m} minute${m === 1 ? "" : "s"}`;
+}

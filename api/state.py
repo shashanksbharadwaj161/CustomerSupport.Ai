@@ -91,7 +91,8 @@ class AppState:
         for lang in langs:
             name, opts, skipped = self.engines.stt_route(lang)
             stt = self.engines.peek_stt(name, opts)
-            stt_state = "ready" if stt is not None and stt._loaded else ("loading" if installed(name) else "unavailable")
+            warm = stt is not None and stt._loaded and (name, lang) in self.engines.warmed
+            stt_state = "ready" if warm else ("loading" if installed(name) else "unavailable")
             vids = [self.engines.cfg.get("default_voices", {}).get(lang)]
             fb = self.engines.cfg.get("cpu_fallback_voices", {}).get(lang) or []
             vids += [fb] if isinstance(fb, str) else fb

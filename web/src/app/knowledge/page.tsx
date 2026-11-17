@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { CrawlGraph, type GNode } from "@/components/knowledge/CrawlGraph";
 import { AppShell } from "@/components/shell/AppShell";
+import { AdminGate } from "@/components/shell/AuthGate";
 import { API_BASE, api, getToken } from "@/lib/api";
 
 type Source = { id: string; url: string; status: string; pages: number; chunks: number; brief_status?: string; embedder?: string; error?: string; profile_id?: string };
@@ -90,7 +91,7 @@ export default function Knowledge() {
   const failed = events.some((e) => e.kind === "error") || detail?.status === "error";
 
   return (
-    <AppShell>
+    <AppShell><AdminGate>
       <h1 className="display my-6" style={{ fontSize: "clamp(40px, 7vw, 104px)" }}>Knowledge</h1>
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
         <section className="space-y-6 min-w-0">
@@ -156,6 +157,6 @@ export default function Knowledge() {
           {sources.length === 0 && <p className="text-sm" style={{ color: "var(--ink-muted)" }}>No sources yet. Try the demo site prefilled on the left.</p>}
         </aside>
       </div>
-    </AppShell>
+    </AdminGate></AppShell>
   );
 }

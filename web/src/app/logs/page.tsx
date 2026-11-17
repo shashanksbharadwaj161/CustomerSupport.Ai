@@ -4,6 +4,7 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { AppShell } from "@/components/shell/AppShell";
+import { AdminGate } from "@/components/shell/AuthGate";
 import { emptyLevels, type Levels, type SignalState } from "@/components/signal/Signal";
 import { api } from "@/lib/api";
 import type { Lang } from "@/lib/tokens";
@@ -28,10 +29,10 @@ export default function Logs() {
   }, []);
   useEffect(() => { if (id) api(`/api/calls/${id}`).then(setD as any).catch(() => setD(null)); }, [id]);
 
-  if (id && d) return <AppShell><Detail d={d} /></AppShell>;
+  if (id && d) return <AppShell><AdminGate><Detail d={d} /></AdminGate></AppShell>;
   const avg = (xs: number[]) => (xs.length ? Math.round(xs.reduce((a, b) => a + b, 0) / xs.length) : null);
   return (
-    <AppShell>
+    <AppShell><AdminGate>
       <h1 className="display my-6" style={{ fontSize: "clamp(40px, 7vw, 104px)" }}>Call Logs</h1>
       <div className="glass overflow-x-auto">
         <table className="w-full mono text-xs" data-testid="calls-table">
@@ -46,7 +47,7 @@ export default function Logs() {
             {calls.length === 0 && <tr><td className="px-3 py-6" colSpan={9}>No calls yet. Start one on the Live Call page.</td></tr>}</tbody>
         </table>
       </div>
-    </AppShell>
+    </AdminGate></AppShell>
   );
 
   function Detail({ d }: { d: { call: Call; turns: Turn[]; guardrail_events: any[] } }) {

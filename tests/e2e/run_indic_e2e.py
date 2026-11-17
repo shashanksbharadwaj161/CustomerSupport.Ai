@@ -29,7 +29,8 @@ from eval.fleurs import CACHE, fetch  # noqa: E402
 OUT = ROOT / "tests" / "e2e" / "results"
 WAV = CACHE.parent / "e2e"
 PORT = int(os.environ.get("E2E_PORT", "8768"))
-CASES = [("hi",), ("bn",), ("kn",), ("hi", "en"), ("bn", "ja"), ("kn", "hi")]
+CASES = [("en",), ("ja",), ("hi",), ("bn",), ("kn",), ("hi", "en"), ("bn", "ja"), ("kn", "hi")]
+SHARE = bool(os.environ.get("SHARE"))  # run in share mode: visitor passcode login, exposed host/origin checks
 DIGITS = re.compile(r"[0-9०-९০-৯೦-೯０-９]")
 
 
@@ -99,8 +100,16 @@ def check(langs, res) -> dict:
 def main():
     OUT.mkdir(parents=True, exist_ok=True)
     py = os.environ.get("PYTHON") or sys.executable
-    env = {**os.environ, "SHAON_DATA_DIR": tempfile.mkdtemp(), "SHAON_LLM_PROVIDER": "fake", "SHAON_SEED_DEMO": "0",
-           "SHAON_PRELOAD": "stt:en,stt:hi,lid,tts:en,tts:ja,tts:hi,tts:bn,tts:kn"}
+    data = tempfile.mkdtemp()
+    env = {**os.environ, "SHAON_DATA_DIR": data, "SHAON_LLM_PROVIDER": "fake", "SHAON_SEED_DEMO": "0",
+           "SHAON_PRELOAD": "lid,stt:en,stt:ja,stt:hi,stt:bn,stt:kn,tts:en,tts:ja,tts:hi,tts:bn,tts:kn"}
+    node_env = {}
+    if SHARE:
+        hf = pathlib.Path(data) / "share_host.txt"
+        hf.write_text("e2e-share-test.trycloudflare.com")
+        env.update({"SHAON_EXPOSED": "1", "ALLOW_KEY_EDIT": "false", "VISITOR_PASSCODE": "e2e-visit-pass", "ADMIN_PASSWORD": "e2e-admin-passcode-1",
+                    "SHAON_SHARE_HOST_FILE": str(hf), "SHAON_MAX_CALLS": "2"})
+        node_env["LOGIN_PASSWORD"] = "e2e-visit-pass"
     log = open(OUT / "indic_server.log", "w")
     srv = subprocess.Popen([py, "-m", "uvicorn", "--factory", "api.main:create_app", "--port", str(PORT), "--log-level", "warning"],
                            cwd=ROOT, env=env, stdout=log, stderr=log)
@@ -113,16 +122,19 @@ def main():
             except Exception:
                 time.sleep(1)
         print("server up; waiting for model preload (MMS STT is ~4 GB)...")
-        for _ in range(120):  # until MMS STT + TTS report loaded
-            e = json.loads(urllib.request.urlopen(f"http://127.0.0.1:{PORT}/api/engines").read())["engines"]
-            if e.get("mms", {}).get("loaded") and e.get("mms-tts", {}).get("loaded"):
-                break
+        for _ in range(200):  # until every language reports ready (same signal the share launcher uses)
+            try:
+                s = json.loads(urllib.request.urlopen(f"http://127.0.0.1:{PORT}/api/share/status", timeout=20).read())
+                if all(v["state"] == "ready" for v in s["languages"].values()):
+                    break
+            except Exception:
+                pass
             time.sleep(3)
         time.sleep(10)
         for langs in CASES:
             wav, used = build_wav(langs)
             cmd = ["node", "scripts/call_e2e.mjs", f"http://127.0.0.1:{PORT}", str(wav), "websocket", "off", ".", "."]
-            r = subprocess.run(cmd, cwd=ROOT / "web", env={**os.environ, "WAIT_TURNS": str(len(langs))}, capture_output=True, text=True, timeout=600)
+            r = subprocess.run(cmd, cwd=ROOT / "web", env={**os.environ, **node_env, "WAIT_TURNS": str(len(langs))}, capture_output=True, text=True, timeout=600)
             try:
                 res = json.loads(r.stdout)
             except Exception:
@@ -138,7 +150,7 @@ def main():
         srv.terminate()
         srv.wait(timeout=30)
     from eval.common import save
-    save("indic_e2e", {"kind": "indic_e2e", "note": "FLEURS read speech as caller; scripted fake LLM (machine-written lines, native review pending); CPU engines; one run each.",
+    save("share_e2e" if SHARE else "indic_e2e", {"kind": "share_e2e" if SHARE else "indic_e2e", "share_mode": SHARE, "note": "FLEURS read speech as caller; scripted fake LLM (machine-written lines, native review pending); CPU engines; one run each.",
                        "cases": results, "pass_rate": round(sum(c["pass"] for c in results) / len(results), 3)})
     sys.exit(0 if all(c["pass"] for c in results) else 1)
 

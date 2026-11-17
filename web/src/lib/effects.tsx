@@ -55,10 +55,12 @@ export function EffectsProvider({ children }: { children: React.ReactNode }) {
   const [hidden, setHidden] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [software, setSoftware] = useState(false);
+  const [phone, setPhone] = useState(false);
 
   useEffect(() => {
     setChoiceState(readChoice());
     setSoftware(softwareRenderer());
+    setPhone(window.matchMedia("(pointer: coarse)").matches || window.innerWidth < 768);
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
     setRM(mq.matches);
     const onMq = () => setRM(mq.matches);
@@ -86,9 +88,9 @@ export function EffectsProvider({ children }: { children: React.ReactNode }) {
     if (reducedMotion) return "off";
     if (choice !== "auto") return choice;
     let t: Tier = measuredFps === null ? "lite" : measuredFps >= 50 ? "full" : measuredFps >= 24 ? "lite" : "off";
-    if ((generating || software) && t === "full") t = "lite"; // design/perf.md: software WebGL starves the models
+    if ((generating || software || phone) && t === "full") t = "lite"; // design/perf.md; phones default to Lite
     return t;
-  }, [choice, measuredFps, reducedMotion, generating, software]);
+  }, [choice, measuredFps, reducedMotion, generating, software, phone]);
 
   useEffect(() => {
     document.documentElement.dataset.effects = tier;

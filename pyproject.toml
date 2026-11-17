@@ -9,7 +9,7 @@ dependencies = ["numpy", "soundfile"]
 # transformers): if pip reports a conflict, use one virtualenv per group (eval/README.md).
 [project.optional-dependencies]
 # the app server (FastAPI + Pipecat transports + Silero VAD + crawler/store); add engine extras below
-app = ["fastapi>=0.115", "uvicorn[standard]", "python-multipart", "cryptography", "anthropic>=2", "httpx", "beautifulsoup4",
+app = ["fastapi>=0.115", "uvicorn[standard]", "python-multipart", "segno>=1.6", "cryptography", "anthropic>=2", "httpx", "beautifulsoup4",
        "chromadb", "pipecat-ai[webrtc,silero,websocket]>=1.16", "playwright==1.63.0", "crawl4ai>=0.9"]
 stt-whisper = ["faster-whisper>=1.1"]
 stt-indic = ["torch", "torchaudio", "transformers", "onnx", "onnxruntime"]

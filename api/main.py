@@ -228,8 +228,7 @@ def _preload(st) -> None:
             kind, _, lang = item.partition(":")
             try:
                 if kind == "stt":
-                    name, opts = st.engines.stt_choice(lang or "en")
-                    st.engines.get_stt(name, opts)
+                    st.engines.warm_stt(lang or "en")
                 elif kind == "tts":  # default voice, else the CPU fallbacks in order (what a call would use)
                     cat = st.voices()
                     ids = [st.engines.cfg["default_voices"].get(lang or "en")]

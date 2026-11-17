@@ -143,6 +143,8 @@ class CallSession:
                 info.setdefault("fallbacks", []).append(f"{name} failed ({type(e).__name__}): next in order")
                 name, opts, _ = self.engines.stt_route(lang)
         info["engines"].append(f"{name}:{opts.get('model') or opts.get('decoding') or ''}:{lang}")
+        if hasattr(self.engines, "warmed"):
+            self.engines.warmed.add((name, lang))
         return text
 
     def _finish(self, text, lang, info, t0) -> dict:

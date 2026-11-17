@@ -3,21 +3,25 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useLayoutEffect, useRef, useState } from "react";
+import { useAuth } from "./AuthGate";
 
 export const NAV = [
-  { href: "/", label: "Home" },
-  { href: "/studio/", label: "Studio" },
-  { href: "/call/", label: "Live Call" },
-  { href: "/knowledge/", label: "Knowledge" },
-  { href: "/logs/", label: "Call Logs" },
-  { href: "/settings/", label: "Settings" },
+  { href: "/", label: "Home", admin: false },
+  { href: "/studio/", label: "Studio", admin: true },
+  { href: "/call/", label: "Live Call", admin: false },
+  { href: "/knowledge/", label: "Knowledge", admin: true },
+  { href: "/logs/", label: "Call Logs", admin: true },
+  { href: "/settings/", label: "Settings", admin: true },
 ];
 
 export function CapsuleNav() {
   const path = usePathname() || "/";
+  const ctx = useAuth();
+  const visitor = !!ctx && ctx.auth.visitorMode && ctx.auth.role !== "admin";
+  const items = NAV.filter((n) => !(visitor && n.admin));
   const wrap = useRef<HTMLDivElement>(null);
   const [ind, setInd] = useState<{ left: number; width: number } | null>(null);
-  const active = NAV.find((n) => (n.href === "/" ? path === "/" : path.startsWith(n.href.replace(/\/$/, ""))))?.href;
+  const active = items.find((n) => (n.href === "/" ? path === "/" : path.startsWith(n.href.replace(/\/$/, ""))))?.href;
   useLayoutEffect(() => {
     const el = wrap.current?.querySelector<HTMLElement>(`[data-href="${active}"]`);
     if (el && wrap.current) setInd({ left: el.offsetLeft, width: el.offsetWidth });
@@ -28,7 +32,7 @@ export function CapsuleNav() {
         left: ind.left, width: ind.width, borderRadius: "var(--radius-pill)", background: "var(--surface-raised)",
         boxShadow: "var(--glow-soft)", border: "1px solid var(--line-strong)",
         transition: "left var(--dur-base) var(--ease-enter), width var(--dur-base) var(--ease-enter)" }} />}
-      {NAV.map((n) => (
+      {items.map((n) => (
         <Link key={n.href} href={n.href} data-href={n.href} aria-current={n.href === active ? "page" : undefined}
           className="relative z-10 whitespace-nowrap px-3 py-1.5 text-sm"
           style={{ color: n.href === active ? "var(--ink)" : "var(--ink-muted)", borderRadius: "var(--radius-pill)" }}>

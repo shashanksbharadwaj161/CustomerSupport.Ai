@@ -3,11 +3,12 @@ import { EnginesPanel } from "@/components/settings/EnginesPanel";
 import { KeyPanel } from "@/components/settings/KeyPanel";
 import { VoicesPanel } from "@/components/settings/VoicesPanel";
 import { AppShell } from "@/components/shell/AppShell";
+import { AdminGate } from "@/components/shell/AuthGate";
 import { EffectsPicker } from "@/lib/effects";
 
 export default function Settings() {
   return (
-    <AppShell>
+    <AppShell><AdminGate>
       <h1 className="display my-6" style={{ fontSize: "clamp(40px, 7vw, 96px)" }}>Settings</h1>
       <div className="grid gap-6">
         <KeyPanel />
@@ -17,6 +18,6 @@ export default function Settings() {
         <VoicesPanel />
         <EnginesPanel />
       </div>
-    </AppShell>
+    </AdminGate></AppShell>
   );
 }

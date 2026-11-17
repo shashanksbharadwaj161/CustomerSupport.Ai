@@ -2,6 +2,7 @@
 /** Agent Studio: profiles list, tabbed editor, version history, live system-prompt preview. */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AppShell } from "@/components/shell/AppShell";
+import { AdminGate } from "@/components/shell/AuthGate";
 import { Area, Chips, Field, Text } from "@/components/studio/fields";
 import { api } from "@/lib/api";
 import { gsap, setupMotion } from "@/lib/motion";
@@ -83,7 +84,7 @@ export default function Studio() {
   }
 
   return (
-    <AppShell>
+    <AppShell><AdminGate>
       <div className="flex flex-wrap items-end justify-between gap-4 my-6">
         <h1 className="display" style={{ fontSize: "clamp(40px, 7vw, 104px)" }}>Agent Studio</h1>
         <div className="flex flex-wrap gap-2" role="group" aria-label="New agent from preset">
@@ -211,6 +212,6 @@ export default function Studio() {
               <pre className="mono text-xs whitespace-pre-wrap mt-3" style={{ color: "var(--ink-muted)" }}>{prompt}</pre></details>
           </section>)}
       </div>
-    </AppShell>
+    </AdminGate></AppShell>
   );
 }

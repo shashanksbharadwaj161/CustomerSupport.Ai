@@ -2,16 +2,17 @@
 /** Live Call: full-bleed Signal, floating transcript, telemetry strip, voice dock, language override. */
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { DemoBanner, GetReady, useReady } from "@/components/call/GetReady";
 import { Transcript, type Line } from "@/components/call/Transcript";
 import { AppShell } from "@/components/shell/AppShell";
 import { emptyLevels, type Levels, type SignalState } from "@/components/signal/Signal";
-import { api } from "@/lib/api";
+import { api, ApiError } from "@/lib/api";
 import { driveLevels, LevelMeter } from "@/lib/audio";
 import { WebRTCCall } from "@/lib/call/webrtc";
 import { WebSocketCall } from "@/lib/call/websocket";
 import type { CallClient, ServerMsg, TransportKind } from "@/lib/call/types";
 import { EffectsPicker, useEffectsTier } from "@/lib/effects";
-import { LANG_NAMES, LANGS, type Lang } from "@/lib/tokens";
+import { humanDuration, LANG_NAMES, LANGS, type Lang } from "@/lib/tokens";
 
 const Signal = dynamic(() => import("@/components/signal/Signal").then((m) => m.Signal), { ssr: false });
 
@@ -45,6 +46,10 @@ export default function LiveCall() {
   const [voices, setVoices] = useState<Voice[]>([]);
   const [activeVoice, setActiveVoice] = useState<Record<string, string>>({});
   const [info, setInfo] = useState<{ provider?: string; languages?: Lang[] }>({});
+  const [screen, setScreen] = useState<null | { kind: "busy" | "ended" | "lost"; text: string }>(null);
+  const { ready } = useReady();
+  const userEnded = useRef(false);
+  const missedBeats = useRef(0);
   const client = useRef<CallClient | null>(null);
   const levels = useRef<Levels>(emptyLevels());
   const stopLevels = useRef<() => void>(() => {});
@@ -67,6 +72,20 @@ export default function LiveCall() {
 
   useEffect(() => { setGenerating(state === "thinking" || state === "speaking"); }, [state, setGenerating]);
   useEffect(() => () => { client.current?.disconnect(); stopLevels.current(); setGenerating(false); }, [setGenerating]);
+
+  // heartbeat while live: if the host PC disappears (sleep, offline, tunnel restarted) show a friendly state, not a blank screen
+  useEffect(() => {
+    if (status !== "live") return;
+    const id = window.setInterval(async () => {
+      try { const r = await fetch("/health", { cache: "no-store" }); missedBeats.current = r.ok ? 0 : missedBeats.current + 1; }
+      catch { missedBeats.current += 1; }
+      if (missedBeats.current >= 2) {
+        userEnded.current = true; client.current?.disconnect(); setStatus("ended"); setState("idle");
+        setScreen({ kind: "lost", text: "The host PC stopped answering (asleep, offline, or the share link changed). Try again in a moment, or ask for a new link." });
+      }
+    }, 5000);
+    return () => window.clearInterval(id);
+  }, [status]);
 
   const add = useCallback((l: Omit<Line, "id">) => setLines((xs) => [...xs, { ...l, id: ++lineId.current }]), []);
 
@@ -111,15 +130,25 @@ export default function LiveCall() {
         }); break;
       case "voice": setActiveVoice((v) => ({ ...v, [m.lang]: m.voice })); break;
       case "error": add({ role: "system", text: `Error in ${m.stage}: ${m.detail}` }); setState("error"); break;
+      case "busy": setScreen({ kind: "busy", text: "The agent is busy with another caller right now. Please try again in a minute." }); break;
+      case "ended":
+        userEnded.current = true;
+        setScreen({ kind: "ended", text: m.reason === "max_length" ? `The call ended automatically after ${humanDuration(m.seconds || 300)} (demo time limit). You can start a new call.` : "The call has ended." });
+        break;
       case "interrupted": add({ role: "system", text: "Caller interrupted (barge-in)" }); break;
     }
   }, [add, lang]);
 
   async function start() {
-    setError(null); setLines([]); setStatus("connecting"); setTiming({});
+    setError(null); setLines([]); setStatus("connecting"); setTiming({}); setScreen(null); userEnded.current = false; missedBeats.current = 0;
     const c: CallClient = transport === "websocket" ? new WebSocketCall(profileId) : new WebRTCCall(profileId);
     c.onMessage = onMsg;
-    c.onClose = (r) => { setStatus((s) => (s === "live" || s === "connecting" ? "ended" : s)); setState("idle"); if (r !== "ended") setError(`Connection ${r}`); };
+    c.onClose = (r) => {
+      setStatus((s) => (s === "live" || s === "connecting" ? "ended" : s)); setState("idle");
+      if (r === "ended" || userEnded.current) return;
+      setScreen((cur) => cur ?? (r.includes("4503") ? { kind: "busy", text: "The agent is busy with another caller right now. Please try again in a minute." }
+        : { kind: "lost", text: "The connection was lost. The host PC may have gone to sleep, lost its internet, or the share link changed. Try again in a moment, or ask for a new link." }));
+    };
     client.current = c;
     try {
       await c.connect();
@@ -132,19 +161,33 @@ export default function LiveCall() {
       };
       if (!wire()) { const id = window.setInterval(() => { if (wire()) window.clearInterval(id); }, 500); window.setTimeout(() => window.clearInterval(id), 10000); }
     } catch (e: any) {
-      setStatus("error"); setError(e?.message || String(e)); c.disconnect();
+      userEnded.current = true; c.disconnect(); setStatus("error");
+      if (e instanceof ApiError && e.status === 503) setScreen({ kind: "busy", text: "The agent is busy with another caller right now. Please try again in a minute." });
+      else if (e?.name === "NotAllowedError") setError("Microphone permission was blocked. Allow it in the browser's site settings, then try again.");
+      else if (e instanceof ApiError && (e.status === 401 || e.status === 403)) setError("Your passcode session expired. Reload the page and enter the passcode again.");
+      else setScreen({ kind: "lost", text: "Could not reach the agent. The host PC may be offline or the link may have changed." });
     }
   }
-  function end() { client.current?.disconnect(); client.current = null; stopLevels.current(); setStatus("ended"); setState("idle"); }
+  function end() { userEnded.current = true; client.current?.disconnect(); client.current = null; stopLevels.current(); setStatus("ended"); setState("idle"); }
 
   function setOverrideLang(l: Lang | "") { setOverride(l); client.current?.send({ type: "override_lang", lang: l || null }); }
   function pickVoice(l: Lang, v: string) { client.current?.send({ type: "set_voice", lang: l, voice: v }); setActiveVoice((x) => ({ ...x, [l]: v })); }
 
   const live = status === "live";
-  const langVoices = voices.filter((v) => v.language === lang);
+  const langVoices = voices.filter((v) => v.language === lang && v.status !== "pending"); // only voices that can speak on this machine
 
   return (
     <AppShell wide>
+      <div className="mb-3"><DemoBanner ready={ready} /></div>
+      {screen && (
+        <div role="alertdialog" aria-labelledby="screen-h" className="glass p-5 mb-4 flex flex-wrap items-center gap-4" data-testid={`screen-${screen.kind}`}
+          style={{ borderColor: screen.kind === "lost" ? "var(--danger)" : "var(--warn)" }}>
+          <div className="flex-1 min-w-[220px]"><h2 id="screen-h" className="display text-2xl mb-1">{screen.kind === "busy" ? "Agent is busy" : screen.kind === "ended" ? "Call ended" : "Connection lost"}</h2>
+            <p className="text-sm">{screen.text}</p></div>
+          <button className="btn btn-primary" onClick={() => { setScreen(null); start(); }} data-testid="screen-retry">{screen.kind === "ended" ? "New call" : "Try again"}</button>
+        </div>)}
+      {!live && status !== "connecting" && (
+        <div className="mb-4"><GetReady ready={ready} canStart={!!profileId} onStart={start} /></div>)}
       <div className="relative grid gap-4 lg:grid-cols-[minmax(0,1fr)_420px]">
         <section className="relative min-h-[60vh] lg:min-h-[78vh]" aria-label="Voice visual">
           <Signal state={state} lang={lang} levelsRef={levels} className="absolute inset-0" />
