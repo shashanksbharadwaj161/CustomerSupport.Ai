@@ -4,6 +4,7 @@
 #   QUICK=1 scripts/test_all.sh    # unit tests + web typecheck only
 #   INDIC=1 scripts/test_all.sh    # also 5-language live calls + switches with real FLEURS speech in share mode (slow, CPU)
 #   PWSH=/path/to/pwsh             # run the Windows launcher test under PowerShell 7 (auto if pwsh is on PATH)
+#   INSTALLER=1 scripts/test_all.sh  # also the Windows installer scenarios (pwsh + stubbed winget/git/pip/npm, ~2 min)
 set -uo pipefail
 cd "$(dirname "$0")/.."
 PY="${PYTHON:-}"; [ -z "$PY" ] && { [ -x .venv/bin/python ] && PY=.venv/bin/python || PY=python3; }
@@ -33,6 +34,14 @@ if [ -n "$PWSH" ]; then
   "$PY" tests/share/run_launcher_test.py "$PWSH" || fail=1
 else
   echo; echo "=== share launcher: SKIPPED (pwsh not installed; set PWSH=/path/to/pwsh)"
+fi
+if [ -n "${INSTALLER:-}" ]; then  # opt-in: scripts/install.ps1 scenarios (fresh, partial, second run, resume, low disk, private repo)
+  if [ -n "$PWSH" ]; then
+    step "Windows installer (scripts/install.ps1 under pwsh, stubbed winget / git clone / pip / npm / cloudflared)"
+    PWSH="$PWSH" PYTHON="$PY" "$PY" tests/install/run_installer_test.py || fail=1
+  else
+    echo; echo "=== Windows installer: SKIPPED (pwsh not installed; set PWSH=/path/to/pwsh)"
+  fi
 fi
 if [ -n "${INDIC:-}" ]; then  # opt-in: 5 languages + 3 switches with real FLEURS speech, in SHARE mode (slow on CPU; MMS ~4 GB)
   step "live calls en/ja/hi/bn/kn + switches through share mode (FLEURS caller audio, CPU engines)"

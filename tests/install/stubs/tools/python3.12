@@ -1,0 +1,47 @@
+#!/usr/bin/python3
+"""Stub base Python 3.12 + venv Python for tests/install. State lives in $FAKE_STATE.
+Failure knobs: FAKE_PIP_FAIL=1, FAKE_FETCH_FAIL_ONCE=1, FAKE_FETCH_DISK=1, FAKE_SELFTEST_FAIL=1."""
+import os, shutil, sys
+S = os.environ["FAKE_STATE"]
+a = sys.argv[1:]
+def log(s): open(S + "/python.log", "a").write(s + "\n")
+def flag(n): return os.path.exists(os.path.join(S, n))
+def touch(n): open(os.path.join(S, n), "a").close()
+log(" ".join(a))
+if a[:1] == ["-c"]:
+    code = a[1]
+    if "version_info[:3]" in code: print("3.12.10"); sys.exit(0)
+    if "version_info[:2]" in code: print("3.12"); sys.exit(0)
+    if code.startswith("import fastapi"): sys.exit(0 if flag("pip_done") else 1)
+    if "login(" in code: sys.exit(0)
+    if "sys.executable" in code: print(sys.argv[0]); sys.exit(0)
+    sys.exit(0)
+if a[:2] == ["-m", "venv"]:
+    d = a[2]; os.makedirs(d + "/bin", exist_ok=True)
+    shutil.copy(sys.argv[0], d + "/bin/python"); open(d + "/pyvenv.cfg", "w").write("version = 3.12.10\n"); sys.exit(0)
+if a[:2] == ["-m", "pip"]:
+    if "-e" in a:
+        if os.environ.get("FAKE_PIP_FAIL"): print("ERROR: Could not find a version that satisfies the requirement x"); sys.exit(1)
+        touch("pip_done"); open(S + "/pip_installs", "a").write("x\n")
+    print("Successfully installed (stub)"); sys.exit(0)
+if a and a[0].endswith("fetch_models.py"):
+    if "--check" in a: sys.exit(0 if flag("models_done") else 1)
+    if flag("models_done"):
+        print("Models: all 8 present. Nothing to download."); sys.exit(0)
+    print("Models for CPU demo mode: 5.69 GB in total, 5.69 GB still to download.")
+    if os.environ.get("FAKE_FETCH_DISK"):
+        print("Not enough disk space: 1.00 GB free"); sys.exit(3)
+    if os.environ.get("FAKE_FETCH_FAIL_ONCE") and not flag("fetch_failed_once"):
+        touch("fetch_failed_once"); touch("partial_mms")
+        print("[2/24] facebook/mms-1b-all  model.safetensors  (3.86 GB)\n    FAILED: ConnectionError: connection reset")
+        print("Some downloads did not finish."); sys.exit(2)
+    if flag("partial_mms"): print("[2/24] facebook/mms-1b-all  model.safetensors  resuming at 1.20 GB of 3.86 GB")
+    touch("models_done"); print("All models downloaded (5.69 GB)."); sys.exit(0)
+if a and a[0].endswith("doctor.py"):
+    print("[PASS   ] Python 3.10-3.12 (stub doctor)"); sys.exit(0)
+if a and a[0].endswith("selftest.py"):
+    open(S + "/selftest_runs", "a").write("x\n")
+    if os.environ.get("FAKE_SELFTEST_FAIL"):
+        print("  kn   mms_kn  FAIL  voice: a model file is missing on disk (offline check)"); sys.exit(1)
+    print("Self-test passed: every language can speak and listen on this PC."); sys.exit(0)
+print("stub python: unhandled " + " ".join(a), file=sys.stderr); sys.exit(0)

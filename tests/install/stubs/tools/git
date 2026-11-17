@@ -1,0 +1,10 @@
+#!/bin/bash
+# Stub git: real git, except FAKE_GIT_CLONE_FAIL=auth makes clone/fetch fail like a private repository.
+export PATH=/usr/bin:/bin
+echo "git $*" >> "$FAKE_STATE/git.log"
+if [ "$FAKE_GIT_CLONE_FAIL" = "auth" ] && { [ "$1" = clone ] || [ "$1" = ls-remote ]; }; then
+  echo "remote: Repository not found." >&2
+  echo "fatal: Authentication failed for 'https://github.com/owner/private.git/'" >&2
+  exit 128
+fi
+exec /usr/bin/git "$@"

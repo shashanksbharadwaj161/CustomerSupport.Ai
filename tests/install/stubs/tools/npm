@@ -1,0 +1,9 @@
+#!/bin/bash
+# Stub npm: 'ci' makes node_modules, 'run build' makes out/index.html (in the current folder = web/)
+export PATH=/usr/bin:/bin
+echo "npm $*" >> "$FAKE_STATE/npm.log"
+case "$1" in
+  ci) mkdir -p node_modules ;;
+  run) mkdir -p out && echo '<html><body>ShaOn stub build</body></html>' > out/index.html ;;
+esac
+exit 0

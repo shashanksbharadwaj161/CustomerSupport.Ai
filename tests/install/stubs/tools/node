@@ -1,0 +1,3 @@
+#!/bin/bash
+[ "$1" = "--version" ] && { echo "v22.11.0"; exit 0; }
+exit 0

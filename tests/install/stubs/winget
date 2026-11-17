@@ -1,0 +1,27 @@
+#!/usr/bin/python3
+"""Stub winget for tests/install: 'installs' a stub tool into $FAKE_INSTALLED and lists that dir in
+$SHAON_TEST_PATH_FILE (stands in for the PATH that a real install writes to the registry)."""
+import os, shutil, sys
+args = sys.argv[1:]
+log = os.environ["FAKE_STATE"] + "/winget.log"
+if args[:1] == ["--version"]:
+    print("v1.9.25200"); sys.exit(0)
+if args[:1] != ["install"]:
+    sys.exit(0)
+pid = args[args.index("--id") + 1]
+open(log, "a").write(f"install {pid} {' '.join(a for a in args if a.startswith('--accept'))}\n")
+if pid == os.environ.get("FAKE_WINGET_FAIL_ID"):
+    print("Installer failed with exit code: 1603", file=sys.stderr); sys.exit(1)
+here = os.environ["FAKE_STUBS"]
+inst = os.environ["FAKE_INSTALLED"]
+os.makedirs(inst, exist_ok=True)
+tools = {"Git.Git": ["git"], "Python.Python.3.12": ["python3.12"], "OpenJS.NodeJS.LTS": ["node", "npm"],
+         "Cloudflare.cloudflared": ["cloudflared"], "eSpeak-NG.eSpeak-NG": ["espeak-ng"], "Gyan.FFmpeg": ["ffmpeg"],
+         "Microsoft.VCRedist.2015+.x64": ["shaon-vcredist"]}
+for t in tools[pid]:
+    shutil.copy(os.path.join(here, "tools", t), os.path.join(inst, t))
+pf = os.environ["SHAON_TEST_PATH_FILE"]
+lines = open(pf).read().split() if os.path.exists(pf) else []
+if inst not in lines:
+    open(pf, "a").write(inst + "\n")
+print(f"Successfully installed {pid}")
