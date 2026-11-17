@@ -5,16 +5,15 @@ Haiku 5.5 price applies to prompts up to 100K tokens (higher beyond; our prompts
 """
 from __future__ import annotations
 
-PRICES = {
-    "claude-haiku-5-5": {"in": 0.10, "out": 0.50},
-    "claude-sonnet-5-5": {"in": 2.00, "out": 10.00},
-}
+from agent.llm.models import CATALOG, price as _price
+
+PRICES = {m["id"]: {"in": m["in"], "out": m["out"]} for m in CATALOG}
 CACHE_WRITE_MULT = 1.25  # 5-minute TTL
 CACHE_READ_MULT = 0.10
 
 
 def cost_usd(model: str, usage) -> float:
-    p = PRICES[model]
+    p, _estimated = _price(model)  # unknown model: highest known rate (the cap can only stop early)
     get = (lambda k: getattr(usage, k, 0) or 0) if not isinstance(usage, dict) else (lambda k: usage.get(k, 0) or 0)
     inp = get("input_tokens")
     cw = get("cache_creation_input_tokens")

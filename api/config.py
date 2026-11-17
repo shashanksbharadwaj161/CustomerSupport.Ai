@@ -48,27 +48,36 @@ class Config:
     max_calls: int = 2              # concurrent calls (busy screen beyond this)
     max_call_seconds: int = 300     # hard limit per call
     share_host_file: pathlib.Path | None = None  # public tunnel host learned at launch (written by scripts/share.ps1)
+    local_preview: bool = False     # ShaOn-Local.bat: no passcodes, key/model editable, ONLY this PC (127.0.0.1, no proxies)
 
 
 def load_config() -> Config:
     _load_dotenv(ROOT / ".env")
     data = pathlib.Path(os.environ.get("SHAON_DATA_DIR") or ROOT / "data").resolve()
+    local = _bool("SHAON_LOCAL_PREVIEW", False)
+    if local and _bool("SHAON_EXPOSED", False):
+        raise RuntimeError("SHAON_LOCAL_PREVIEW and SHAON_EXPOSED cannot both be on: local preview has no passcodes, "
+                           "so it must never be shared. Use ShaOn-Share.bat for a public link.")
+    cap_env = float(os.environ.get("SPEND_CAP_USD") or 10)
     origins = [o.strip() for o in os.environ.get("ALLOWED_ORIGINS", "").split(",") if o.strip()]
     return Config(
         data_dir=data,
-        admin_password=os.environ.get("ADMIN_PASSWORD", ""),
-        allow_key_edit=_bool("ALLOW_KEY_EDIT", True),
+        # local preview IGNORES stale gate settings from the environment or .env (they would re-create a dead end)
+        admin_password="" if local else os.environ.get("ADMIN_PASSWORD", ""),
+        allow_key_edit=True if local else _bool("ALLOW_KEY_EDIT", True),
         transport=os.environ.get("TRANSPORT") or "both",
         llm_model=os.environ.get("LLM_MODEL") or "claude-haiku-5-5",
         llm_fallback_model=os.environ.get("LLM_FALLBACK_MODEL") or "claude-sonnet-5-5",
-        default_spend_cap_usd=float(os.environ.get("SPEND_CAP_USD") or 10),
+        # documented default 10 USD; a 0 from a stale launcher environment must not lock the local preview
+        default_spend_cap_usd=(cap_env if cap_env > 0 else 10.0) if local else cap_env,
         llm_provider=os.environ.get("SHAON_LLM_PROVIDER") or "auto",
         exposed=_bool("SHAON_EXPOSED", False),
         allowed_origins=origins,
         crawl_allowlist=[d.strip().lower() for d in os.environ.get("CRAWL_ALLOWLIST", "").split(",") if d.strip()],
         preload=[p.strip() for p in os.environ.get("SHAON_PRELOAD", "").split(",") if p.strip()],
-        visitor_passcode=os.environ.get("VISITOR_PASSCODE", ""),
+        visitor_passcode="" if local else os.environ.get("VISITOR_PASSCODE", ""),
         max_calls=int(os.environ.get("SHAON_MAX_CALLS") or 2),
         max_call_seconds=int(os.environ.get("SHAON_MAX_CALL_SECONDS") or 300),
         share_host_file=pathlib.Path(os.environ.get("SHAON_SHARE_HOST_FILE") or data / "share_host.txt"),
+        local_preview=local,
     )

@@ -247,10 +247,12 @@ class BrainProcessor(FrameProcessor):
             "role": "agent", "language": meta.get("reply_lang", lang), "text": meta.get("reply", ""),
             "llm_ms": meta.get("llm_ms"), "llm_ttft_ms": meta.get("llm_ttft_ms"), "guard_ms": meta.get("guard_ms"),
             "sources_json": meta.get("sources"), "guardrail_json": meta.get("guard"),
-            "engine_json": {"provider": meta.get("provider"), "model": meta.get("model"), "tools": meta.get("tools"),
+            "engine_json": {"provider": meta.get("provider"), "model": meta.get("model"), "model_served": meta.get("model_served"),
+                            "model_fallback": meta.get("model_fallback"), "tools": meta.get("tools"),
                             "retrieval_ms": meta.get("retrieval_ms")}})
         self._turn_id = turn_id
         await self._flush_latency()
         await self._send(msg("turn_meta", turn_id=turn_id, stt_ms=info.get("stt_ms"), llm_ttft_ms=meta.get("llm_ttft_ms"),
                              llm_ms=meta.get("llm_ms"), guard_ms=meta.get("guard_ms"), lid_ms=info.get("lid_ms"),
-                             handoff=meta.get("handoff", False), provider=meta.get("provider"), model=meta.get("model")))
+                             handoff=meta.get("handoff", False), provider=meta.get("provider"), model=meta.get("model"),
+                             model_served=meta.get("model_served"), model_fallback=meta.get("model_fallback")))

@@ -66,9 +66,12 @@ def main() -> int:
             return 2
         langs = s["languages"]
         parts = " ".join(f"{l}:{langs[l]['state']}" for l in LANGS)
-        if cmd == "ready":
+        if cmd == "ready":  # 0 = all ready, 3 = settled but some not downloaded/unavailable, 1 = still loading
             print(parts)
-            return 0 if all(langs[l]["state"] == "ready" for l in LANGS) else 1
+            states = [langs[l]["state"] for l in LANGS]
+            if all(s == "ready" for s in states):
+                return 0
+            return 3 if all(s in ("ready", "missing", "unavailable") for s in states) else 1
         sp = s.get("spend", {})
         print(f"engines {parts} | calls {s['active_calls']}/{s['max_calls']} | llm {s['provider']} | "
               f"spend ${sp.get('spent_usd', 0):.2f} of ${sp.get('cap_usd', 0):.2f}")

@@ -13,7 +13,8 @@ def data_dir(tmp_path, monkeypatch):
     monkeypatch.setenv("SHAON_DATA_DIR", str(tmp_path / "data"))
     for k in ("ANTHROPIC_API_KEY", "ADMIN_PASSWORD", "SHAON_LLM_PROVIDER", "ALLOW_KEY_EDIT", "SHAON_EXPOSED",
               "TRANSPORT", "SHAON_PRELOAD", "CRAWL_ALLOWLIST", "VISITOR_PASSCODE", "SHAON_MAX_CALLS",
-              "SHAON_MAX_CALL_SECONDS", "SHAON_SHARE_HOST_FILE", "SHAON_SEED_DEMO"):
+              "SHAON_MAX_CALL_SECONDS", "SHAON_SHARE_HOST_FILE", "SHAON_SEED_DEMO", "SHAON_LOCAL_PREVIEW",
+              "LLM_MODEL", "LLM_FALLBACK_MODEL", "SPEND_CAP_USD"):
         monkeypatch.setenv(k, "")
     return tmp_path / "data"
 

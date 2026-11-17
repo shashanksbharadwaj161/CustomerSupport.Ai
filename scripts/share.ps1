@@ -236,10 +236,11 @@ try {
       $line = (& $Py scripts/share_helper.py ready $Port) -join " "
       $code = $LASTEXITCODE
       if ($line -ne $last) { Say "  $line" "Gray"; $last = $line }
-      if ($code -eq 0) { break }
+      if ($code -eq 0 -or $code -eq 3) { break }   # 3 = some languages are not downloaded (they stay unavailable)
       Start-Sleep -Seconds 3
     }
-    if ($code -ne 0) { Say "Some languages are not ready (see above). Visitors see this on the Get-ready screen." "Yellow" } else { Say "All languages ready." "Green" }
+    if ($code -eq 3) { Say "Some languages are not downloaded (missing). Run ShaOn-Install.bat to get all models. Visitors see this on the Get-ready screen." "Yellow" }
+    elseif ($code -ne 0) { Say "Some languages are not ready (see above). Visitors see this on the Get-ready screen." "Yellow" } else { Say "All languages ready." "Green" }
   }
 
   # ------------------------------------------------------------ 5. tunnel + link

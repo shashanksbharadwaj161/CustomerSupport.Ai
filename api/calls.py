@@ -23,7 +23,7 @@ def make_session(state: AppState, profile_id: str | None, transport: str, app) -
         vid = prof["config"]["voices"].get("by_language", {}).get(lang) or voices.for_persona(persona, lang)
         if vid:
             ctx.voice_by_lang[lang] = vid
-    hooks = Hooks(provider=state.provider, model=state.cfg.llm_model,
+    hooks = Hooks(provider=state.provider, model=state.llm_model(),
                   guard=getattr(app.state, "guard", None), retriever=getattr(app.state, "retriever", None),
                   on_turn=state.log_turn, on_turn_update=state.update_turn, on_guard=state.log_guard,
                   on_call_end=state.end_call)

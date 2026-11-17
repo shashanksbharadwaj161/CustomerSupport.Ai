@@ -38,6 +38,7 @@ class LLMResult:
     ttft_ms: int | None = None
     total_ms: int | None = None
     refused: bool = False
+    fallback_from: str | None = None  # "<model>: <reason>" when the fallback model answered instead
 
 
 OnText = Callable[[str], Awaitable[None]]
@@ -74,56 +75,96 @@ class AnthropicProvider(LLMProvider):
     name = "anthropic"
     is_real = True
 
-    def __init__(self, api_key: str, default_model: str, spend=None, effort: str = "low"):
+    def __init__(self, api_key: str, default_model: str, spend=None, effort: str = "low", fallback_model: str | None = None):
         import anthropic
 
         register_secret(api_key)
         self._anthropic = anthropic
         self.client = anthropic.AsyncAnthropic(api_key=api_key, max_retries=2, timeout=30)
         self.default_model = default_model
+        self.fallback_model = fallback_model
         self.spend = spend
         self.effort = effort
+
+    def _request(self, *, model, system, messages, max_tokens, tools) -> dict:
+        from agent.llm.models import request_params
+        kw: dict[str, Any] = dict(
+            model=model, max_tokens=max_tokens, messages=messages,
+            # cached prefix: rules + persona + guardrails + site brief (byte-stable per profile version)
+            system=[{"type": "text", "text": system, "cache_control": {"type": "ephemeral"}}],
+            **request_params(model, self.effort),  # per-model: a param one model needs is a 400 on another
+        )
+        if tools:
+            kw["tools"] = tools
+        return kw
 
     async def stream(self, *, system, messages, model=None, max_tokens=300, tools=None, on_text=None,
                      purpose="reply", call_id=None) -> LLMResult:
         model = model or self.default_model
         if self.spend:
             self.spend.check()  # raises SpendCapReached
-        kw: dict[str, Any] = dict(
-            model=model, max_tokens=max_tokens, messages=messages,
-            # cached prefix: rules + persona + guardrails + site brief (byte-stable per profile version)
-            system=[{"type": "text", "text": system, "cache_control": {"type": "ephemeral"}}],
-            output_config={"effort": self.effort},
-        )
-        if model.startswith("claude-haiku"):
-            kw["thinking"] = {"type": "disabled"}  # voice latency; allowed at effort <= high on Haiku 5.5
-        if tools:
-            kw["tools"] = tools
+        emitted = False
+
+        async def relay(chunk):
+            nonlocal emitted
+            emitted = True
+            if on_text:
+                await on_text(chunk)
+
+        try:
+            res = await self._once(model, system, messages, max_tokens, tools, relay, purpose, call_id)
+        except (self._anthropic.NotFoundError, self._anthropic.InternalServerError) as e:
+            # model unavailable for this key (404) or overloaded (529/5xx): try the fallback model once, if nothing was spoken yet
+            fb = self.fallback_model
+            if not fb or fb == model or emitted:
+                raise
+            res = await self._once(fb, system, messages, max_tokens, tools, relay, purpose, call_id)
+            res.fallback_from = f"{model}: {type(e).__name__}"
+            return res
+        if res.refused and not emitted and self.fallback_model and self.fallback_model != model:
+            res2 = await self._once(self.fallback_model, system, messages, max_tokens, tools, relay, purpose, call_id)
+            res2.fallback_from = f"{model}: refusal"
+            return res2
+        return res
+
+    async def _once(self, model, system, messages, max_tokens, tools, on_text, purpose, call_id) -> LLMResult:
+        kw = self._request(model=model, system=system, messages=messages, max_tokens=max_tokens, tools=tools)
         t0 = time.perf_counter()
         ttft = None
         async with self.client.messages.stream(**kw) as s:
             async for chunk in s.text_stream:
                 if ttft is None:
                     ttft = time.perf_counter() - t0
-                if on_text:
-                    await on_text(chunk)
+                await on_text(chunk)
             msg = await s.get_final_message()
         usage = {k: getattr(msg.usage, k, 0) or 0 for k in
                  ("input_tokens", "output_tokens", "cache_read_input_tokens", "cache_creation_input_tokens")}
+        served = getattr(msg, "model", None) or model  # the model the API says answered
         if self.spend:
-            self.spend.record(model, usage, purpose, call_id)
+            self.spend.record(served if isinstance(served, str) else model, usage, purpose, call_id)
         text = "".join(b.text for b in msg.content if b.type == "text").strip()
         calls = [ToolCall(b.id, b.name, dict(b.input)) for b in msg.content if b.type == "tool_use"]
-        return LLMResult(text=text, model=model, stop_reason=msg.stop_reason, usage=usage, tool_calls=calls,
+        return LLMResult(text=text, model=served if isinstance(served, str) else model, stop_reason=msg.stop_reason,
+                         usage=usage, tool_calls=calls,
                          content=[b.model_dump() for b in msg.content if b.type in ("text", "tool_use")],
                          ttft_ms=round(ttft * 1000) if ttft else None,
                          total_ms=round((time.perf_counter() - t0) * 1000), refused=msg.stop_reason == "refusal")
 
+    async def list_models(self) -> list[dict]:
+        """Models this key can use (Models API, free). Used only when the user presses Refresh in Settings."""
+        out = []
+        async for m in self.client.models.list():
+            out.append({"id": m.id, "display_name": getattr(m, "display_name", None),
+                        "max_input_tokens": getattr(m, "max_input_tokens", None), "max_tokens": getattr(m, "max_tokens", None)})
+        return out
+
     async def test_key(self) -> dict:
         """One tiny call to verify the key (Settings 'Test key')."""
-        r = await self.stream(system="Reply with the single word OK.", messages=[{"role": "user", "content": "ping"}],
-                              max_tokens=5, purpose="key_test")
-        return {"ok": True, "model": r.model, "reply": r.text[:20]}
+        if self.spend:
+            self.spend.check()  # the cap applies to every Claude call, the key test too
+        r = await self._once(self.default_model, "Reply with the single word OK.", [{"role": "user", "content": "ping"}],
+                             16, None, _noop, "key_test", None)
+        return {"ok": True, "model": r.model, "requested_model": self.default_model, "reply": r.text[:20]}
 
 
 # --- no-network providers -------------------------------------------------------------------
@@ -158,6 +199,10 @@ def _lang_from_messages(messages: list[dict]) -> tuple[str, str]:
     caller = text.split("</context>")[-1].strip()
     lang = m.group(1) if m else (dominant_language(caller)[0] or "en")
     return lang, caller
+
+
+async def _noop(_chunk: str) -> None:
+    return None
 
 
 async def _emit(text: str, on_text: OnText | None) -> None:

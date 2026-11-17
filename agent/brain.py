@@ -172,6 +172,9 @@ class TurnEngine:
                                    {"role": "user", "content": tool_results}]
             result = await self.provider.stream(system=self.ctx.system_prompt(), messages=messages, model=model,
                                                 tools=tools, on_text=on_text, call_id=self.ctx.call_id)
+        meta["model_served"] = result.model  # what the API reports actually answered (shown in Logs / telemetry)
+        if getattr(result, "fallback_from", None):
+            meta["model_fallback"] = result.fallback_from
         tail = buf.strip()
         if tail:
             spoken.append(tail)

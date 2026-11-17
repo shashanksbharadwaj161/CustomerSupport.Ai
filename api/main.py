@@ -14,7 +14,7 @@ from fastapi.staticfiles import StaticFiles
 from agent import logscrub
 from api.auth import Auth, client_ip, has_forwarding_headers, required_role
 from api.profiles import ProfileStore
-from api.state import AppState, require_admin
+from api.state import AppState, is_loopback, require_admin
 
 
 def create_app(state: AppState | None = None) -> FastAPI:
@@ -43,6 +43,10 @@ def create_app(state: AppState | None = None) -> FastAPI:
     async def auth_mw(request: Request, call_next):
         auth: Auth = app.state.auth
         p = request.url.path
+        # local preview has NO passcodes, so it answers only this PC: direct loopback, never through a proxy/tunnel
+        if st.cfg.local_preview and not is_loopback(request):
+            return JSONResponse({"detail": "Local preview only answers this PC (127.0.0.1). For a public link use ShaOn-Share.bat."},
+                                status_code=403)
         # exposed: Host must be localhost or the tunnel host learned at launch (blocks DNS-rebinding / stray hosts),
         # and browser-sent Origin on state-changing requests must match too
         if not auth.host_ok(request.headers.get("host")):
@@ -71,7 +75,7 @@ def create_app(state: AppState | None = None) -> FastAPI:
         a: Auth = app.state.auth
         role = a.role_from(request)
         return {"required": a.enabled, "ok": role is not None, "role": role, "visitor_mode": a.roles_on,
-                "share": st.cfg.exposed}
+                "share": st.cfg.exposed, "local_preview": st.cfg.local_preview}
 
     @app.post("/api/auth/login")
     async def login(request: Request):
@@ -122,20 +126,32 @@ def create_app(state: AppState | None = None) -> FastAPI:
         return {**st.engines.status(), "config": st.engines.cfg}
 
     # ---- settings (key never leaves the server; last 4 only)
+    def model_block() -> dict:
+        from agent.llm.models import CATALOG_SOURCE, merge_live
+        live, live_at = st.live_models()
+        ms = st.model_settings()
+        prov = st.provider()
+        return {"model": ms["llm_model"], "model_source": ms["llm_model_source"], "model_known": ms["llm_model_known"],
+                "fallback_model": ms["llm_fallback_model"], "fallback_source": ms["llm_fallback_model_source"],
+                "fallback_known": ms["llm_fallback_model_known"],
+                "active_model": ms["llm_model"] if prov.is_real else None,  # what replies are sent to right now
+                "provider": prov.name, "catalog": merge_live(live), "catalog_source": CATALOG_SOURCE,
+                "live_listed_at": live_at, "live_count": len(live)}
+
     @app.get("/api/settings")
     def get_settings():
         key, source = st.secrets.api_key()
         return {"key_present": bool(key), "key_source": source, "key_last4": st.secrets.last4(key),
                 "key_edit_allowed": st.cfg.allow_key_edit, "admin_password_set": bool(st.cfg.admin_password),
-                "spend": st.spend.summary(), "provider": st.provider().name, "model": st.cfg.llm_model,
-                "fallback_model": st.cfg.llm_fallback_model, "transport": st.cfg.transport}
+                "local_preview": st.cfg.local_preview, "share": st.cfg.exposed,
+                "spend": st.spend.summary(), **model_block(), "transport": st.cfg.transport}
 
     @app.put("/api/settings/key")
     async def put_key(request: Request):
         require_admin(st, request, for_key=True)
         body = await request.json()
         key = str(body.get("key", "")).strip()
-        if not key.startswith("sk-ant-") or len(key) < 20:
+        if not key.startswith("sk-ant-") or len(key) < 20 or any(c.isspace() for c in key):
             raise HTTPException(400, "That does not look like an Anthropic API key (sk-ant-...).")
         logscrub.register_secret(key)
         st.secrets.set("anthropic_api_key", key)
@@ -147,7 +163,8 @@ def create_app(state: AppState | None = None) -> FastAPI:
         require_admin(st, request, for_key=True)
         st.secrets.delete("anthropic_api_key")
         st._provider_cache = None
-        return {"ok": True}
+        key, source = st.secrets.api_key()
+        return {"ok": True, "key_present": bool(key), "key_source": source}  # an .env key may still apply
 
     @app.post("/api/settings/key/test")
     async def test_key(request: Request):
@@ -160,7 +177,44 @@ def create_app(state: AppState | None = None) -> FastAPI:
         except HTTPException:
             raise
         except Exception as e:
-            return JSONResponse({"ok": False, "error": logscrub.scrub(f"{type(e).__name__}: {e}")[:300]}, status_code=400)
+            return JSONResponse({"ok": False, "error": _friendly_llm_error(e, st.llm_model())}, status_code=400)
+
+    @app.put("/api/settings/model")
+    async def put_model(request: Request):
+        """Main + fallback model. Known = in the docs catalog or this key's live model list; anything else needs
+        allow_unlisted=true and is marked unverified until a Test key / call succeeds with it."""
+        require_admin(st, request)
+        from agent.llm.models import valid_id_format
+        body = await request.json()
+        model = str(body.get("model", "")).strip()
+        fb = str(body.get("fallback_model", "") or "").strip()
+        known = {m["id"] for m in model_block()["catalog"]}
+        for label, v in (("model", model), ("fallback model", fb)):
+            if label == "fallback model" and not v:
+                continue
+            if not valid_id_format(v):
+                raise HTTPException(400, f"The {label} ID '{v[:80]}' is not a valid model ID (lowercase letters, digits, dashes).")
+            if v not in known and not body.get("allow_unlisted"):
+                raise HTTPException(400, f"'{v}' is not in the model list. Refresh the list with your key, or tick "
+                                         "'use this exact ID' to save it unverified (Test key then checks it).")
+        if fb and fb == model:
+            fb = ""
+        st.set_models(model, fb or None)
+        return model_block()
+
+    @app.post("/api/settings/models/refresh")
+    async def refresh_models(request: Request):
+        """Live model list for THIS key (Models API: free, no tokens). Only runs when the user presses Refresh."""
+        require_admin(st, request)
+        prov = st.provider()
+        if not hasattr(prov, "list_models"):
+            raise HTTPException(400, "Add an API key first: the live model list comes from your Anthropic account.")
+        try:
+            live = await asyncio.wait_for(prov.list_models(), timeout=30)
+        except Exception as e:
+            return JSONResponse({"ok": False, "error": _friendly_llm_error(e, None)}, status_code=400)
+        st.save_live_models(live)
+        return model_block()
 
     @app.put("/api/settings/spend-cap")
     async def put_cap(request: Request):
@@ -169,7 +223,7 @@ def create_app(state: AppState | None = None) -> FastAPI:
         try:
             st.spend.set_cap(float(body["cap_usd"]))
         except (KeyError, ValueError, TypeError):
-            raise HTTPException(400, "cap_usd must be a number >= 0")
+            raise HTTPException(400, "The cap must be a number from 0 to 100000 (USD).")
         return st.spend.summary()
 
     # ---- calls + logs
@@ -195,6 +249,27 @@ def create_app(state: AppState | None = None) -> FastAPI:
         def no_web():
             return JSONResponse({"detail": "web UI not built: run `cd web && npm run build` (scripts/start.sh does it)"})
     return app
+
+
+def _friendly_llm_error(e: Exception, model: str | None) -> str:
+    """Plain-language Anthropic API errors for Settings (scrubbed: never contains the key)."""
+    import anthropic
+    from api.spend import SpendCapReached
+    if isinstance(e, SpendCapReached):
+        return f"Spend cap reached ({e}). Raise the cap below to make Claude calls again."
+    if isinstance(e, anthropic.AuthenticationError):
+        return "Anthropic rejected the key (401). Check that it was copied completely and is still active."
+    if isinstance(e, anthropic.PermissionDeniedError):
+        return "This key is not allowed to use that resource (403)."
+    if isinstance(e, anthropic.NotFoundError):
+        return f"Model '{model}' was not found for this key (404). Pick another model or refresh the model list."
+    if isinstance(e, anthropic.RateLimitError):
+        return "Rate limited by Anthropic (429). Wait a minute and try again."
+    if isinstance(e, anthropic.BadRequestError):
+        return logscrub.scrub(f"Anthropic refused the request (400): {getattr(e, 'message', e)}")[:300]
+    if isinstance(e, (anthropic.APIConnectionError, asyncio.TimeoutError)):
+        return "Could not reach the Anthropic API (network or timeout)."
+    return logscrub.scrub(f"{type(e).__name__}: {e}")[:300]
 
 
 async def _seed_demo_knowledge(app) -> None:

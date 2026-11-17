@@ -19,11 +19,33 @@ class Spend:
         r = self.db.one("SELECT value FROM settings WHERE key='spend_cap_usd'")
         return float(r["value"]) if r else self.default_cap
 
-    def set_cap(self, usd: float) -> None:
-        if usd < 0:
-            raise ValueError("cap must be >= 0")
-        self.db.execute("INSERT INTO settings(key,value,encrypted,updated_at) VALUES('spend_cap_usd',?,0,?) "
-                        "ON CONFLICT(key) DO UPDATE SET value=excluded.value, updated_at=excluded.updated_at", (str(usd), now()))
+    def set_cap(self, usd: float, by_user: bool = True) -> None:
+        if usd < 0 or usd != usd or usd > 100000:
+            raise ValueError("cap must be between 0 and 100000")
+        for k, v in (("spend_cap_usd", str(usd)), ("spend_cap_source", "user" if by_user else "system")):
+            self.db.execute("INSERT INTO settings(key,value,encrypted,updated_at) VALUES(?,?,0,?) "
+                            "ON CONFLICT(key) DO UPDATE SET value=excluded.value, updated_at=excluded.updated_at", (k, v, now()))
+        self.db.execute("DELETE FROM settings WHERE key='spend_cap_notice'")
+
+    @property
+    def source(self) -> str:
+        r = self.db.one("SELECT value FROM settings WHERE key='spend_cap_source'")
+        if r:
+            return r["value"]
+        return "legacy" if self.db.one("SELECT value FROM settings WHERE key='spend_cap_usd'") else "default"
+
+    def unlock_stale_zero_cap(self) -> bool:
+        """Local preview: a 0 cap that the USER never chose (written by an earlier launcher/preview) is reset to the
+        default and a notice is shown. A cap the user set in Settings is never touched; the spend ledger never is."""
+        r = self.db.one("SELECT value FROM settings WHERE key='spend_cap_usd'")
+        if not r or float(r["value"]) > 0 or self.source == "user":
+            return False
+        self.db.execute("DELETE FROM settings WHERE key='spend_cap_usd'")
+        self.db.execute("INSERT INTO settings(key,value,encrypted,updated_at) VALUES('spend_cap_notice',?,0,?) "
+                        "ON CONFLICT(key) DO UPDATE SET value=excluded.value, updated_at=excluded.updated_at",
+                        (f"The spend cap was 0 (set by an earlier launcher, not by you), which blocked every Claude call. "
+                         f"It is back to the default {self.default_cap:.2f} USD. Spend history is unchanged.", now()))
+        return True
 
     @property
     def spent(self) -> float:
@@ -35,7 +57,7 @@ class Spend:
             raise SpendCapReached(f"spend cap ${self.cap:.2f} reached (spent ${self.spent:.4f})")
 
     def record(self, model: str, usage: dict, purpose: str, call_id: str | None = None) -> float:
-        usd = cost_usd(model, usage) if model in _known() else 0.0
+        usd = cost_usd(model, usage)  # unknown models are priced conservatively, never as free
         self.db.execute(
             "INSERT INTO spend(call_id,purpose,model,input_tokens,output_tokens,cache_read_tokens,cache_write_tokens,usd,created_at) "
             "VALUES(?,?,?,?,?,?,?,?,?)",
@@ -45,7 +67,10 @@ class Spend:
 
     def summary(self) -> dict:
         rows = self.db.all("SELECT purpose, COUNT(*) n, SUM(usd) usd FROM spend GROUP BY purpose")
-        return {"cap_usd": self.cap, "spent_usd": round(self.spent, 6), "by_purpose": rows}
+        n = self.db.one("SELECT value FROM settings WHERE key='spend_cap_notice'")
+        return {"cap_usd": self.cap, "spent_usd": round(self.spent, 6), "by_purpose": rows, "default_cap_usd": self.default_cap,
+                "cap_source": self.source, "notice": n["value"] if n else None,
+                "blocked": self.spent >= self.cap}
 
 
 def _known():

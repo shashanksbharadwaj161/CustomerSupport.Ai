@@ -25,9 +25,57 @@ class AppState:
         self.engines = EngineManager()
         self.provider_override = provider_override
         self.active_calls: dict[str, dict] = {}
-        self._provider_cache: tuple[str | None, LLMProvider] | None = None
+        self._provider_cache: tuple[tuple, LLMProvider] | None = None
         key, _ = self.secrets.api_key()
         register_secret(key)
+        if self.cfg.local_preview:
+            self.spend.unlock_stale_zero_cap()
+
+    # ---- model selection (Settings): DB value > LLM_MODEL / LLM_FALLBACK_MODEL env > catalog default
+    def _setting(self, name: str) -> str | None:
+        r = self.db.one("SELECT value FROM settings WHERE key=?", (name,))
+        return r["value"] if r and r["value"] else None
+
+    def model_settings(self) -> dict:
+        import os
+        from agent.llm.models import BY_ID, DEFAULT_FALLBACK, DEFAULT_MODEL
+        out = {}
+        for key, env, default in (("llm_model", "LLM_MODEL", DEFAULT_MODEL), ("llm_fallback_model", "LLM_FALLBACK_MODEL", DEFAULT_FALLBACK)):
+            row = self.db.one("SELECT value FROM settings WHERE key=?", (key,))
+            v, src = (row["value"] if row else None), "settings"
+            if row and not v and key == "llm_fallback_model":
+                v = ""  # the user chose "no fallback"
+            elif not v:
+                v, src = (os.environ.get(env), "env") if os.environ.get(env) else (default, "default")
+            out[key] = v
+            out[key + "_source"] = src
+            out[key + "_known"] = (not v) or v in BY_ID or v in {m["id"] for m in self.live_models()[0]}
+        return out
+
+    def llm_model(self) -> str:
+        return self.model_settings()["llm_model"]
+
+    def set_models(self, model: str, fallback: str | None) -> None:
+        from api.db import now as _now
+        for k, v in (("llm_model", model), ("llm_fallback_model", fallback or "")):
+            self.db.execute("INSERT INTO settings(key,value,encrypted,updated_at) VALUES(?,?,0,?) "
+                            "ON CONFLICT(key) DO UPDATE SET value=excluded.value, updated_at=excluded.updated_at", (k, v, _now()))
+        self._provider_cache = None  # next call builds a provider with the new models
+
+    def live_models(self) -> tuple[list[dict], str | None]:
+        import json
+        r = self.db.one("SELECT value, updated_at FROM settings WHERE key='models_live'")
+        if not r or not r["value"]:
+            return [], None
+        try:
+            return json.loads(r["value"]), r["updated_at"]
+        except ValueError:
+            return [], None
+
+    def save_live_models(self, models: list[dict]) -> None:
+        from api.db import now as _now
+        self.db.execute("INSERT INTO settings(key,value,encrypted,updated_at) VALUES('models_live',?,0,?) "
+                        "ON CONFLICT(key) DO UPDATE SET value=excluded.value, updated_at=excluded.updated_at", (dumps(models), _now()))
 
     def voices(self) -> VoiceCatalog:
         rows = self.db.all("SELECT * FROM voices")
@@ -46,10 +94,12 @@ class AppState:
         key, _ = self.secrets.api_key()
         if not key:
             return DemoProvider()
-        if self._provider_cache and self._provider_cache[0] == key:
+        ms = self.model_settings()
+        ident = (key, ms["llm_model"], ms["llm_fallback_model"])
+        if self._provider_cache and self._provider_cache[0] == ident:
             return self._provider_cache[1]
-        p = AnthropicProvider(key, self.cfg.llm_model, spend=self.spend)
-        self._provider_cache = (key, p)
+        p = AnthropicProvider(key, ms["llm_model"], spend=self.spend, fallback_model=ms["llm_fallback_model"] or None)
+        self._provider_cache = (ident, p)
         return p
 
     def health(self) -> dict:
@@ -93,6 +143,8 @@ class AppState:
             stt = self.engines.peek_stt(name, opts)
             warm = stt is not None and stt._loaded and (name, lang) in self.engines.warmed
             stt_state = "ready" if warm else ("loading" if installed(name) else "unavailable")
+            if stt_state == "loading" and not _weights_on_disk(name, opts, lang):
+                stt_state = "missing"
             vids = [self.engines.cfg.get("default_voices", {}).get(lang)]
             fb = self.engines.cfg.get("cpu_fallback_voices", {}).get(lang) or []
             vids += [fb] if isinstance(fb, str) else fb
@@ -103,10 +155,13 @@ class AppState:
                     continue
                 voice = v
                 tts_state = "ready" if self.engines.tts_ready(v.engine, lang) else "loading"
+                if tts_state == "loading" and not _weights_on_disk(v.engine, v.params, lang):
+                    tts_state = "missing"
                 if v.engine not in ("indic-parler", "omnivoice") or tts_state == "ready":
                     break
             states = {stt_state, tts_state}
-            state = "unavailable" if "unavailable" in states else ("loading" if "loading" in states else "ready")
+            state = ("unavailable" if "unavailable" in states else "missing" if "missing" in states
+                     else "loading" if "loading" in states else "ready")
             fa = [r["first_audio_ms"] for r in self.db.all(
                 "SELECT first_audio_ms FROM turns WHERE role='agent' AND language=? AND first_audio_ms IS NOT NULL ORDER BY id DESC LIMIT 20", (lang,))]
             out[lang] = {"state": state, "stt": name, "stt_state": stt_state, "tts_voice": voice.id if voice else None,
@@ -149,6 +204,19 @@ class AppState:
         self.db.execute("UPDATE calls SET ended_at=?, languages_used=?, end_reason=? WHERE id=?",
                         (now(), ",".join(info.get("languages_used", [])), info.get("end_reason"), call_id))
         self.active_calls.pop(call_id, None)
+
+
+_ISO3 = {"hi": "hin", "bn": "ben", "kn": "kan"}
+
+
+def _weights_on_disk(engine: str, opts: dict, lang: str) -> bool:
+    """False only when we KNOW the weights a language needs are not downloaded yet (CPU demo engines);
+    unknown engines return True (loading) rather than claiming they are missing."""
+    from agent.engines import weights_cached
+    repo = {"faster-whisper": f"Systran/faster-whisper-{(opts or {}).get('model', 'small')}",
+            "mms": "facebook/mms-1b-all", "kokoro": "hexgrad/Kokoro-82M",
+            "mms-tts": f"facebook/mms-tts-{_ISO3.get(lang, lang)}"}.get(engine)
+    return True if repo is None else weights_cached(repo)
 
 
 def is_loopback(request: Request) -> bool:
