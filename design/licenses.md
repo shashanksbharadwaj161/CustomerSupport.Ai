@@ -14,7 +14,8 @@ listed too because they decide demo vs product use.
 | gsap | 3.15.0 | GSAP Standard "no charge" License | Free incl. commercial; not for no-code tools competing with Webflow; no reverse engineering; Webflow may change it. Re-read at release. Plugins used: CustomEase, ScrollTrigger. |
 | tailwindcss, @tailwindcss/postcss | 4.3.4 | MIT | |
 | @fontsource/noto-sans, -bengali, -devanagari, -kannada, -jp | 5.3.x | SIL OFL 1.1 | self-hosted fonts for the 5 scripts |
-| @fontsource/space-grotesk | 5.3.0 | SIL OFL 1.1 | display face (provisional until moodboard) |
+| @fontsource/space-grotesk | 5.3.0 | SIL OFL 1.1 | UI face (Signal Console direction) |
+| @fontsource/unbounded | 5.3.0 | SIL OFL 1.1 | display face: page titles and wordmark, Latin only (Signal Console direction) |
 | @fontsource/jetbrains-mono | 5.3.0 | SIL OFL 1.1 | mono / telemetry / ASCII glyph atlas |
 | playwright (dev) | 1.63.0 | Apache-2.0 | screenshots and E2E tests |
 | typescript (dev) | 5.9.3 | Apache-2.0 | |

@@ -36,7 +36,10 @@ type Props = {
 };
 
 export function Signal(props: Props) {
-  const { tier, hidden } = useEffectsTier();
+  const { tier, hidden, software, generating } = useEffectsTier();
+  // measured: with CPU-rendered WebGL the Lite orb added ~1.4 s to first audio on a 4-core PC (5.3 s vs 3.7-4.0 s with
+  // effects off). While the models generate on such a machine the orb drops to 8 fps (unless Full was chosen).
+  const liteFps = software && generating ? token.num("signal-fps-cpu-busy", 8) : token.num("signal-fps-lite", 30);
   if (tier === "off") return <StaticSignal state={props.state} lang={props.lang} className={props.className} />;
   const dpr = tier === "full" ? token.num("signal-dpr-full", 2) : token.num("signal-dpr-lite", 1);
   return (
@@ -47,7 +50,7 @@ export function Signal(props: Props) {
         camera={{ position: [0, 0, 3.2], fov: 45 }}
         gl={{ antialias: false, alpha: true, powerPreference: "high-performance" }}
       >
-        {tier === "lite" && !hidden && <FrameCap fps={token.num("signal-fps-lite", 30)} />}
+        {tier === "lite" && !hidden && <FrameCap fps={liteFps} />}
         <Particles {...props} count={tier === "full" ? token.num("signal-particles-full", 14000) : token.num("signal-particles-lite", 3500)} />
         {props.ascii && <AsciiPass lang={props.lang} cell={tier === "full" ? 9 : 12} />}
       </Canvas>

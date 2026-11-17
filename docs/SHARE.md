@@ -4,6 +4,10 @@ Let a client or a friend talk to ShaOn from their own phone, using a link you se
 Everything runs on **your Windows 10/11 PC**; a free Cloudflare "Quick Tunnel" gives it a temporary public https address.
 Nothing costs money except the Claude API, and only after you paste your own key into ShaOn's Settings page.
 
+> **Just testing on your own PC?** Double-click **`ShaOn-Local.bat`**: the full app opens with no passcode, and the API
+> key, model and spend cap are editable in Settings. It answers only this PC (docs/RUNBOOK.md, "Local preview").
+> Use the steps below only when someone else should open a link.
+
 ## Step 1 - get ShaOn and start the installer
 
 **Easiest (one line).** Open PowerShell (Start menu > type `PowerShell` > Enter), paste this line, press Enter:

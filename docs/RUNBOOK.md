@@ -12,6 +12,26 @@ You need: an Anthropic API key (console.anthropic.com; set a monthly limit there
 
 ---------------------------------------------------------------------------------------------------
 
+## Local preview on Windows (no passcode, editable key and model) - the everyday way to test
+
+Double-click **`ShaOn-Local.bat`** in the ShaOn folder (after `ShaOn-Install.bat` ran once). It:
+- turns on local preview mode: no visitor/admin passcode screen; Home, Live Call, Studio, Knowledge, Logs and
+  Settings open directly; the API key, model and spend cap are editable in Settings;
+- ignores stale `ADMIN_PASSWORD`, `VISITOR_PASSCODE`, `ALLOW_KEY_EDIT` (in the environment or `.env`) and refuses to start
+  together with `SHAON_EXPOSED`; a spend cap of 0 that you never chose yourself is reset to the default 10 USD
+  (a cap you set in Settings is kept; spend history is never erased);
+- listens on 127.0.0.1 only and answers nothing that arrives through a proxy or tunnel (403), so this no-passcode
+  mode can never be shared. For a public link use `ShaOn-Share.bat` (passcodes, key editing locked);
+- rebuilds the web app when its code changed (after `git pull`), preloads only the languages whose models are
+  downloaded (the others show "not downloaded"), and opens http://127.0.0.1:8000/ in your browser.
+
+Then in **Settings**: paste the key, press **Save key**, choose the model (Haiku 5.5 is the low-latency default; Sonnet
+5.5 is the fallback), press **Save model**, optionally **Refresh from my account** (free model list for your key), and
+press **Test key** (one tiny paid call with the selected model). Set the spend cap there too.
+Advanced: `scripts\local.ps1 -Port 8010`, `-NoBrowser`.
+
+---------------------------------------------------------------------------------------------------
+
 ## Path A - Windows + WSL2 + NVIDIA GPU
 
 ### A1. WSL2 and the GPU (once)

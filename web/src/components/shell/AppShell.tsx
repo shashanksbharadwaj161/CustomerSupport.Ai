@@ -124,7 +124,7 @@ function DemoReasons() {
   );
 }
 
-export function AppShell({ children, wide = false, bare = false }: { children: React.ReactNode; wide?: boolean; bare?: boolean }) {
+export function AppShell({ children, wide = false, bare = false, reasons = true }: { children: React.ReactNode; wide?: boolean; bare?: boolean; reasons?: boolean }) {
   const path = usePathname() || "/";
   return (
     <div className="shell console-bg">
@@ -135,7 +135,7 @@ export function AppShell({ children, wide = false, bare = false }: { children: R
           style={bare ? undefined : { maxWidth: wide ? "none" : "var(--content-max)", padding: "0 var(--gutter)" }}>
           {/* route transition: content only (the dock is fixed and must not be inside a transformed box) */}
           <div key={path} className="page-enter">
-            {!bare && <DemoReasons />}
+            {!bare && reasons && <DemoReasons />}
             {children}
           </div>
         </main>

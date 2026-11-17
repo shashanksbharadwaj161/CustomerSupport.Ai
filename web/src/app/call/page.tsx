@@ -182,7 +182,7 @@ export default function LiveCall() {
 
   const callLabel = status === "connecting" ? "Connecting" : live ? "Live" : status === "ended" ? "Ended" : status === "error" ? "Not connected" : "Ready";
   return (
-    <AppShell wide>
+    <AppShell wide reasons={false}>
       <div className="mx-auto" style={{ maxWidth: 1480 }}>
         {/* control bar */}
         <div className="flex flex-wrap items-end gap-3 pt-5 pb-4" style={{ borderBottom: "1px solid var(--line)" }}>
@@ -193,11 +193,11 @@ export default function LiveCall() {
               <span data-testid="call-state">{callLabel}</span><span className="faint" style={{ fontWeight: 400 }}> · {state}</span>
             </h1>
           </div>
-          <label className="label" style={{ minWidth: 220, flex: "1 1 220px", maxWidth: 320 }}>Agent
+          <label className={`label ${live ? "hidden sm:flex" : ""}`} style={{ minWidth: 220, flex: "1 1 220px", maxWidth: 320 }}>Agent
             <select value={profileId ?? ""} onChange={(e) => setProfileId(e.target.value)} disabled={live} data-testid="profile-select">
               {profiles.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
             </select></label>
-          <label className="label" style={{ minWidth: 170, flex: "0 1 190px" }}>Transport
+          <label className={`label ${live ? "hidden sm:flex" : ""}`} style={{ minWidth: 170, flex: "0 1 190px" }}>Transport
             <select value={transport} onChange={(e) => setTransport(e.target.value as TransportKind)} disabled={live}>
               <option value="smallwebrtc">WebRTC (this PC)</option><option value="websocket">WebSocket (link)</option>
             </select></label>
@@ -215,11 +215,11 @@ export default function LiveCall() {
 
         <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(340px,440px)] items-start">
           {/* stage + telemetry */}
-          <div className="grid gap-4 min-w-0">
-            <section className="hud relative overflow-hidden p-3 md:p-6" aria-label="Voice visual" style={{ ["--tick-c" as string]: live ? "var(--signal)" : "var(--line-strong)" }}>
+          <div className="contents lg:grid gap-4 min-w-0">
+            <section className="hud relative overflow-hidden p-3 md:p-6 order-1 lg:order-none" aria-label="Voice visual" style={{ ["--tick-c" as string]: live ? "var(--signal)" : "var(--line-strong)" }}>
               <SignalStage state={state} lang={lang} levelsRef={levels} className="w-full mx-auto max-w-[min(640px,70vh)]" compact={false} testid="call-stage" />
             </section>
-            <Module index="T" title="Telemetry · last turn" light={timing.first_audio_ms ? "ok" : "off"} testid="telemetry"
+            <Module index="T" title="Telemetry" className="order-5 lg:order-none" light={timing.first_audio_ms ? "ok" : "off"} testid="telemetry"
               actions={<span>{transport} · {info.provider ?? "llm -"} · fx {tier}</span>}>
               <Latency timing={timing} />
               <dl className="rows mt-4">
@@ -231,12 +231,12 @@ export default function LiveCall() {
           </div>
 
           {/* right column: get ready / transcript / controls */}
-          <div className="grid gap-4 min-w-0">
-            {!live && status !== "connecting" && <GetReady ready={ready} canStart={!!profileId} onStart={start} />}
-            <Module index="C" title="Transcript" light={live ? "live" : lines.length ? "ok" : "off"} actions={<span>{lines.length} lines</span>}>
+          <div className="contents lg:grid gap-4 min-w-0">
+            {!live && status !== "connecting" && <div className="order-2 lg:order-none"><GetReady ready={ready} canStart={!!profileId} onStart={start} /></div>}
+            <Module index="C" title="Transcript" className="order-3 lg:order-none" light={live ? "live" : lines.length ? "ok" : "off"} actions={<span>{lines.length} lines</span>}>
               <Transcript lines={lines} />
             </Module>
-            <Module index="V" title="Language & voice">
+            <Module index="V" title="Language & voice" className="order-4 lg:order-none">
               <div className="grid gap-4">
                 <div>
                   <p className="label mb-2">Language override</p>

@@ -15,6 +15,8 @@ PENDING = cannot be done here; says who must do it.
 | UI | all pages, tiers, reduced motion, axe 0 violations, 64 screenshots | Folded Signal moodboard + assets for final styling - you |
 | M0 numbers | harness, Kaggle runbook, recorder, rater | native recordings + ratings - native speakers; GPU run - you / Kaggle |
 | Share link (PC + Quick Tunnel) | `ShaOn-Share.bat` launcher (run under PowerShell 7 with a stub tunnel), visitor/admin passcodes, Host/Origin checks, busy + max length, SSRF guard, Get-ready screen; 5 languages + 3 switches through the share-mode server | **public tunnel path: NOT TESTED** (sandbox cannot reach the Cloudflare edge); Windows PowerShell 5.1 + real phone - you |
+| Local preview + Settings | `ShaOn-Local.bat`: no passcode, loopback only; API key save/replace/remove/test, model selector (docs catalog + live list on demand), fallback, editable spend cap; all with mocked Anthropic client + a browser E2E with a fake key | your real key + Test key, and the launcher on real Windows - you |
+| UI "Signal Console" redesign | console shell, interactive orb stage, all six pages, phone layouts, tiers, reduced motion; axe 0 violations; screenshots in `design/screens/v2/` | native-speaker look at the five scripts; your taste - you |
 | Windows installer | `ShaOn-Install.bat` / one-line command: preflight, winget tools, clone/pull, pinned venv, web build, models, self-test, first-run key step, hand-off to the share launcher; 8 stubbed scenarios 44/44 under PowerShell 7; the real pinned install + model download + self-test pass on Linux | **NOT TESTED: real winget, Windows 10/11, Windows PowerShell 5.1, real tunnel, real phone** - you (first run on your laptop) |
 
 ## D0 - Design spike: BUILT
@@ -190,6 +192,47 @@ How to use: docs/SHARE.md ("Install and share in two steps").
 - **NOT TESTED here: real winget, real Windows 10/11, Windows PowerShell 5.1, Windows Defender/SmartScreen behaviour,
   pip wheels on Windows (checked against PyPI only), the real Cloudflare tunnel, a real phone.** Shortest real test: on
   the laptop run the one-line command from docs/SHARE.md, wait for the link, open it on a phone on mobile data.
+
+## Local preview, working Settings, Signal Console redesign (2026-11-17): BUILT + VERIFIED here; real Windows NOT TESTED
+How to use: double-click `ShaOn-Local.bat` (docs/RUNBOOK.md, "Local preview on Windows").
+- **Local preview (no auth)**: `SHAON_LOCAL_PREVIEW=1` (set by `scripts/local.ps1`) disables passcodes and forces key
+  editing on, IGNORING stale `ADMIN_PASSWORD` / `VISITOR_PASSCODE` / `ALLOW_KEY_EDIT` from the environment or `.env`;
+  refuses to start with `SHAON_EXPOSED`; binds 127.0.0.1 and returns 403 for anything with proxy/tunnel headers or a
+  non-loopback peer (no unauthenticated key endpoint can be published). Share mode (`ShaOn-Share.bat`) is unchanged and
+  forces local preview off. Verified: pytest (stale passcodes, forwarded requests 403, cannot combine with share mode,
+  share mode still gates Settings) + the real launcher under PowerShell 7 with stale env (7/7).
+- **Settings**: key save/replace/remove (encrypted at rest, last 4 only, scrubbed), explicit Test key (one tiny call with
+  the selected model; friendly 401/404/429 messages). Model selector: catalog cached from Anthropic's model + pricing
+  docs (2026-11-03), live list from the Models API (`models.list`, free) only when "Refresh from my account" is pressed;
+  explicit IDs only with an opt-in tick, marked unverified. Main + fallback model persisted in the DB, used by call
+  replies, guard checks, site briefs and knowledge Q&A; provider cache rebuilt on change; the model the API reports is
+  recorded per turn and shown in telemetry/Logs. Per-model request parameters (thinking/effort rules differ per model).
+  Unknown model IDs are priced at the highest known rate, so the spend cap can never be bypassed. Spend cap editable;
+  a 0 cap the user never set (e.g. from an earlier preview launcher) is reset to 10 USD with a notice; user caps and
+  history untouched.
+- Verified with mocks only (no Anthropic network call in this session): tests/test_settings_models.py (19 tests: what is
+  actually sent per model, persistence across restart, provider invalidation, fallback on 404, refresh, pricing guard,
+  cap rules, key never in responses/logs) and tests/e2e/run_settings_e2e.py (18/18: every page opens without login,
+  fake key masked, model persists after reload and shows in the status strip, unlisted ID needs the tick, cap edit,
+  orb demo states, fake key in no HTTP response and no server log).
+- **Redesign "Signal Console"** (design/references.md, DESIGN.md section 1): tokens, console shell (rail / dock / status
+  strip), page transitions, SignalStage (reticle, live call-outs, per-state behaviour, drag/keys rotate+zoom, static in
+  Off tier and reduced motion), Landing (hero with labelled simulated demo, signal chain, languages, presets, live ready
+  check), Live Call (real mic/playback reactivity, transcript, latency telemetry, language/voice controls), Studio,
+  Knowledge, Logs, Settings. Checked in Chromium at 1440 px and 390 px (no horizontal overflow on any page), during a
+  real fake-mic call (listening / thinking / speaking captured), with reduced motion; axe: 0 violations. Fixed during
+  review: orb particles clipped into a square at high levels, CSS layer order, phone ordering, message ordering.
+- Windows checkout fix: tracked screenshots named `logs_?id=...png` renamed (`logs_id_...`), screenshot names sanitised,
+  and tests/test_repo_hygiene.py fails on any Windows-invalid tracked filename.
+- **Pending on your PC**: Hindi/Bengali/Kannada models are not downloaded there (those languages show "not downloaded";
+  `ShaOn-Install.bat` fetches them, ~5 GB more); your real key + Test key; one real call. Not tested here: Windows
+  PowerShell 5.1 running `local.ps1`, Windows browsers, time-to-first-audio with the new visuals on your PC.
+- **Time to first audio, effects on vs off (measured here, n=3 each, English fake-mic call, fake LLM)**: Lite median
+  5.08 s (4.02-5.59) vs Off median 4.10 s (3.18-4.20), so the orb still costs about 1 s in THIS sandbox, where the
+  browser renders WebGL in software on the same 4 CPU cores as the speech models (before the fix: Lite 5.28-5.33 s vs
+  Off 3.70-3.98 s). Mitigation added: on CPU-rendered WebGL, while the models generate, the orb drops to 8 fps and the
+  reticle updates about 8 times per second (unless you pick Full). On a PC whose browser uses the GPU for WebGL the cost
+  should be smaller; NOT measured. If the delay matters, choose Effects: Off for calls (Settings > Visual effects).
 
 ## M9 - Eval report skeleton: BUILT
 - `python -m eval.make_eval_report` -> `docs/EVAL_REPORT.md`: per-language table (STT, LID, Claude, retrieval, TTS rating,

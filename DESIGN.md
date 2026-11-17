@@ -4,7 +4,13 @@ Goal: a spectacular, futuristic, award-level interface: shaders, particles, ASCI
 
 ## 1. Art direction
 
-- Primary direction: your APPROVED "Folded Signal" moodboard (from your handoff notes). I have not seen it. Copy its files into `design/moodboard/` and extract palette, type and shape language into the tokens below before building. The tokens in section 3 are provisional until then.
+- **Current direction (2026-11-17): "Signal Console"**, authorised by you as the final visual direction without waiting
+  for the Folded Signal moodboard. It came from references studied on dribbble.com/tags/futuristic-website (notes and
+  principles in `design/references.md`; no third-party assets copied). Graphite instrument panels, hairline frames with
+  corner ticks, one acid signal accent, Unbounded / Space Grotesk / JetBrains Mono plus Noto for the scripts, the orb
+  inside a measuring reticle. Tokens: `web/src/styles/tokens.css`. Screens: `design/screens/v2/`.
+- Earlier plan (superseded): the "Folded Signal" moodboard. If you still want it applied, copy it into `design/moodboard/`
+  and the tokens can be re-tuned; the component structure does not depend on it.
 - Rejected direction: NOVARA (research history). Do not use it as a reference.
 - Concept hook: a "signal" that listens, thinks, speaks and morphs between languages. The voice is the hero graphic.
 - Reuse your existing assets from the shaon-tech project: two generated image masters, their 12 deployed AVIF/WebP variants, original website graphics, and the Flow video experiment (all from your notes). Copy into `design/assets/`. Do not reuse assets you do not own.
@@ -38,7 +44,7 @@ Use references for inspiration and technique. Do not clone layouts, copy code or
 | GSAP Motion Lab | https://horizonx.so/explore/gsap-scroll-motion-lab | Motion experiments | Timeline and scroll patterns |
 | NOVARA | https://horizonx.so/explore/novara-creative-studio | REJECTED direction | Do not use |
 
-## 3. Design tokens (provisional until Folded Signal is extracted)
+## 3. Design tokens (Signal Console, in web/src/styles/tokens.css)
 
 - Color roles: `bg`, `surface`, `surface-raised`, `ink`, `ink-muted`, `signal` (primary glow), `signal-alt`, `warn`, `danger`, plus one hue per language (en, ja, hi, bn, kn) used for badges, orb tint and ASCII tint. Dark theme first; build a light theme only if time allows.
 - Type: oversized display face (KILN-style), mono face for telemetry and ASCII, and Noto families for content in each script: Noto Sans Bengali, Noto Sans Devanagari, Noto Sans Kannada, Noto Sans JP. Check every script renders with proper line height and shaping in transcripts, buttons and the Studio.

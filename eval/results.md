@@ -181,3 +181,14 @@ fake LLM, browser over the WebSocket transport on localhost. One run each. The p
 
 Visitor UI checks (share_ui_e2e.json): wrong passcode, Get ready, busy, max call length, offline mid-call: 5/5 PASS.
 Security tests: 21/21 (tests/test_share_security.py). Launcher with stub tunnel: 7/7.
+
+## Visual effects vs time to first audio (2026-11-17, Signal Console redesign)
+English fake-mic call (tests/e2e/audio/en_question.wav), fake LLM, WebSocket, CPU-only sandbox (4 cores) where the
+browser renders WebGL in software (SwiftShader). n=3 per setting, after the CPU-busy throttle.
+
+| Effects | first audio (ms) | median |
+|---|---|---|
+| Lite | 5079, 5589, 4015 | 5079 |
+| Off | 4203, 4096, 3180 | 4096 |
+
+Before the throttle (n=2): Lite 5332, 5277 vs Off 3696, 3975. Not measured on a PC with hardware WebGL.

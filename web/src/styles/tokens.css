@@ -78,6 +78,7 @@
   --signal-dpr-full: 2;
   --signal-dpr-lite: 1;
   --signal-fps-lite: 30;
+  --signal-fps-cpu-busy: 8;     /* CPU-rendered WebGL while the speech models generate (measured cost, STATUS.md) */
 }
 
 @media (min-width: 768px) {

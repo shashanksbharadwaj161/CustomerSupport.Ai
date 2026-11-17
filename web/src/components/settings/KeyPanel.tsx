@@ -122,7 +122,7 @@ function SpendModule({ s, reload }: { s: S; reload: () => Promise<unknown> }) {
 }
 
 function price(m: CatalogModel) {
-  return m.in == null ? "price unknown: capped at the highest rate" : `$${m.in} in · $${m.out} out / MTok`;
+  return m.in == null ? "price unknown: capped at the highest rate" : `$${m.in.toFixed(2)} in · $${(m.out ?? 0).toFixed(2)} out / MTok`;
 }
 
 function ModelModule({ s, reload }: { s: S; reload: () => Promise<unknown> }) {

@@ -29,6 +29,8 @@ export function Hero() {
 
   // wordmark first, then the language motif; then a scripted demo loop until the visitor interacts
   useEffect(() => {
+    // reduced motion / Off tier: no self-changing content, the visitor drives the demo
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches || document.documentElement.dataset.effects === "off") setAuto(false);
     const t = window.setTimeout(() => setMotif(undefined), 2600);
     return () => window.clearTimeout(t);
   }, []);
@@ -78,9 +80,9 @@ export function Hero() {
           </dl>
         </div>
 
-        <div className="min-w-0 order-1 lg:order-2">
-          <SignalStage state={state} lang={lang} levelsRef={levels} motif={motif} ascii={ascii} simulated className="w-full max-w-[640px] mx-auto" testid="hero-stage" />
-          <div className="module mt-4" data-testid="demo-controls" onPointerDown={take}>
+        <div className="contents lg:block min-w-0 lg:order-2">
+          <SignalStage state={state} lang={lang} levelsRef={levels} motif={motif} ascii={ascii} simulated className="w-full max-w-[640px] mx-auto order-1 lg:order-none" testid="hero-stage" />
+          <div className="module mt-4 order-3 lg:order-none" data-testid="demo-controls" onPointerDown={take}>
             <div className="module-head"><span className={`light ${auto ? "light-live" : "light-ok"}`} /><span className="ttl">Simulated demo</span>
               <span className="spacer" /><span>{auto ? "auto" : "manual"}</span></div>
             <div className="module-body grid gap-3">

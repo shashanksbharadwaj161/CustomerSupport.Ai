@@ -15,6 +15,8 @@ scripts/start.sh
 ```
 Open http://127.0.0.1:8000. Missing key or models -> honest demo mode (yellow banner; Settings > Engines).
 
+**Test locally (Windows, no passcode, key + model editable in Settings):** double-click `ShaOn-Local.bat`.
+
 **Install + share with a link (free, Windows PC):** double-click `ShaOn-Install.bat` (or the one-line command in
 [docs/SHARE.md](docs/SHARE.md)): it installs everything and ends with a public link. Later: `ShaOn-Share.bat`.
 Full setup from a fresh Windows/WSL2 PC or a Kaggle-only setup: **[docs/RUNBOOK.md](docs/RUNBOOK.md)**.

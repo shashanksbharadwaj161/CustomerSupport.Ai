@@ -42,7 +42,8 @@ type Props = {
 };
 
 export function SignalStage({ state, lang, levelsRef, motif, ascii, simulated, className = "", compact, testid = "signal-stage" }: Props) {
-  const { tier } = useEffectsTier();
+  const { tier, software, generating } = useEffectsTier();
+  const busyCpu = software && generating && tier !== "full";  // CPU-rendered page while the models work: update ~8x/s
   const control = useRef<Control>(emptyControl());
   const box = useRef<HTMLDivElement>(null);
   const drag = useRef<{ x: number; y: number; yaw: number; pitch: number } | null>(null);
@@ -53,12 +54,14 @@ export function SignalStage({ state, lang, levelsRef, motif, ascii, simulated, c
   useEffect(() => {
     const el = box.current;
     if (!el) return;
-    let raf = 0, t0 = performance.now();
+    let raf = 0, t0 = performance.now(), last = 0;
     const mic = el.querySelector<HTMLElement>("[data-v=mic]"), out = el.querySelector<HTMLElement>("[data-v=out]");
     const yaw = el.querySelector<HTMLElement>("[data-v=yaw]");
     const arc = el.querySelector<SVGCircleElement>("[data-v=arc]");
     const C = 2 * Math.PI * 41;
     const tick = (t: number) => {
+      if (busyCpu && t - last < 120) { raf = requestAnimationFrame(tick); return; }
+      last = t;
       const L = levelsRef.current;
       const m = L?.mic ?? 0, o = L?.out ?? 0;
       el.style.setProperty("--lvl-mic", m.toFixed(3));
@@ -72,7 +75,7 @@ export function SignalStage({ state, lang, levelsRef, motif, ascii, simulated, c
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [levelsRef, state, still]);
+  }, [levelsRef, state, still, busyCpu]);
 
   const onDown = (e: React.PointerEvent) => {
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);

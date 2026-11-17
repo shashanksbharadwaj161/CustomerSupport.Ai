@@ -19,6 +19,8 @@ type Ctx = {
   reducedMotion: boolean;
   hidden: boolean;
   generating: boolean;
+  /** WebGL runs on the CPU (SwiftShader / llvmpipe): the orb competes with the speech models for the same cores */
+  software: boolean;
   setChoice: (c: TierChoice) => void;
   setGenerating: (g: boolean) => void;
 };
@@ -102,7 +104,7 @@ export function EffectsProvider({ children }: { children: React.ReactNode }) {
     try { window.localStorage.setItem(KEY, c); } catch {}
   }, []);
 
-  const value = { choice, tier, measuredFps, reducedMotion, hidden, generating, setChoice, setGenerating };
+  const value = { choice, tier, measuredFps, reducedMotion, hidden, generating, software, setChoice, setGenerating };
   return <EffectsContext.Provider value={value}>{children}</EffectsContext.Provider>;
 }
 
