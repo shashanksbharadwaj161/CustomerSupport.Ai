@@ -40,6 +40,8 @@ particle hero, ASCII) are re-implemented from scratch.
 | facebook/mms-1b-all (Wav2Vec2 + adapters) | **CC-BY-NC-4.0** | CPU STT candidate for hi/bn/kn: **evaluation / demo only**, never in a product |
 | facebook/mms-tts-hin, -ben, -kan (VITS) | **CC-BY-NC-4.0** | CPU voices for hi/bn/kn: **DEMO ONLY, robotic pipeline-testing voices** (badge in UI) |
 | transformers | Apache-2.0 | runtime for MMS / IndicConformer / Parler |
+| pyopenjtalk-plus | MIT | Japanese G2P for Kokoro (replaces pyopenjtalk: prebuilt Windows wheels, dictionary bundled) |
+| SudachiPy / SudachiDict-core | Apache-2.0 | dependencies of pyopenjtalk-plus |
 | segno | BSD-3-Clause | QR code for the share link (scripts/share_helper.py) |
 | cloudflared (installed by the user, not bundled) | Apache-2.0 | free Quick Tunnel for the share link |
 
