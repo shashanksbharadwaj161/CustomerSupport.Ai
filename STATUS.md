@@ -192,6 +192,58 @@ How to use: docs/SHARE.md ("Install and share in two steps").
 - **NOT TESTED here: real winget, real Windows 10/11, Windows PowerShell 5.1, Windows Defender/SmartScreen behaviour,
   pip wheels on Windows (checked against PyPI only), the real Cloudflare tunnel, a real phone.** Shortest real test: on
   the laptop run the one-line command from docs/SHARE.md, wait for the link, open it on a phone on mobile data.
+| Live speech pipeline + website recordings | "TTS context completed with no audio" fixed (regression test); Mithi v2 Flash voices for hi/bn/kn; real two-speaker calls through the website recorded in all 5 languages, 5/5 PASS, first audio 6.4-8.9 s on 4 CPU cores | real Claude conversations (your key) and the same calls on your Windows PC - you |
+
+## Live speech pipeline fix, CPU voices, two-speaker website recordings (2026-11-17): BUILT + VERIFIED here; Claude + Windows PENDING
+- **Bug "RouterTTS ... TTS context ... completed with no audio" (the call failure on Windows): FIXED.** Cause: pipecat closes
+  an audio context that produces no audio for 3 s (`stop_frame_timeout_s`) and, after 3 such contexts, retires the
+  service. ShaOn synthesised a whole sentence in one blocking call; a cold Kokoro sentence took 13-17 s on CPU, so the
+  context was closed while it was still being synthesised and the voice died for the rest of the call. Fix
+  (agent/pipeline/services.py): synthesis runs in a worker thread and refreshes the audio context every second while it
+  works; zero-audio contexts no longer retire the service; long replies are split at clause punctuation and the first
+  clause plays while the rest is synthesised; audio goes out in 0.2 s chunks at the engine's own rate (24 kHz Kokoro/Mithi,
+  16 kHz MMS) and is resampled by pipecat. Regression test: tests/test_tts_context_regression.py (a 4.5 s fake
+  synthesis reproduces the warning without the fix; with it: audio arrives, no warning, a later turn still speaks).
+  Server logs of all 5 recordings: 0 "no audio" warnings, 0 error events.
+- Other fixes: one Whisper pass for language ID + transcription (no second decode); `SHAON_TORCH_THREADS` caps torch and
+  CTranslate2 threads (oversubscription made synthesis 3-5x slower when the browser shares the CPU); Japanese works
+  without the 0.5 GB UniDic (falls back to the bundled pyopenjtalk dictionary; test); clear mic errors instead of
+  "Connection lost" when no microphone or a busy one; a voice whose engine is not installed falls back to the next CPU voice.
+- **Voices evaluated (CPU, eval/results.md "CPU voices compared")**: Kokoro-82M (en/ja, Apache-2.0) kept; **Mithi v2 Flash**
+  (Oomni/mithi-v2-flash, Apache-2.0; its self-contained run.py was reviewed: no network/subprocess, safetensors) is the
+  new default for hi/bn/kn, MMS-TTS stays as last fallback. Warm RTF Mithi 0.51-0.82, Kokoro 0.24-0.85, MMS 0.15-0.25;
+  round-trip recognition CER <= 0.145 for every voice. No MOS / native naturalness rating exists (none invented); the
+  Mithi authors say its expression is flatter than larger models. **Indic Parler-TTS: PENDING** (gated on Hugging Face,
+  no token here). Indic-Speak: not used (restricted licence). New download: ~0.21 GB (ShaOn-Local.bat fetches it once).
+- **Website recordings** (tests/e2e/conversations/: record_conversations.py + web/scripts/conversation_record.mjs +
+  report.py). Real /call/ page in headed Chromium; a synthetic CUSTOMER (its own voice) speaks into the browser
+  microphone through PulseAudio; the browser's speaker output and the customer are recorded together with the screen by
+  ONE ffmpeg process; nothing is edited afterwards. Fake demo bank (Lotus Bay Bank), AI disclosure in the greeting.
+  **Agent replies come from the SCRIPTED test provider (`SHAON_LLM_PROVIDER=scripted`), NOT Claude**: there is no Anthropic
+  key in this cloud machine and your Windows key was not copied. The UI shows "SCRIPTED REPLIES · NOT CLAUDE" in every
+  frame. Everything else (mic capture, VAD, language ID, STT, routing, TTS, playback) is the real pipeline.
+
+  | Language | Result | Agent voice | Customer voice | STT | STT ms (turn 1, 2) | First audio ms (turn 1, 2) | Full | Excerpt |
+  |---|---|---|---|---|---|---|---|---|
+  | English | PASS | Kokoro af_heart | Kokoro am_michael | Whisper small | 3955, 4356 | 6509, 7074 | 52.8 s | 2.3-32.3 s |
+  | Hindi | PASS | Mithi ahana | Kokoro hm_omega | MMS-1B-all | 4278, 4796 | 8290, 8441 | 59.2 s | 2.2-32.2 s |
+  | Bengali | PASS | Mithi ahana | Mithi nakul | MMS-1B-all | 4320, 4776 | 8238, 8137 | 57.8 s | 3.1-33.1 s |
+  | Kannada | PASS | Mithi ahana | Mithi nakul | MMS-1B-all | 4358, 4700 | 8912, 8739 | 61.8 s | 2.4-34.1 s |
+  | Japanese | PASS | Kokoro jf_alpha | Kokoro jm_kumo | Whisper small | 3637, 3298 | 6399, 7963 | 58.9 s | 3.5-33.5 s |
+
+  PASS = 1280x720 H.264 + AAC; both customer lines, the greeting and both answers audible; both customer turns recognised
+  in the right language; both answers in native script AND answering the question asked (hours, then lost card); no
+  error events. First audio = customer stopped speaking -> first agent audio in the browser (end-of-speech wait + STT +
+  reply + first clause of TTS), measured, not trimmed. A full exchange takes 53-62 s, so `shaon-conversation-xx.mp4` is a
+  ~30 s EXCERPT (one contiguous cut: greeting, question, the real wait, the answer; labelled EXCERPT on screen) and
+  `shaon-conversation-xx-full.mp4` is the whole unedited call. Videos stay out of Git (eval/out/conversations/).
+  Earlier failure kept on record: the first Bengali take answered the wrong question (keyword "কার" matched নমস্কার);
+  the report was too lenient and called it PASS. Fixed the keywords, added a test, made the report check the answer.
+- Where the latency goes on this 4-core machine (browser with software WebGL + recorder on the same cores): STT
+  3.3-4.8 s per turn (MMS-1B for hi/bn/kn; Whisper small for en/ja), TTS first clause 2.5-4.7 s. On a PC with an NVIDIA
+  GPU both should drop a lot; NOT measured.
+- **PENDING**: real Claude replies (put your key in Settings, Test key, one call per language); the same calls on your
+  Windows PC (`git pull`, ShaOn-Local.bat); native-speaker ratings of the Mithi voices; Indic Parler-TTS (HF token).
 
 ## Local preview, working Settings, Signal Console redesign (2026-11-17): BUILT + VERIFIED here; real Windows NOT TESTED
 How to use: double-click `ShaOn-Local.bat` (docs/RUNBOOK.md, "Local preview on Windows").

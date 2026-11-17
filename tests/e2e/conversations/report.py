@@ -115,10 +115,10 @@ def full_path(lang: str) -> pathlib.Path:
 
 
 def make_excerpt(run: dict) -> dict:
-    """ONE contiguous 30-s cut of the unedited recording (no internal edits, latency kept), labelled EXCERPT on screen.
+    """ONE contiguous ~30-s cut of the unedited recording (no internal edits, latency kept), labelled EXCERPT on screen.
 
-    Window: from the start of the call (AI disclosure greeting) when the first answer finishes inside 30 s, otherwise
-    the 30 s that end just after the first answer (customer question + the real wait + the answer)."""
+    Window: from 0.4 s before the first sound (the spoken AI-disclosure greeting) to just after the first agent answer,
+    i.e. greeting + customer question + the real wait + the answer; at least 30 s, at most 34 s."""
     lang = run["lang"]
     full, out = full_path(lang), OUT / f"shaon-conversation-{lang}.mp4"
     ev = {}
@@ -126,10 +126,12 @@ def make_excerpt(run: dict) -> dict:
         ev.setdefault(e["ev"], []).append(e["t"])
     rs = ev["record_start"][0]
     dur = run["probe"]["duration_s"]
-    a1 = ev["agent_done"][0] - rs + 0.8
-    start = 0.0 if a1 <= EXCERPT_S else min(a1 - EXCERPT_S, ev["customer_start"][0] - rs - 0.5)
-    start = max(0.0, min(start, dur - EXCERPT_S))
-    end = min(dur, start + EXCERPT_S)
+    sd = subprocess.run(["ffmpeg", "-hide_banner", "-t", "20", "-i", str(full), "-vn", "-af", "silencedetect=n=-40dB:d=0.3", "-f", "null", "-"],
+                        capture_output=True, text=True).stderr
+    first = next((float(ln.split("silence_end:")[1].split()[0]) for ln in sd.splitlines() if "silence_end:" in ln), 0.0)
+    start = max(0.0, first - 0.4)
+    a1 = ev["agent_done"][0] - rs + 0.6
+    end = min(dur, start + 34.0, max(start + EXCERPT_S, a1))
     label = (f"EXCERPT  {start:.1f}s-{end:.1f}s of the unedited {dur:.1f}s recording  "
              f"(shaon-conversation-{lang}-full.mp4)  live call, not sped up")
     vf = (f"drawbox=x=0:y=ih-30:w=iw:h=30:color=black@0.72:t=fill,"

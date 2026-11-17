@@ -1,0 +1,227 @@
+[
+ {
+  "lang": "en",
+  "language": "English",
+  "pass": true,
+  "why": [],
+  "provider": "scripted",
+  "model_served": "scripted",
+  "customer_voice": "kokoro_en_michael",
+  "agent_voice": "kokoro_en_heart",
+  "agent_voices_used": [
+   "kokoro_en_heart (kokoro)"
+  ],
+  "stt": "faster-whisper:small",
+  "first_audio_ms": [
+   6509,
+   7074
+  ],
+  "stt_ms": [
+   3955,
+   4356
+  ],
+  "duration_s": 52.76,
+  "audio_errors": 0,
+  "customer_max_db": [
+   -3.3,
+   -4.6
+  ],
+  "agent_max_db": [
+   -7.6,
+   -9.0,
+   -3.7
+  ],
+  "excerpt": {
+   "file": "shaon-conversation-en.mp4",
+   "full_file": "shaon-conversation-en-full.mp4",
+   "start_s": 2.3,
+   "end_s": 32.3,
+   "duration_s": 30.0,
+   "width": 1280,
+   "height": 720,
+   "video_codec": "h264",
+   "audio_codec": "aac",
+   "max_db": -3.3
+  }
+ },
+ {
+  "lang": "hi",
+  "language": "Hindi",
+  "pass": true,
+  "why": [],
+  "provider": "scripted",
+  "model_served": "scripted",
+  "customer_voice": "kokoro_hi_omega",
+  "agent_voice": "mithi_hi_ahana",
+  "agent_voices_used": [
+   "mithi_hi_ahana (mithi)"
+  ],
+  "stt": "mms",
+  "first_audio_ms": [
+   8290,
+   8441
+  ],
+  "stt_ms": [
+   4278,
+   4796
+  ],
+  "duration_s": 59.16,
+  "audio_errors": 0,
+  "customer_max_db": [
+   -3.6,
+   -3.5
+  ],
+  "agent_max_db": [
+   -1.4,
+   -1.4,
+   -1.4
+  ],
+  "excerpt": {
+   "file": "shaon-conversation-hi.mp4",
+   "full_file": "shaon-conversation-hi-full.mp4",
+   "start_s": 2.2,
+   "end_s": 32.2,
+   "duration_s": 30.0,
+   "width": 1280,
+   "height": 720,
+   "video_codec": "h264",
+   "audio_codec": "aac",
+   "max_db": -1.4
+  }
+ },
+ {
+  "lang": "bn",
+  "language": "Bengali",
+  "pass": true,
+  "why": [],
+  "provider": "scripted",
+  "model_served": "scripted",
+  "customer_voice": "mithi_bn_nakul",
+  "agent_voice": "mithi_bn_ahana",
+  "agent_voices_used": [
+   "mithi_bn_ahana (mithi)"
+  ],
+  "stt": "mms",
+  "first_audio_ms": [
+   8238,
+   8137
+  ],
+  "stt_ms": [
+   4320,
+   4776
+  ],
+  "duration_s": 57.8,
+  "audio_errors": 0,
+  "customer_max_db": [
+   -3.5,
+   -3.5
+  ],
+  "agent_max_db": [
+   -1.4,
+   -1.4,
+   -1.3
+  ],
+  "excerpt": {
+   "file": "shaon-conversation-bn.mp4",
+   "full_file": "shaon-conversation-bn-full.mp4",
+   "start_s": 3.1,
+   "end_s": 33.1,
+   "duration_s": 30.0,
+   "width": 1280,
+   "height": 720,
+   "video_codec": "h264",
+   "audio_codec": "aac",
+   "max_db": -1.4
+  }
+ },
+ {
+  "lang": "kn",
+  "language": "Kannada",
+  "pass": true,
+  "why": [],
+  "provider": "scripted",
+  "model_served": "scripted",
+  "customer_voice": "mithi_kn_nakul",
+  "agent_voice": "mithi_kn_ahana",
+  "agent_voices_used": [
+   "mithi_kn_ahana (mithi)"
+  ],
+  "stt": "mms",
+  "first_audio_ms": [
+   8912,
+   8739
+  ],
+  "stt_ms": [
+   4358,
+   4700
+  ],
+  "duration_s": 61.8,
+  "audio_errors": 0,
+  "customer_max_db": [
+   -3.6,
+   -3.5
+  ],
+  "agent_max_db": [
+   -1.4,
+   -1.4,
+   -1.3
+  ],
+  "excerpt": {
+   "file": "shaon-conversation-kn.mp4",
+   "full_file": "shaon-conversation-kn-full.mp4",
+   "start_s": 2.4,
+   "end_s": 34.1,
+   "duration_s": 31.68,
+   "width": 1280,
+   "height": 720,
+   "video_codec": "h264",
+   "audio_codec": "aac",
+   "max_db": -1.4
+  }
+ },
+ {
+  "lang": "ja",
+  "language": "Japanese",
+  "pass": true,
+  "why": [],
+  "provider": "scripted",
+  "model_served": "scripted",
+  "customer_voice": "kokoro_ja_kumo",
+  "agent_voice": "kokoro_ja_alpha",
+  "agent_voices_used": [
+   "kokoro_ja_alpha (kokoro)"
+  ],
+  "stt": "faster-whisper:small",
+  "first_audio_ms": [
+   6399,
+   7963
+  ],
+  "stt_ms": [
+   3637,
+   3298
+  ],
+  "duration_s": 58.92,
+  "audio_errors": 0,
+  "customer_max_db": [
+   -3.5,
+   -3.6
+  ],
+  "agent_max_db": [
+   -8.2,
+   -9.8,
+   -8.8
+  ],
+  "excerpt": {
+   "file": "shaon-conversation-ja.mp4",
+   "full_file": "shaon-conversation-ja-full.mp4",
+   "start_s": 3.5,
+   "end_s": 33.5,
+   "duration_s": 30.0,
+   "width": 1280,
+   "height": 720,
+   "video_codec": "h264",
+   "audio_codec": "aac",
+   "max_db": -3.6
+  }
+ }
+]
