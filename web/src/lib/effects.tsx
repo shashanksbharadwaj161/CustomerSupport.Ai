@@ -115,13 +115,14 @@ export function useEffectsTier(): Ctx {
 export function EffectsPicker({ compact = false }: { compact?: boolean }) {
   const { choice, tier, setChoice, measuredFps, reducedMotion } = useEffectsTier();
   return (
-    <div className="flex items-center gap-2" role="group" aria-label="Visual effects">
+    <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Visual effects">
       {!compact && <span className="telemetry">Effects</span>}
-      {(["auto", "full", "lite", "off"] as TierChoice[]).map((c) => (
-        <button key={c} type="button" className="btn" style={{ padding: "4px 10px", fontSize: 12, borderColor: c === choice ? "var(--signal)" : undefined }}
-          aria-pressed={c === choice} onClick={() => setChoice(c)}>{c}</button>
-      ))}
-      <span className="telemetry" aria-live="polite">
+      <div className="seg">
+        {(["auto", "full", "lite", "off"] as TierChoice[]).map((c) => (
+          <button key={c} type="button" aria-pressed={c === choice} onClick={() => setChoice(c)}>{c}</button>
+        ))}
+      </div>
+      <span className="telemetry" aria-live="polite" data-testid="fps">
         {reducedMotion ? "reduced motion" : `${tier}${measuredFps ? ` · ${measuredFps} fps` : ""}`}
       </span>
     </div>

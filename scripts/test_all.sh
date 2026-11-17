@@ -26,6 +26,8 @@ step "accessibility (axe)"; (cd web && node scripts/a11y.mjs http://127.0.0.1:87
 kill $SERVER 2>/dev/null; trap - EXIT
 step "call E2E (fake mic -> STT -> fake LLM -> TTS -> browser)"
 CASES="en_question:smallwebrtc:off en_question:websocket:off ja_question:websocket:off" tests/e2e/run_e2e.sh || fail=1
+step "settings UI on local preview (no login, fake key masked, model persists, cap, orb states; no Anthropic call)"
+"$PY" tests/e2e/run_settings_e2e.py || fail=1
 step "share mode visitor UI (wrong passcode, Get-ready, busy, call time limit, host offline)"
 "$PY" tests/e2e/run_share_ui_e2e.py || fail=1
 PWSH="${PWSH:-$(command -v pwsh || true)}"

@@ -1,63 +1,48 @@
 "use client";
-/** Scroll-driven technical story (Immersive Robotics idea, re-implemented): one pinned stage, five steps. */
-import { useEffect, useRef } from "react";
-import { useEffectsTier } from "@/lib/effects";
-import { gsap, ScrollTrigger, setupMotion } from "@/lib/motion";
+/** "How a turn flows": an interactive signal chain. Click / arrow keys select a stage; a packet runs the chain. */
+import { useState } from "react";
 
-const STEPS = [
-  { k: "01", t: "Listens", d: "Voice activity detection cuts your speech into turns, locally. Audio never leaves the machine.", m: "VAD · SMART TURN" },
-  { k: "02", t: "Identifies the language", d: "Language ID over five candidates, biased to the previous turn, double-checked by the script of the transcript.", m: "LID · SCRIPT CHECK" },
-  { k: "03", t: "Understands", d: "Speech to text per language: Whisper for English and Japanese, IndicConformer for Hindi, Bengali, Kannada (GPU).", m: "STT ROUTER" },
-  { k: "04", t: "Answers from your site", d: "Claude Haiku 5.5 answers only from your crawled website, retrieved passages and tools. Guardrails check every sentence.", m: "RAG · GUARDRAILS" },
-  { k: "05", t: "Speaks back", d: "Reply language is read from the reply's script; the matching voice speaks it, sentence by sentence.", m: "TTS ROUTER" },
+const STAGES = [
+  { k: "MIC", t: "Listens", d: "Your browser streams microphone audio to this PC over WebRTC (or a WebSocket through the share tunnel). Nothing goes to a cloud speech service.", m: "WebRTC · 16 kHz" },
+  { k: "VAD", t: "Finds the turn", d: "Silero voice-activity detection cuts speech into turns locally, so the agent answers when you stop talking.", m: "Silero VAD" },
+  { k: "LID", t: "Identifies the language", d: "Whisper language ID over five candidates. When it is unsure, the script of the transcript decides; a manual override always wins.", m: "Whisper small · script check" },
+  { k: "STT", t: "Transcribes", d: "Per-language speech-to-text: Whisper for English and Japanese, MMS for Hindi, Bengali and Kannada on CPU (IndicConformer with a token).", m: "Whisper · MMS" },
+  { k: "LLM", t: "Answers from your site", d: "Claude, the model you pick in Settings, answers only from your crawled website, retrieved passages and allowed tools, in native script.", m: "Claude · RAG · tools" },
+  { k: "GRD", t: "Checks the reply", d: "Local guardrail rules plus one combined model check; anything unsafe or unsupported becomes a polite hand-off to a human.", m: "3-layer guardrails" },
+  { k: "TTS", t: "Speaks back", d: "The reply's script picks the voice; sentences are spoken as soon as they are ready. Kokoro for en/ja/hi, MMS (demo-only) for bn/kn.", m: "Kokoro · MMS" },
 ];
 
 export function HowItWorks() {
-  const root = useRef<HTMLDivElement>(null);
-  const { tier } = useEffectsTier();
-  useEffect(() => {
-    if (tier === "off" || !root.current) return;
-    setupMotion();
-    const ctx = gsap.context(() => {
-      const panels = gsap.utils.toArray<HTMLElement>("[data-step]");
-      const tl = gsap.timeline({ scrollTrigger: { trigger: root.current, start: "top top", end: `+=${panels.length * 70}%`, scrub: 0.6, pin: true } });
-      // cross-fade: step i+1 starts entering before step i has left, so one step is always readable
-      panels.forEach((p, i) => {
-        if (i > 0) tl.fromTo(p, { yPercent: 30, opacity: 0, clipPath: "inset(30% 0 30% 0)" },
-          { yPercent: 0, opacity: 1, clipPath: "inset(0% 0 0% 0)", ease: "emphasis", duration: 0.45 }, i - 0.25);
-        if (i < panels.length - 1) tl.to(p, { yPercent: -25, opacity: 0, ease: "exit", duration: 0.4 }, i + 0.75);
-      });
-      tl.fromTo("[data-progress]", { scaleX: 0 }, { scaleX: 1, ease: "none", duration: panels.length }, 0);
-    }, root);
-    return () => { ctx.revert(); ScrollTrigger.refresh(); };
-  }, [tier]);
-
-  if (tier === "off") {
-    return (
-      <section aria-labelledby="how-h" className="px-[var(--gutter)] py-24 max-w-[var(--content-max)] mx-auto">
-        <h2 id="how-h" className="display mb-10" style={{ fontSize: "clamp(36px, 6vw, 88px)" }}>How ShaOn works</h2>
-        <ol className="grid gap-6 md:grid-cols-5">{STEPS.map((s) => (
-          <li key={s.k} className="glass p-5"><p className="telemetry">{s.k} · {s.m}</p><h3 className="display text-2xl my-2">{s.t}</h3><p className="text-sm" style={{ color: "var(--ink-muted)" }}>{s.d}</p></li>))}</ol>
-      </section>
-    );
-  }
+  const [i, setI] = useState(4);
+  const s = STAGES[i];
   return (
-    <section ref={root} aria-labelledby="how-h" className="relative h-[100svh] overflow-hidden">
-      <div className="absolute inset-0 grid place-items-center px-[var(--gutter)]">
-        <h2 id="how-h" className="sr-only">How ShaOn works</h2>
-        <div className="relative w-full max-w-[var(--content-max)] h-[60vh]">
-          {STEPS.map((s, i) => (
-            <article key={s.k} data-step className="absolute inset-0 grid md:grid-cols-[1fr_1.2fr] gap-8 items-center" style={{ opacity: i === 0 ? 1 : 0 }} aria-label={`Step ${s.k}: ${s.t}`}>
-              <div className="display" style={{ fontSize: "clamp(96px, 20vw, 320px)", color: "transparent", WebkitTextStroke: "1px var(--line-strong)" }} aria-hidden="true">{s.k}</div>
-              <div>
-                <p className="telemetry mb-3" style={{ color: "var(--signal)" }}>{s.m}</p>
-                <h3 className="display mb-4" style={{ fontSize: "clamp(36px, 5vw, 80px)" }}>{s.t}</h3>
-                <p className="text-lg max-w-[42ch]" style={{ color: "var(--ink-muted)" }}>{s.d}</p>
-              </div>
-            </article>))}
-        </div>
-        <div className="absolute bottom-10 inset-x-[var(--gutter)] h-px" style={{ background: "var(--line)" }}>
-          <div data-progress className="h-px origin-left" style={{ background: "var(--signal)" }} />
+    <section aria-labelledby="how-h" className="mx-auto py-16 md:py-24" style={{ maxWidth: "var(--content-max)", padding: "0 var(--gutter)" }}>
+      <p className="kicker"><span className="faint">01 </span>Signal chain</p>
+      <h2 id="how-h" className="display mt-3 mb-10" style={{ fontSize: "clamp(32px, 5vw, 72px)" }}>How one turn flows</h2>
+      <div className="module">
+        <div className="module-head"><span className="light light-live" /><span className="ttl">Pipeline · 7 stages</span><span className="spacer" />
+          <span>select a stage</span></div>
+        <div className="module-body">
+          <ol className="chain" role="tablist" aria-label="Pipeline stages"
+            onKeyDown={(e) => { if (e.key === "ArrowRight") setI((x) => Math.min(STAGES.length - 1, x + 1)); if (e.key === "ArrowLeft") setI((x) => Math.max(0, x - 1)); }}>
+            {STAGES.map((st, j) => (
+              <li key={st.k} role="presentation">
+                <button type="button" role="tab" aria-selected={i === j} tabIndex={i === j ? 0 : -1} onClick={() => setI(j)} className="chain-node"
+                  id={`stage-${st.k}`} aria-controls="stage-detail">
+                  <span className="num faint" style={{ fontSize: 10 }}>{String(j + 1).padStart(2, "0")}</span>
+                  <span className="mono" style={{ fontSize: 15, fontWeight: 600 }}>{st.k}</span>
+                  <span style={{ fontSize: 12 }} className="muted">{st.t}</span>
+                </button>
+              </li>))}
+          </ol>
+          <div id="stage-detail" role="tabpanel" aria-labelledby={`stage-${s.k}`} className="grid md:grid-cols-[auto_1fr] gap-6 mt-6 pt-6 items-start" style={{ borderTop: "1px solid var(--line)" }}>
+            <p aria-hidden="true" className="display" style={{ fontSize: "clamp(64px, 9vw, 128px)", color: "transparent", WebkitTextStroke: "1px var(--signal)", lineHeight: 0.85 }}>{s.k}</p>
+            <div>
+              <p className="telemetry" style={{ color: "var(--signal)" }}>{s.m}</p>
+              <h3 className="headline mt-2" style={{ fontSize: 28 }}>{s.t}</h3>
+              <p className="muted mt-3 max-w-[60ch]" style={{ lineHeight: 1.6 }}>{s.d}</p>
+            </div>
+          </div>
         </div>
       </div>
     </section>

@@ -91,6 +91,6 @@ void main() {
   vec2 auv = vec2((idx + inCell.x) / uGlyphs, inCell.y);
   float glyph = texture2D(uAtlas, auv).r;
   vec3 c = mix(uTint, col * 1.4 + uTint * 0.2, 0.55);
-  gl_FragColor = vec4(c * glyph, 1.0);
+  gl_FragColor = vec4(c * glyph, glyph);  // transparent between glyphs: the console grid shows through
 }
 `;

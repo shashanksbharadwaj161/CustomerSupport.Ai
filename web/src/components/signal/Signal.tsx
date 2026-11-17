@@ -20,6 +20,9 @@ import { StaticSignal } from "./StaticSignal";
 export type SignalState = "idle" | "listening" | "thinking" | "speaking" | "switch" | "handoff" | "error";
 export type Levels = { mic: number; out: number; bands: [number, number, number, number] };
 export const emptyLevels = (): Levels => ({ mic: 0, out: 0, bands: [0, 0, 0, 0] });
+/** Visitor control (drag / keys on SignalStage): rotation in radians, zoom factor. Read every frame, no re-render. */
+export type Control = { yaw: number; pitch: number; zoom: number };
+export const emptyControl = (): Control => ({ yaw: 0, pitch: 0, zoom: 1 });
 
 type Props = {
   state: SignalState;
@@ -29,6 +32,7 @@ type Props = {
   ascii?: boolean;         // GPU ASCII post-process (landing hero)
   className?: string;
   label?: string;
+  controlRef?: React.RefObject<Control>;
 };
 
 export function Signal(props: Props) {
@@ -70,7 +74,9 @@ const STATE_WEIGHTS: Record<SignalState, { listen: number; think: number; speak:
   error: { listen: 0, think: 0, speak: 0, calm: 0.3, err: 1 },
 };
 
-function Particles({ state, lang, levelsRef, motif, count }: Props & { count: number }) {
+function Particles({ state, lang, levelsRef, motif, count, controlRef }: Props & { count: number }) {
+  const points = useRef<THREE.Points>(null);
+  const camera = useThree((s) => s.camera);
   setupMotion();
   const target = motif ?? lang;
   const { geometry, uniforms } = useMemo(() => {
@@ -147,9 +153,16 @@ function Particles({ state, lang, levelsRef, motif, count }: Props & { count: nu
     b.set(b.x + (nb[0] - b.x) * k, b.y + (nb[1] - b.y) * k, b.z + (nb[2] - b.z) * k, b.w + (nb[3] - b.w) * k);
     const pv = uniforms.uPointer.value;
     pv.set(s.pointer.x * 1.6, s.pointer.y * 1.0);
+    const c = controlRef?.current;
+    if (c && points.current) {  // eased toward the visitor's drag / keyboard target
+      points.current.rotation.y += (c.yaw - points.current.rotation.y) * 0.18;
+      points.current.rotation.x += (c.pitch - points.current.rotation.x) * 0.18;
+      const z = 3.2 / Math.max(0.6, Math.min(1.6, c.zoom));
+      camera.position.z += (z - camera.position.z) * 0.18;
+    }
   });
 
-  return <points geometry={geometry} material={material} frustumCulled={false} />;
+  return <points ref={points} geometry={geometry} material={material} frustumCulled={false} />;
 }
 
 /** GPU ASCII post-process: scene -> render target -> brightness-mapped glyph atlas. */

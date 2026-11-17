@@ -51,7 +51,8 @@ export function VoicesPanel() {
   const list = voices.filter((v) => v.language === lang);
   return (
     <section className="glass p-6 space-y-4" aria-labelledby="voices-h" data-testid="voices-panel">
-      <h2 id="voices-h" className="display text-2xl">Voices</h2>
+      <p className="kicker"><span className="faint">05 </span>Voices</p>
+      <h2 id="voices-h" className="headline" style={{ fontSize: 24 }}>Voices</h2>
       <div className="flex flex-wrap gap-2" role="tablist" aria-label="Voice language">
         {LANGS.map((l) => <button key={l} role="tab" aria-selected={l === lang} lang={l} className={`btn lang-${l}`} style={{ background: l === lang ? "color-mix(in srgb, currentColor 16%, var(--surface-raised))" : undefined, borderColor: l === lang ? "currentColor" : undefined }} onClick={() => setLang(l)}>{LANG_NAMES[l].native}</button>)}
       </div>

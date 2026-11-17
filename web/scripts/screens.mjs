@@ -22,7 +22,9 @@ for (const vp of [{ name: "desktop", width: 1440, height: 900 }, { name: "phone"
       page.on("pageerror", (e) => errors.push(String(e)));
       await page.goto(`${base}${p}?effects=${tier === "reduced" ? "auto" : tier}`, { waitUntil: "networkidle" });
       await page.waitForTimeout(3500);
-      const name = `${prefix}${p.replace(/\//g, "_").replace(/^_|_$/g, "") || "landing"}-${tier}-${vp.name}.png`;
+      // file names must be valid on Windows too: only letters, digits, "_", "-" and "." (no ?, =, :, *)
+      const slug = p.replace(/[^a-zA-Z0-9]+/g, "_").replace(/^_+|_+$/g, "") || "landing";
+      const name = `${prefix}${slug}-${tier}-${vp.name}.png`.replace(/[^a-zA-Z0-9._-]/g, "_");
       await page.screenshot({ path: out + name });
       if (p === "/" && vp.name === "desktop") {  // scroll story + gallery
         for (const [i, y] of [[1, 1.6], [2, 3.2], [3, 5.6]]) {

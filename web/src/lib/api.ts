@@ -24,7 +24,10 @@ export async function api<T = any>(path: string, opts: RequestInit & { json?: un
   const r = await fetch(API_BASE + path, { ...opts, headers, body, credentials: "include" });
   const ct = r.headers.get("content-type") || "";
   const data = ct.includes("json") ? await r.json() : await r.text();
-  if (!r.ok) throw new ApiError(r.status, typeof data === "object" && data && "detail" in data ? String((data as any).detail) : String(data));
+  if (!r.ok) {
+    const d = data as any;
+    throw new ApiError(r.status, d && typeof d === "object" ? String(d.detail ?? d.error ?? JSON.stringify(d)) : String(data));
+  }
   return data as T;
 }
 

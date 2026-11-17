@@ -11,11 +11,12 @@ export function EnginesPanel() {
   if (!d) return null;
   return (
     <section className="glass p-6 space-y-3" aria-labelledby="eng-h">
-      <h2 id="eng-h" className="display text-2xl">Speech engines</h2>
+      <p className="kicker"><span className="faint">06 </span>Engines</p>
+      <h2 id="eng-h" className="headline" style={{ fontSize: 24 }}>Speech engines</h2>
       <p className="text-sm" style={{ color: "var(--ink-muted)" }}>{d.cuda ? "CUDA GPU detected: GPU engine profile." : "No CUDA GPU: CPU profile (Whisper small, Kokoro)."} Status is shown as measured, never assumed.</p>
       <div className="overflow-x-auto">
         <table className="w-full text-sm" data-testid="engines-table">
-          <thead><tr className="telemetry text-left"><th className="py-1 pr-3">Engine</th><th className="pr-3">Kind</th><th className="pr-3">Installed</th><th className="pr-3">Weights</th><th className="pr-3">Status</th><th>License</th></tr></thead>
+          <thead><tr className="telemetry text-left" style={{ fontSize: 10 }}><th className="py-1 pr-3">Engine</th><th className="pr-3">Kind</th><th className="pr-3">Installed</th><th className="pr-3">Weights</th><th className="pr-3">Status</th><th>License</th></tr></thead>
           <tbody>{Object.entries(d.engines).map(([n, e]) => (
             <tr key={n} className="border-t" style={{ borderColor: "var(--line)" }}>
               <td className="py-2 pr-3 mono">{n}</td><td className="pr-3">{e.kind}</td>

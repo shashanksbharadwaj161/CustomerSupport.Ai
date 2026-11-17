@@ -2,7 +2,7 @@
 /** Knowledge: URL drop zone -> crawl progress (SSE, polling fallback) -> pages, chunks, brief, test question. */
 import { useCallback, useEffect, useRef, useState } from "react";
 import { CrawlGraph, type GNode } from "@/components/knowledge/CrawlGraph";
-import { AppShell } from "@/components/shell/AppShell";
+import { AppShell, PageHead } from "@/components/shell/AppShell";
 import { AdminGate } from "@/components/shell/AuthGate";
 import { API_BASE, api, getToken } from "@/lib/api";
 
@@ -92,7 +92,8 @@ export default function Knowledge() {
 
   return (
     <AppShell><AdminGate>
-      <h1 className="display my-6" style={{ fontSize: "clamp(40px, 7vw, 104px)" }}>Knowledge</h1>
+      <PageHead index="03" kicker="Knowledge" title="Knowledge"
+        sub="Crawl a website you own (same domain, robots.txt respected), watch the pages become a graph, read the site brief and ask a test question." />
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
         <section className="space-y-6 min-w-0">
           <div className={`glass p-6 space-y-4`} style={{ borderColor: drag ? "var(--signal)" : undefined, boxShadow: drag ? "var(--glow-strong)" : undefined,
@@ -126,12 +127,12 @@ export default function Knowledge() {
               <CrawlGraph nodes={nodes} done={done} failed={failed} />
               {detail.error && <p style={{ color: "var(--danger)" }}>{detail.error}</p>}
               <div>
-                <h2 className="display text-xl mb-2">Site brief</h2>
+                <h2 className="headline text-xl mb-2">Site brief</h2>
                 {detail.brief_text ? <pre className="text-sm whitespace-pre-wrap">{detail.brief_text}</pre>
                   : <p className="text-sm" style={{ color: "var(--warn)" }}>{detail.brief_status || "pending"}. Small sites still go fully into the agent prompt.</p>}
               </div>
               <div>
-                <h2 className="display text-xl mb-2">Ask a test question</h2>
+                <h2 className="headline text-xl mb-2">Ask a test question</h2>
                 <div className="flex gap-2"><input className="btn flex-1" value={q} onChange={(e) => setQ(e.target.value)} placeholder="e.g. শনিবার শাখা কখন খোলে?" aria-label="Test question" data-testid="kb-question" />
                   <button className="btn btn-primary" onClick={ask} disabled={!q || detail.status !== "ready"} data-testid="kb-ask">Ask</button></div>
                 {ans?.loading && <p className="telemetry mt-2">searching…</p>}

@@ -3,7 +3,7 @@
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { AppShell } from "@/components/shell/AppShell";
+import { AppShell, PageHead } from "@/components/shell/AppShell";
 import { AdminGate } from "@/components/shell/AuthGate";
 import { emptyLevels, type Levels, type SignalState } from "@/components/signal/Signal";
 import { api } from "@/lib/api";
@@ -33,8 +33,9 @@ export default function Logs() {
   const avg = (xs: number[]) => (xs.length ? Math.round(xs.reduce((a, b) => a + b, 0) / xs.length) : null);
   return (
     <AppShell><AdminGate>
-      <h1 className="display my-6" style={{ fontSize: "clamp(40px, 7vw, 104px)" }}>Call Logs</h1>
-      <div className="glass overflow-x-auto">
+      <PageHead index="04" kicker="Call logs" title="Logs"
+        sub="Every call and turn with measured latency, the model that answered, guardrail events and a replay of the Signal." />
+      <div className="glass overflow-x-auto" style={{ padding: 0 }}>
         <table className="w-full mono text-xs" data-testid="calls-table">
           <thead><tr className="telemetry text-left">{["started", "call", "agent", "transport", "languages", "llm", "turns", "guard", ""].map((h) => <th key={h} className="px-3 py-2">{h}</th>)}</tr></thead>
           <tbody>{calls.map((c) => (
@@ -44,9 +45,12 @@ export default function Logs() {
               <td className="px-3">{c.turns}</td><td className="px-3" style={{ color: c.guard_events ? "var(--warn)" : undefined }}>{c.guard_events}</td>
               <td className="px-3"><Link className="underline" href={`/logs/?id=${c.id}`} onClick={() => setId(c.id)}>{c.active ? "live" : "open"}</Link></td>
             </tr>))}
-            {calls.length === 0 && <tr><td className="px-3 py-6" colSpan={9}>No calls yet. Start one on the Live Call page.</td></tr>}</tbody>
+            </tbody>
         </table>
       </div>
+      {calls.length === 0 && (
+        <div className="empty mt-4"><span className="ascii faint" aria-hidden="true">{"[ no signal recorded ]"}</span>
+          <span>No calls yet. <Link href="/call/" className="underline">Start one on the Live Call page.</Link></span></div>)}
     </AdminGate></AppShell>
   );
 
@@ -56,7 +60,7 @@ export default function Logs() {
       <div className="space-y-6 my-6" data-testid="call-detail">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div><Link href="/logs/" className="telemetry underline" onClick={() => { setId(null); setD(null); }}>← all calls</Link>
-            <h1 className="display text-4xl mt-2">{d.call.id}</h1>
+            <h1 className="display mt-2" style={{ fontSize: "clamp(26px, 4vw, 48px)" }}>{d.call.id}</h1>
             <p className="telemetry">{fmtT(d.call.started_at)} · {d.call.transport} · {d.call.provider} · languages {d.call.languages_used || "-"} · avg first audio {avg(fa) ?? "-"} ms</p></div>
         </div>
         <Replay turns={d.turns} />

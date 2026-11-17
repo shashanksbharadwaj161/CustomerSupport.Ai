@@ -129,7 +129,8 @@ class AppState:
         return {"mode": "demo" if reasons else "full", "reasons": reasons, "notes": notes, "provider": prov.name,
                 "key_present": bool(key), "key_source": source, "spend": self.spend.summary(), "cuda": st["cuda"],
                 "engines": eng, "transport": self.cfg.transport, "exposed": self.cfg.exposed,
-                "auth_required": bool(self.cfg.admin_password)}
+                "auth_required": bool(self.cfg.admin_password), "local_preview": self.cfg.local_preview,
+                "model": self.llm_model() if prov.is_real else None}
 
     # ---- readiness per language (Get-ready screen, launcher status)
     def readiness(self) -> dict:

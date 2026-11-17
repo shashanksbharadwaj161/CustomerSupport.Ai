@@ -1,25 +1,25 @@
 "use client";
-/** Live Call: full-bleed Signal, floating transcript, telemetry strip, voice dock, language override. */
-import dynamic from "next/dynamic";
+/** Live Call console: the SignalStage reacts to the real mic / playback levels; transcript, telemetry and controls
+ *  sit in modules around it (never on top of it). */
 import { useCallback, useEffect, useRef, useState } from "react";
 import { DemoBanner, GetReady, useReady } from "@/components/call/GetReady";
 import { Transcript, type Line } from "@/components/call/Transcript";
-import { AppShell } from "@/components/shell/AppShell";
+import { AppShell, Module } from "@/components/shell/AppShell";
+import { IconMic, IconStop } from "@/components/shell/Icons";
 import { emptyLevels, type Levels, type SignalState } from "@/components/signal/Signal";
+import { SignalStage } from "@/components/signal/SignalStage";
 import { api, ApiError } from "@/lib/api";
 import { driveLevels, LevelMeter } from "@/lib/audio";
 import { WebRTCCall } from "@/lib/call/webrtc";
 import { WebSocketCall } from "@/lib/call/websocket";
 import type { CallClient, ServerMsg, TransportKind } from "@/lib/call/types";
-import { EffectsPicker, useEffectsTier } from "@/lib/effects";
+import { useEffectsTier } from "@/lib/effects";
 import { humanDuration, LANG_NAMES, LANGS, type Lang } from "@/lib/tokens";
-
-const Signal = dynamic(() => import("@/components/signal/Signal").then((m) => m.Signal), { ssr: false });
 
 type Profile = { id: string; name: string; type: string };
 type Voice = { id: string; language: Lang; display_name: string; engine: string; demo_only?: boolean; status?: string };
 type TurnTiming = { turn_id?: number; stt_ms?: number; lid_ms?: number; llm_ttft_ms?: number; llm_ms?: number; guard_ms?: number;
-  tts_ms?: number; first_audio_ms?: number; client_first_audio_ms?: number; tier?: string };
+  tts_ms?: number; first_audio_ms?: number; client_first_audio_ms?: number; tier?: string; model?: string; model_served?: string; model_fallback?: string };
 
 declare global { interface Window { __shaon?: { turns: TurnTiming[]; messages: ServerMsg[]; state: string } } }
 
@@ -120,7 +120,8 @@ export default function LiveCall() {
       case "tts_unavailable":
         add({ role: "system", text: `No speech voice for ${m.lang?.toUpperCase()} on this machine yet: text only. ${m.detail}` }); break;
       case "turn_meta":
-        setTiming((t) => ({ ...t, turn_id: m.turn_id, stt_ms: m.stt_ms, lid_ms: m.lid_ms, llm_ttft_ms: m.llm_ttft_ms, llm_ms: m.llm_ms, guard_ms: m.guard_ms }));
+        setTiming((t) => ({ ...t, turn_id: m.turn_id, stt_ms: m.stt_ms, lid_ms: m.lid_ms, llm_ttft_ms: m.llm_ttft_ms, llm_ms: m.llm_ms, guard_ms: m.guard_ms,
+          model: (m as any).model, model_served: (m as any).model_served, model_fallback: (m as any).model_fallback }));
         break;
       case "latency":
         setTiming((t) => {
@@ -179,71 +180,110 @@ export default function LiveCall() {
   const live = status === "live";
   const langVoices = voices.filter((v) => v.language === lang && v.status !== "pending"); // only voices that can speak on this machine
 
+  const callLabel = status === "connecting" ? "Connecting" : live ? "Live" : status === "ended" ? "Ended" : status === "error" ? "Not connected" : "Ready";
   return (
     <AppShell wide>
-      <div className="mb-3"><DemoBanner ready={ready} /></div>
-      {screen && (
-        <div role="alertdialog" aria-labelledby="screen-h" className="glass p-5 mb-4 flex flex-wrap items-center gap-4" data-testid={`screen-${screen.kind}`}
-          style={{ borderColor: screen.kind === "lost" ? "var(--danger)" : "var(--warn)" }}>
-          <div className="flex-1 min-w-[220px]"><h2 id="screen-h" className="display text-2xl mb-1">{screen.kind === "busy" ? "Agent is busy" : screen.kind === "ended" ? "Call ended" : "Connection lost"}</h2>
-            <p className="text-sm">{screen.text}</p></div>
-          <button className="btn btn-primary" onClick={() => { setScreen(null); start(); }} data-testid="screen-retry">{screen.kind === "ended" ? "New call" : "Try again"}</button>
-        </div>)}
-      {!live && status !== "connecting" && (
-        <div className="mb-4"><GetReady ready={ready} canStart={!!profileId} onStart={start} /></div>)}
-      <div className="relative grid gap-4 lg:grid-cols-[minmax(0,1fr)_420px]">
-        <section className="relative min-h-[60vh] lg:min-h-[78vh]" aria-label="Voice visual">
-          <Signal state={state} lang={lang} levelsRef={levels} className="absolute inset-0" />
-          <div className="absolute left-0 top-0 flex flex-wrap items-center gap-2">
-            <span className={`lang-badge lang-${lang}`} lang={lang} data-testid="current-lang" style={{ fontFamily: "var(--font-body)", fontSize: 14 }}>{LANG_NAMES[lang].native}</span>
-            <span className="telemetry" data-testid="call-state">{status} · {state}</span>
+      <div className="mx-auto" style={{ maxWidth: 1480 }}>
+        {/* control bar */}
+        <div className="flex flex-wrap items-end gap-3 pt-5 pb-4" style={{ borderBottom: "1px solid var(--line)" }}>
+          <div className="mr-auto min-w-0">
+            <p className="kicker"><span className="faint">01 </span>Live call</p>
+            <h1 className="headline mt-1" style={{ fontSize: "clamp(26px, 3.2vw, 40px)" }}>
+              <span className={`light ${live ? "light-live" : status === "error" ? "light-danger" : "light-ok"}`} style={{ display: "inline-block", marginRight: 12, verticalAlign: "middle" }} />
+              <span data-testid="call-state">{callLabel}</span><span className="faint" style={{ fontWeight: 400 }}> · {state}</span>
+            </h1>
           </div>
-          {/* telemetry strip */}
-          <div className="absolute inset-x-0 bottom-0 glass px-4 py-2 flex flex-wrap gap-x-5 gap-y-1 mono text-[11px]" data-testid="telemetry" style={{ borderRadius: "var(--radius-md)" }}>
-            <span>transport {transport}</span>
-            <span>llm {info.provider ?? "-"}</span>
-            <span>stt {timing.stt_ms ?? "-"} ms</span>
-            <span>lid {timing.lid_ms ?? "-"} ms</span>
-            <span>llm first text {timing.llm_ttft_ms ?? "-"} ms</span>
-            <span>guard {timing.guard_ms ?? "-"} ms</span>
-            <span>tts gen {timing.tts_ms ?? "-"} ms</span>
-            <span style={{ color: "var(--signal)" }}>first audio {timing.first_audio_ms ?? "-"} ms</span>
-            <span>effects {tier}</span>
+          <label className="label" style={{ minWidth: 220, flex: "1 1 220px", maxWidth: 320 }}>Agent
+            <select value={profileId ?? ""} onChange={(e) => setProfileId(e.target.value)} disabled={live} data-testid="profile-select">
+              {profiles.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+            </select></label>
+          <label className="label" style={{ minWidth: 170, flex: "0 1 190px" }}>Transport
+            <select value={transport} onChange={(e) => setTransport(e.target.value as TransportKind)} disabled={live}>
+              <option value="smallwebrtc">WebRTC (this PC)</option><option value="websocket">WebSocket (link)</option>
+            </select></label>
+          {!live ? <button className="btn btn-primary btn-lg" onClick={start} disabled={status === "connecting" || !profileId} data-testid="start-call"><IconMic />{status === "connecting" ? "Connecting…" : "Start call"}</button>
+            : <button className="btn btn-danger btn-lg" onClick={end} data-testid="end-call"><IconStop />End call</button>}
+        </div>
+        <div className="my-4"><DemoBanner ready={ready} /></div>
+        {error && <p role="alert" className="notice notice-danger mb-4">{error}</p>}
+        {screen && (
+          <div role="alertdialog" aria-labelledby="screen-h" className={`notice ${screen.kind === "lost" ? "notice-danger" : "notice-warn"} mb-4 flex-wrap items-center`} data-testid={`screen-${screen.kind}`}>
+            <div className="flex-1 min-w-[220px]"><h2 id="screen-h" className="headline mb-1" style={{ fontSize: 20, color: "var(--ink)" }}>{screen.kind === "busy" ? "Agent is busy" : screen.kind === "ended" ? "Call ended" : "Connection lost"}</h2>
+              <p style={{ color: "var(--ink)" }}>{screen.text}</p></div>
+            <button className="btn btn-primary" onClick={() => { setScreen(null); start(); }} data-testid="screen-retry">{screen.kind === "ended" ? "New call" : "Try again"} <span className="arrow">→</span></button>
+          </div>)}
+
+        <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(340px,440px)] items-start">
+          {/* stage + telemetry */}
+          <div className="grid gap-4 min-w-0">
+            <section className="hud relative overflow-hidden p-3 md:p-6" aria-label="Voice visual" style={{ ["--tick-c" as string]: live ? "var(--signal)" : "var(--line-strong)" }}>
+              <SignalStage state={state} lang={lang} levelsRef={levels} className="w-full mx-auto max-w-[min(640px,70vh)]" compact={false} testid="call-stage" />
+            </section>
+            <Module index="T" title="Telemetry · last turn" light={timing.first_audio_ms ? "ok" : "off"} testid="telemetry"
+              actions={<span>{transport} · {info.provider ?? "llm -"} · fx {tier}</span>}>
+              <Latency timing={timing} />
+              <dl className="rows mt-4">
+                <dt>Model</dt><dd className="mono" style={{ fontSize: 13 }}>{timing.model_served || timing.model || (info.provider === "anthropic" ? "first reply pending" : info.provider ? `${info.provider} (no Claude call)` : "-")}
+                  {timing.model_fallback && <span className="chip chip-warn ml-2">fallback: {timing.model_fallback}</span>}</dd>
+                <dt>Client</dt><dd className="num" style={{ fontSize: 13 }}>{timing.client_first_audio_ms != null ? `${timing.client_first_audio_ms} ms thinking → speaking (browser clock)` : "-"}</dd>
+              </dl>
+            </Module>
           </div>
-        </section>
-        <aside className="glass p-4 flex flex-col gap-4" aria-label="Call controls and transcript">
-          <div className="flex flex-wrap gap-2 items-end">
-            <label className="flex flex-col gap-1 text-sm">Agent
-              <select className="btn" value={profileId ?? ""} onChange={(e) => setProfileId(e.target.value)} disabled={live} data-testid="profile-select">
-                {profiles.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-              </select></label>
-            <label className="flex flex-col gap-1 text-sm">Transport
-              <select className="btn" value={transport} onChange={(e) => setTransport(e.target.value as TransportKind)} disabled={live}>
-                <option value="smallwebrtc">WebRTC (local)</option><option value="websocket">WebSocket (tunnel)</option>
-              </select></label>
-            {!live ? <button className="btn btn-metal" onClick={start} disabled={status === "connecting" || !profileId} data-testid="start-call">{status === "connecting" ? "Connecting…" : "Start call"}</button>
-              : <button className="btn" style={{ borderColor: "var(--danger)", color: "var(--danger)" }} onClick={end} data-testid="end-call">End call</button>}
+
+          {/* right column: get ready / transcript / controls */}
+          <div className="grid gap-4 min-w-0">
+            {!live && status !== "connecting" && <GetReady ready={ready} canStart={!!profileId} onStart={start} />}
+            <Module index="C" title="Transcript" light={live ? "live" : lines.length ? "ok" : "off"} actions={<span>{lines.length} lines</span>}>
+              <Transcript lines={lines} />
+            </Module>
+            <Module index="V" title="Language & voice">
+              <div className="grid gap-4">
+                <div>
+                  <p className="label mb-2">Language override</p>
+                  <div className="seg" role="radiogroup" aria-label="Language override" data-testid="override">
+                    <button type="button" role="radio" aria-checked={override === ""} onClick={() => setOverrideLang("")}>Auto</button>
+                    {(info.languages || LANGS).map((l) => (
+                      <button key={l} type="button" role="radio" aria-checked={override === l} lang={l} onClick={() => setOverrideLang(l)}
+                        style={{ fontFamily: `var(--font-${l === "en" ? "body" : l})`, textTransform: "none", letterSpacing: 0, fontSize: 13 }}>{LANG_NAMES[l].native}</button>))}
+                  </div>
+                  <p className="hint mt-2">Auto follows the caller&apos;s language each turn. An override always wins.</p>
+                </div>
+                <div>
+                  <p className="label mb-2">Voice for {LANG_NAMES[lang].native}</p>
+                  <div role="group" aria-label={`Voices for ${LANG_NAMES[lang].latin}`} className="flex flex-wrap gap-2" data-testid="voice-dock">
+                    {langVoices.length === 0 && <span className="hint">No voice installed for this language.</span>}
+                    {langVoices.map((v) => (
+                      <button key={v.id} className="btn btn-sm" aria-pressed={activeVoice[lang] === v.id} disabled={!live} onClick={() => pickVoice(lang, v.id)}
+                        title={v.engine}>{v.display_name}{v.demo_only ? " · demo" : ""}</button>))}
+                  </div>
+                  {!live && langVoices.length > 0 && <p className="hint mt-2">Voices switch live during a call (from the next sentence).</p>}
+                </div>
+              </div>
+            </Module>
           </div>
-          {error && <p role="alert" className="text-sm" style={{ color: "var(--danger)" }}>{error}</p>}
-          <Transcript lines={lines} />
-          <div className="mt-auto space-y-3">
-            <label className="flex items-center gap-2 text-sm">Language override
-              <select className="btn" value={override} onChange={(e) => setOverrideLang(e.target.value as Lang | "")} data-testid="override">
-                <option value="">auto</option>
-                {(info.languages || LANGS).map((l) => <option key={l} value={l}>{LANG_NAMES[l].native}</option>)}
-              </select></label>
-            <div role="group" aria-label={`Voices for ${LANG_NAMES[lang].latin}`} className="flex flex-wrap gap-2" data-testid="voice-dock">
-              {langVoices.map((v) => (
-                <button key={v.id} className="btn" style={{ padding: "4px 10px", fontSize: 12, borderColor: activeVoice[lang] === v.id ? "var(--signal)" : undefined }}
-                  aria-pressed={activeVoice[lang] === v.id} disabled={!live} onClick={() => pickVoice(lang, v.id)}
-                  title={v.status === "pending" ? "PENDING: engine not verified on this machine" : v.engine}>
-                  {v.display_name}{v.demo_only ? " · demo" : ""}{v.status === "pending" ? " · pending" : ""}
-                </button>))}
-            </div>
-            <EffectsPicker compact />
-          </div>
-        </aside>
+        </div>
       </div>
     </AppShell>
+  );
+}
+
+const LAT: { k: keyof TurnTiming; label: string }[] = [
+  { k: "stt_ms", label: "Speech → text" }, { k: "lid_ms", label: "Language ID" }, { k: "llm_ttft_ms", label: "Claude first text" },
+  { k: "guard_ms", label: "Guard check" }, { k: "tts_ms", label: "Voice gen" }, { k: "first_audio_ms", label: "First audio" },
+];
+function Latency({ timing }: { timing: TurnTiming }) {
+  const max = Math.max(3000, ...LAT.map((x) => Number(timing[x.k]) || 0));
+  return (
+    <ul className="grid gap-2" aria-label="Latency of the last turn, milliseconds">
+      {LAT.map((x) => {
+        const v = timing[x.k] as number | undefined, first = x.k === "first_audio_ms";
+        return (
+          <li key={x.k} className="grid grid-cols-[120px_1fr_70px] sm:grid-cols-[150px_1fr_80px] items-center gap-3">
+            <span className="telemetry" style={{ fontSize: 10, color: first ? "var(--signal)" : undefined }}>{x.label}</span>
+            <span className="meter"><span style={{ width: `${v ? Math.max(2, (v / max) * 100) : 0}%`, background: first ? "var(--signal)" : "var(--signal-alt)" }} /></span>
+            <span className="num text-right" style={{ fontSize: 13, color: first ? "var(--signal)" : undefined }}>{v != null ? `${v} ms` : "–"}</span>
+          </li>);
+      })}
+    </ul>
   );
 }

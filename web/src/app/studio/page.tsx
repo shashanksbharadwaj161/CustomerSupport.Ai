@@ -1,7 +1,7 @@
 "use client";
 /** Agent Studio: profiles list, tabbed editor, version history, live system-prompt preview. */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { AppShell } from "@/components/shell/AppShell";
+import { AppShell, PageHead } from "@/components/shell/AppShell";
 import { AdminGate } from "@/components/shell/AuthGate";
 import { Area, Chips, Field, Text } from "@/components/studio/fields";
 import { api } from "@/lib/api";
@@ -85,17 +85,16 @@ export default function Studio() {
 
   return (
     <AppShell><AdminGate>
-      <div className="flex flex-wrap items-end justify-between gap-4 my-6">
-        <h1 className="display" style={{ fontSize: "clamp(40px, 7vw, 104px)" }}>Agent Studio</h1>
-        <div className="flex flex-wrap gap-2" role="group" aria-label="New agent from preset">
-          {PRESETS.map(([k, l]) => <button key={k} className="btn" onClick={() => create(k)}>+ {l}</button>)}
-        </div>
-      </div>
+      <PageHead index="02" kicker="Agent Studio" title="Studio"
+        sub="Role, persona, style, guardrails, languages, voices, knowledge and tools. Every save is a new version you can roll back."
+        aside={<div className="flex flex-wrap gap-2" role="group" aria-label="New agent from preset">
+          {PRESETS.map(([k, l]) => <button key={k} className="btn btn-sm" onClick={() => create(k)}>+ {l}</button>)}
+        </div>} />
       <div className="grid gap-6 lg:grid-cols-[240px_minmax(0,1fr)]">
         <nav aria-label="Agents" className="glass p-3 h-fit">
           <ul className="flex lg:flex-col gap-1 overflow-x-auto">
             {list.map((p) => (
-              <li key={p.id}><button className="w-full text-left px-3 py-2 text-sm" style={{ borderRadius: "var(--radius-md)", background: cur?.id === p.id ? "var(--surface-raised)" : "transparent", color: cur?.id === p.id ? "var(--ink)" : "var(--ink-muted)" }}
+              <li key={p.id}><button className="w-full text-left px-3 py-2 text-sm" style={{ borderRadius: "var(--radius-sm)", background: cur?.id === p.id ? "var(--surface-raised)" : "transparent", color: cur?.id === p.id ? "var(--ink)" : "var(--ink-muted)", boxShadow: cur?.id === p.id ? "inset 2px 0 0 var(--signal)" : undefined }}
                 onClick={() => open(p.id)} aria-current={cur?.id === p.id}>
                 <div>{p.name}</div><div className="telemetry">{p.type} · v{p.current_version}</div></button></li>))}
           </ul>
