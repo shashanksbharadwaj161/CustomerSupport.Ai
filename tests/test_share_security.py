@@ -186,3 +186,24 @@ def test_logs_never_contain_passcodes_or_tokens():
     register_secret(VISITOR)
     out = scrub(f"GET /api/calls/ws?token=abc.def-123 passcode {VISITOR}")
     assert VISITOR not in out and "abc.def-123" not in out
+
+
+
+def test_ws_check_does_not_use_up_call_starts_and_429_is_visible(share):
+    """Get-ready checks have their own bucket (a visitor reloading the page must still be able to call), and a
+    rate-limited call start is accepted then closed with 4429 so the page can say "wait a minute" (not "lost")."""
+    c, app = share
+    tok = login(c, VISITOR).json()["token"]
+    hdr = {"origin": ORIGIN, "host": PUB}
+    for _ in range(15):  # more than the 12 call starts per minute
+        with c.websocket_connect(f"/api/ws-check?token={tok}", headers=hdr) as ws:
+            ws.send_text("ping")
+            assert ws.receive_text() == "ping"
+    auth = app.state.auth
+    assert auth.rate_limit_key("203.0.113.7", "call_start")  # still available after 15 checks
+    while auth.rate_limit_key("203.0.113.7", "call_start"):
+        pass
+    with c.websocket_connect(f"/api/calls/ws?token={tok}", headers=hdr) as ws:
+        with pytest.raises(WebSocketDisconnect) as e:
+            ws.receive_text()
+    assert e.value.code == 4429

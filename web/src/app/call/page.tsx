@@ -147,6 +147,8 @@ export default function LiveCall() {
       setStatus((s) => (s === "live" || s === "connecting" ? "ended" : s)); setState("idle");
       if (r === "ended" || userEnded.current) return;
       setScreen((cur) => cur ?? (r.includes("4503") ? { kind: "busy", text: "The agent is busy with another caller right now. Please try again in a minute." }
+        : r.includes("4429") ? { kind: "busy", text: "Too many call attempts from your network in the last minute. Please wait a minute, then try again." }
+        : r.includes("4401") ? { kind: "lost", text: "Your passcode session expired. Reload the page and enter the passcode again." }
         : { kind: "lost", text: "The connection was lost. The host PC may have gone to sleep, lost its internet, or the share link changed. Try again in a moment, or ask for a new link." }));
     };
     client.current = c;
@@ -162,7 +164,8 @@ export default function LiveCall() {
       if (!wire()) { const id = window.setInterval(() => { if (wire()) window.clearInterval(id); }, 500); window.setTimeout(() => window.clearInterval(id), 10000); }
     } catch (e: any) {
       userEnded.current = true; c.disconnect(); setStatus("error");
-      if (e instanceof ApiError && e.status === 503) setScreen({ kind: "busy", text: "The agent is busy with another caller right now. Please try again in a minute." });
+      if (e instanceof ApiError && e.status === 429) setScreen({ kind: "busy", text: "Too many call attempts from your network in the last minute. Please wait a minute, then try again." });
+      else if (e instanceof ApiError && e.status === 503) setScreen({ kind: "busy", text: "The agent is busy with another caller right now. Please try again in a minute." });
       else if (e?.name === "NotAllowedError") setError("Microphone permission was blocked. Allow it in the browser's site settings, then try again.");
       else if (e instanceof ApiError && (e.status === 401 || e.status === 403)) setError("Your passcode session expired. Reload the page and enter the passcode again.");
       else setScreen({ kind: "lost", text: "Could not reach the agent. The host PC may be offline or the link may have changed." });

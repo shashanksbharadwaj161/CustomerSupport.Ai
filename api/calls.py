@@ -87,7 +87,7 @@ def router(app) -> APIRouter:
         await handler.handle_patch_request(SmallWebRTCPatchRequest(pc_id=body["pc_id"], candidates=cands))
         return {"ok": True}
 
-    def ws_refusal(websocket: WebSocket) -> int | None:
+    def ws_refusal(websocket: WebSocket, bucket: str = "call_start") -> int | None:
         """CORS does not cover WebSockets: check Host, Origin, role token and rate limit ourselves (DEPLOY.md)."""
         from api.auth import client_ip
         a = app.state.auth
@@ -97,14 +97,14 @@ def router(app) -> APIRouter:
             return 4403
         if not a.token_ok(a.token_from(websocket), "visitor"):
             return 4401
-        if not a.rate_limit_key(client_ip(websocket), "call_start"):
+        if not a.rate_limit_key(client_ip(websocket), bucket):
             return 4429
         return None
 
     @r.websocket("/api/ws-check")
     async def ws_check(websocket: WebSocket):
         """Get-ready screen: proves a WebSocket survives the tunnel and the passcode works. Echoes one message."""
-        reason = ws_refusal(websocket)
+        reason = ws_refusal(websocket, "ws_check")  # own bucket: a Get-ready check must not use up real call starts
         if reason:
             await websocket.close(code=reason)
             return
@@ -127,6 +127,8 @@ def router(app) -> APIRouter:
             return
         reason = ws_refusal(websocket)
         if reason:
+            if reason == 4429:  # a pre-accept close reaches the browser as 1006; accept so the page can say "wait a minute"
+                await websocket.accept()
             await websocket.close(code=reason)
             return
         if busy():

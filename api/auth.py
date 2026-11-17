@@ -25,7 +25,7 @@ from urllib.parse import urlparse
 
 from fastapi import HTTPException, Request
 
-LIMITS = {"login": (8, 60), "call_start": (12, 60), "crawl": (6, 60), "voice_preview": (30, 60), "ask": (20, 60), "api": (240, 60)}
+LIMITS = {"login": (8, 60), "call_start": (12, 60), "ws_check": (20, 60), "crawl": (6, 60), "voice_preview": (30, 60), "ask": (20, 60), "api": (240, 60)}
 PUBLIC = {"/api/health", "/health", "/api/auth/login", "/api/auth/status", "/api/auth/logout"}
 TOKEN_TTL = 12 * 3600
 
