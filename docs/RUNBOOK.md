@@ -212,7 +212,8 @@ Voice catalog files: `voices/catalog.json`, `voices/bakeoff_voices.json`; Settin
 ---------------------------------------------------------------------------------------------------
 
 ## Remote demo through a tunnel ($0)
-`deploy/tunnel.sh` + `deploy/CHECKLIST.md` (password required, key locked, polling instead of SSE, WebSocket transport).
+Windows: double-click `ShaOn-Share.bat` (docs/SHARE.md). macOS/Linux: `scripts/share.sh` (needs pwsh), or the older
+`deploy/tunnel.sh` + `deploy/CHECKLIST.md`. Both: passcodes, key locked, polling instead of SSE, WebSocket transport.
 
 ## Everyday commands
 | What | Command |

@@ -14,6 +14,8 @@ Audio stays on your machine; only text goes to Claude (Haiku 5.5). The only cost
 scripts/start.sh
 ```
 Open http://127.0.0.1:8000. Missing key or models -> honest demo mode (yellow banner; Settings > Engines).
+
+**Share with a link (free, from your Windows PC):** double-click `ShaOn-Share.bat` - see [docs/SHARE.md](docs/SHARE.md).
 Full setup from a fresh Windows/WSL2 PC or a Kaggle-only setup: **[docs/RUNBOOK.md](docs/RUNBOOK.md)**.
 What works and what is still pending, milestone by milestone: **[STATUS.md](STATUS.md)**.
 

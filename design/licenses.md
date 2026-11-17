@@ -7,7 +7,7 @@ listed too because they decide demo vs product use.
 
 | Package | Version | License | Notes |
 |---|---|---|---|
-| next | 16.4.4 | MIT | static export served by FastAPI |
+| next | 16.4.6 | MIT | static export served by FastAPI (16.4.4 -> 16.4.6: GHSA-mfr8-8qww-v76h, server-side only, did not apply to the static export) |
 | react, react-dom | 19.2.0 | MIT | |
 | three | 0.187.0 | MIT | Signal particles, ASCII pass (own shaders, no copied code) |
 | @react-three/fiber | 9.8.2 | MIT | |
@@ -40,6 +40,8 @@ particle hero, ASCII) are re-implemented from scratch.
 | facebook/mms-1b-all (Wav2Vec2 + adapters) | **CC-BY-NC-4.0** | CPU STT candidate for hi/bn/kn: **evaluation / demo only**, never in a product |
 | facebook/mms-tts-hin, -ben, -kan (VITS) | **CC-BY-NC-4.0** | CPU voices for hi/bn/kn: **DEMO ONLY, robotic pipeline-testing voices** (badge in UI) |
 | transformers | Apache-2.0 | runtime for MMS / IndicConformer / Parler |
+| segno | BSD-3-Clause | QR code for the share link (scripts/share_helper.py) |
+| cloudflared (installed by the user, not bundled) | Apache-2.0 | free Quick Tunnel for the share link |
 
 ## Evaluation data
 

@@ -49,3 +49,32 @@ Budget rule: the only money spent is the Claude API. Everything else must be fre
 ## If you ever decide to spend (not the plan)
 
 Modal or RunPod GPU container with volume storage (one container, commit after each call, SQLite risky with several writers), explicit function timeout above the longest call, `region=` pinning (check GPU availability), WebSocket origin and token checks, Postgres if you scale past one container. Verify Modal's current settings (`min_containers` vs `keep_warm`) at that time.
+
+## Public link at $0: PC + Quick Tunnel (decision 2026-11-17)
+
+How to use it: docs/SHARE.md (double-click `ShaOn-Share.bat`). How it works:
+- `scripts/share.ps1` runs on the user's PC (Windows PowerShell 5.1 / PowerShell 7; `scripts/share.sh` wraps it on macOS/Linux):
+  production build, the app in exposed mode, real per-language model warm-up, `cloudflared tunnel --url`, public `/health`
+  check, link + visitor passcode + QR, watchdog that restarts the tunnel and prints the NEW link when the old one dies.
+- One origin: the FastAPI process serves the static web build, `/api` and the call WebSocket on one local port, so one tunnel
+  URL is enough and the browser sees a single https origin. A separate reverse-proxy process would only add a hop for the
+  audio stream, so the app process itself plays that role.
+- Security while shared: per-launch visitor passcode (calls only) and admin passcode (Studio, Settings, key, knowledge,
+  logs), checked server-side for REST and the WebSocket upgrade; Host and Origin must be localhost or the tunnel host learned
+  at launch; per-IP rate limits using the client IP Cloudflare forwards; max concurrent calls (default 2) and max call length
+  (default 5 min); key editing off; ingestion admin-only with an SSRF guard (resolved addresses, every redirect hop, JS
+  rendering off). Tested in tests/test_share_security.py and the share E2E scripts.
+
+### Hosting options rejected for $0
+These reasons come from the project owner's research (November 2026); re-check them before revisiting the decision.
+
+| Option | Why not |
+|---|---|
+| Hugging Face Docker Spaces | Docker Spaces need a paid plan now; free CPU Spaces would also be too slow for live speech models. |
+| Render, Vercel | No GPU, and not built to host CPU speech models for live calls (Render free sleeps and has no persistent disk; Vercel functions are short-lived). |
+| Oracle Cloud Always Free (Ampere) | Allowance halved to 2 OCPU / 12 GB, and "out of capacity" errors when creating instances: not reliable enough for a client demo. |
+| Modal / RunPod / other GPU clouds | Paid. |
+
+Decision: the user's own PC runs everything; a Cloudflare Quick Tunnel gives a temporary public https link. Trade-offs
+(written into docs/SHARE.md): the link dies when the PC sleeps or the window closes, the URL changes every run, no uptime
+guarantee, not for public traffic.
