@@ -40,7 +40,10 @@ def main():
     for name, extra, note in [("transformers", "stt-indic", "transformers package (IndicConformer runtime; weights checked below)"), ("parler_tts", "tts-parler", "Indic Parler-TTS (hi/bn/kn voices, GPU)"),
                               ("omnivoice", "tts-omnivoice", "OmniVoice (DEMO ONLY, CC-BY-NC weights, GPU)"), ("sentence_transformers", "retrieval", "BGE-M3 embeddings")]:
         line("PASS" if mod(name) else "PENDING", f"{note}", f'pip install -e ".[{extra}]"')
-    for b, fix in [("ffmpeg", "sudo apt install ffmpeg"), ("espeak-ng", "sudo apt install espeak-ng"), ("node", "install Node.js 20+ (nvm)")]:
+    win = sys.platform == "win32"
+    for b, fix in [("ffmpeg", "winget install Gyan.FFmpeg" if win else "sudo apt install ffmpeg"),
+                   ("espeak-ng", "winget install eSpeak-NG.eSpeak-NG" if win else "sudo apt install espeak-ng"),
+                   ("node", "winget install OpenJS.NodeJS.LTS" if win else "install Node.js 20+ (nvm)")]:
         line("PASS" if shutil.which(b) else "MISSING", f"binary {b}", fix)
     try:
         import unidic

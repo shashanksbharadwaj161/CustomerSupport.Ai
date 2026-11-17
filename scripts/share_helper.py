@@ -4,6 +4,7 @@
   python scripts/share_helper.py status <port>            # one status line from the launcher-only endpoint
   python scripts/share_helper.py ready <port>             # exit 0 when every language is ready, prints per-language states
   python scripts/share_helper.py passcode                 # random visitor passcode, e.g. k7mq-x3fp-9tbw
+  python scripts/share_helper.py key                      # exit 0 if an Anthropic key is configured (prints yes/no only)
 """
 from __future__ import annotations
 
@@ -37,6 +38,23 @@ def main() -> int:
     if cmd == "passcode":
         print("-".join("".join(secrets.choice(ALPHABET) for _ in range(4)) for _ in range(3)))
         return 0
+    if cmd == "key":  # reads the encrypted store directly (no server needed); prints yes/no, never the key
+        try:
+            import os
+            import pathlib
+            sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent))
+            from api.config import load_config
+            from api.db import DB
+            from api.secrets_store import SecretStore
+            cfg = load_config()
+            cfg.data_dir.mkdir(parents=True, exist_ok=True)
+            key, _src = SecretStore(DB(cfg.data_dir / "shaon.sqlite3"), cfg.data_dir).api_key()
+            ok = bool(key) or bool(os.environ.get("ANTHROPIC_API_KEY"))
+        except Exception as e:
+            print(f"could not read the key store ({type(e).__name__})")
+            return 2
+        print("yes" if ok else "no")
+        return 0 if ok else 1
     if cmd in ("status", "ready"):
         try:
             s = local(sys.argv[2])

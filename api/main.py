@@ -113,7 +113,9 @@ def create_app(state: AppState | None = None) -> FastAPI:
         if has_forwarding_headers(request.headers) or peer not in ("127.0.0.1", "::1", "localhost", "testclient"):
             raise HTTPException(404, "Not found")
         r = st.readiness()
-        return {**r, "spend": st.spend.summary(), "share_host": app.state.auth.share_host()}
+        key, _src = st.secrets.api_key()
+        return {**r, "spend": st.spend.summary(), "share_host": app.state.auth.share_host(),
+                "key_present": bool(key)}  # a yes/no for the launcher's first-run step; never the key itself
 
     @app.get("/api/engines")
     def engines():

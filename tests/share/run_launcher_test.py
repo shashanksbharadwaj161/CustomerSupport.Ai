@@ -26,12 +26,14 @@ def main() -> int:
            "FAKE_CF_DROP_AFTER": "12", "ADMIN_PASSWORD": ""}
     r = subprocess.run([pwsh, "-NoProfile", "-File", "scripts/share.ps1", "-Port", "8771", "-Cloudflared", str(ROOT / "tests/share/fake_cloudflared.sh"),
                         "-PublicUrlOverride", "http://127.0.0.1:8771", "-RunSeconds", "45", "-SkipWarmup", "-OutDir", str(out)],
-                       cwd=ROOT, env=env, capture_output=True, text=True, timeout=300)
+                       cwd=ROOT, env=env, capture_output=True, text=True, timeout=300, input="")  # stdin EOF = no keyboard
     log = r.stdout + r.stderr
     visitor = re.search(r"VISITOR PASSCODE:\s+(\S+)", log)
     admin = re.search(r"Admin passcode.*?: (\S+)", log)
     link_txt = (out / "share-link.txt").read_text() if (out / "share-link.txt").exists() else ""
     checks = {
+        "first_run_key_step_points_to_local_settings": "http://127.0.0.1:8771/settings/" in log and "Never type or paste the key" in log,
+        "no_keyboard_does_not_hang": "Continuing without a key" in log,
         "printed_link_and_passcode": "SHARE THIS LINK:   https://stub-run-1-test.trycloudflare.com/call/" in log and bool(visitor),
         "drop_detected_old_link_dead": "TUNNEL DROPPED. The old link is DEAD: https://stub-run-1-test" in log,
         "new_link_printed": "SHARE THIS LINK:   https://stub-run-2-test.trycloudflare.com/call/" in log,

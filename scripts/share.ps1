@@ -14,6 +14,7 @@ param(
   [string]$PublicUrlOverride = "",   # testing only: check this base URL instead of the tunnel URL
   [int]$RunSeconds = 0,              # testing only: stop after N seconds
   [switch]$SkipWarmup,
+  [switch]$NonInteractive,           # never wait for Enter (tests, scheduled runs)
   [string]$OutDir = ""               # where share-link.txt / share-qr.png go (default: project folder)
 )
 $ErrorActionPreference = "Stop"
@@ -93,6 +94,62 @@ if (-not $Admin -and (Test-Path (Join-Path $Root ".env"))) {
   if ($m) { $Admin = $m.Matches[0].Groups[1].Value.Trim().Trim('"') }
 }
 if (-not $Admin -or $Admin.Length -lt 12) { $Admin = ((& $Py scripts/share_helper.py passcode).Trim() + "-" + (& $Py scripts/share_helper.py passcode).Trim()) }
+
+# ---------------------------------------------------------------- 2b. models on disk -> no downloads during calls
+& $Py scripts/fetch_models.py --check *> $null
+if ($LASTEXITCODE -eq 0) { $env:HF_HUB_OFFLINE = "1"; Say "Models: all on disk (offline mode: nothing is downloaded during calls)" "Green" }
+else { Say "Some models are not downloaded yet; they download on first use (run ShaOn-Install.bat to get them all now)." "Yellow" }
+
+# ---------------------------------------------------------------- 2c. first-run Anthropic key: local Settings page only
+# The key is never typed in this window, never logged and never sent through the tunnel: it is pasted into Settings on
+# THIS PC (http://127.0.0.1), while the app is NOT shared yet and key editing is allowed. Sharing then locks key editing.
+function Wait-Health([int]$seconds, $proc) {
+  for ($i = 0; $i -lt $seconds; $i++) {
+    if ($proc -and $proc.HasExited) { return $false }
+    if ((Get-Url "http://127.0.0.1:$Port/health" 3) -eq 200) { return $true }
+    Start-Sleep -Seconds 1
+  }
+  return $false
+}
+& $Py scripts/share_helper.py key *> $null
+if ($LASTEXITCODE -ne 0) {
+  if ((Get-Url "http://127.0.0.1:$Port/health" 2) -ne 0) { Fail "Port $Port is already in use (is ShaOn already running?). Close it or run: scripts\share.ps1 -Port 8010" }
+  $env:SHAON_EXPOSED = "0"; $env:ALLOW_KEY_EDIT = "true"; $env:ADMIN_PASSWORD = $Admin; $env:VISITOR_PASSCODE = ""
+  $env:SHAON_PRELOAD = ""; $env:TRANSPORT = "both"; $env:PYTHONIOENCODING = "utf-8"
+  $kOut = Join-Path $ShareDir "keysetup.out.log"; $kErr = Join-Path $ShareDir "keysetup.err.log"
+  $keyServer = Start-Process -FilePath $Py -ArgumentList @("-m", "uvicorn", "--factory", "api.main:create_app", "--host", "127.0.0.1", "--port", "$Port", "--log-level", "warning") `
+    -RedirectStandardOutput $kOut -RedirectStandardError $kErr -PassThru -NoNewWindow
+  try {
+    if (-not (Wait-Health 90 $keyServer)) { Get-Content $kErr -Tail 20 -ErrorAction SilentlyContinue | Write-Host; Fail "The app did not start. Log: $kErr" }
+    $settings = "http://127.0.0.1:$Port/settings/"
+    Write-Host ""
+    Write-Host "  ------------------------------------------------------------" -ForegroundColor Yellow
+    Write-Host "   FIRST RUN: no Anthropic API key yet (calls would use scripted demo replies)." -ForegroundColor Yellow
+    Write-Host "   1. Open this page in a browser ON THIS PC:  $settings" -ForegroundColor White
+    Write-Host "   2. Sign in with the admin passcode:          $Admin" -ForegroundColor White
+    Write-Host "   3. Paste your key (sk-ant-...) under 'Anthropic API key', press Save, then Test key." -ForegroundColor White
+    Write-Host "   4. In the Anthropic Console (console.anthropic.com), set a monthly spend limit for this key." -ForegroundColor White
+    Write-Host "      ShaOn also stops at its own cap (default 10 USD, shown in Settings)." -ForegroundColor Gray
+    Write-Host "   Never type or paste the key into THIS window." -ForegroundColor Gray
+    Write-Host "  ------------------------------------------------------------" -ForegroundColor Yellow
+    if ($OnWindows) { try { Start-Process $settings } catch {} }
+    if ($NonInteractive) { Say "Non-interactive run: continuing without a key (demo replies)." "Yellow" }
+    else {
+      while ($true) {
+        $ans = Read-Host "  Press Enter when the key is saved (or type skip to share with demo replies only)"
+        if ($null -eq $ans) { $ans = "skip" }   # end of input (no keyboard attached): do not loop forever
+        if ($ans -and $ans.Trim().ToLower() -eq "skip") { Say "Continuing without a key: calls use scripted demo replies." "Yellow"; break }
+        & $Py scripts/share_helper.py key *> $null
+        if ($LASTEXITCODE -eq 0) { Say "Anthropic key found (stored encrypted on this PC). Key editing is now locked while sharing." "Green"; break }
+        Say "No key found yet. Save it in Settings first, then press Enter again." "Red"
+      }
+    }
+  }
+  finally {
+    if ($keyServer -and -not $keyServer.HasExited) { try { Stop-Process -Id $keyServer.Id -Force } catch {} }
+    for ($i = 0; $i -lt 20; $i++) { if ((Get-Url "http://127.0.0.1:$Port/health" 1) -eq 0) { break }; Start-Sleep -Milliseconds 500 }
+  }
+} else { Say "Anthropic key: configured" "Green" }
 
 # ---------------------------------------------------------------- 3. start the app (production, exposed mode)
 $env:SHAON_EXPOSED = "1"; $env:ALLOW_KEY_EDIT = "false"; $env:TRANSPORT = "both"
