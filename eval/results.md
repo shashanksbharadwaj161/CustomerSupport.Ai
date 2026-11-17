@@ -192,3 +192,37 @@ browser renders WebGL in software (SwiftShader). n=3 per setting, after the CPU-
 | Off | 4203, 4096, 3180 | 4096 |
 
 Before the throttle (n=2): Lite 5332, 5277 vs Off 3696, 3975. Not measured on a PC with hardware WebGL.
+
+## CPU voices compared: Kokoro-82M, Mithi v2 Flash, MMS-TTS (2026-11-17)
+`eval/runners/run_tts_compare.py` -> `eval/out/tts_compare.json`. CPU only (4 threads, no GPU), two short bank sentences per
+voice. load = engine load once; cold = first sentence (includes first-use warm-up of that engine/language); warm = mean of
+the next ones; RTF = warm generation time / audio length (< 1 is faster than real time). Round-trip CER = character error
+rate when the routed STT (Whisper small for en/ja, MMS-1B-all for hi/bn/kn) transcribes the voice: an intelligibility
+PROXY, not a naturalness score. **No MOS / native-speaker naturalness ratings were collected.** No clipping on any voice.
+
+| Lang | Voice | Licence | Load s | Cold s | Warm s | Audio s | RTF | Round-trip CER |
+|---|---|---|---|---|---|---|---|---|
+| en | kokoro_en_heart (agent) | Apache-2.0 | 2.84 | 13.34 | 0.92 | 3.20 | 0.29 | 0.037 |
+| en | kokoro_en_michael (test customer) | Apache-2.0 | (shared) | 1.15 | 0.88 | 3.59 | 0.25 | 0.037 |
+| en | mithi_en_ahana | Apache-2.0 | 0.79 | 2.01 | 1.49 | 2.84 | 0.53 | 0.037 |
+| ja | kokoro_ja_alpha (agent) | Apache-2.0 | (shared) | 16.53 | 2.70 | 3.17 | 0.85 | 0.125 |
+| ja | kokoro_ja_kumo (test customer) | Apache-2.0 | (shared) | 0.80 | 0.72 | 3.04 | 0.24 | 0.125 |
+| hi | mithi_hi_ahana (agent) | Apache-2.0 | 0.79 | 3.33 | 2.62 | 3.49 | 0.75 | 0.000 |
+| hi | mithi_hi_nakul | Apache-2.0 | (shared) | 2.83 | 2.67 | 3.24 | 0.82 | 0.000 |
+| hi | kokoro_hi_alpha (1st fallback) | Apache-2.0 | (shared) | 2.37 | 1.49 | 4.78 | 0.31 | 0.000 |
+| hi | mms_hi | CC-BY-NC demo only | - | 9.77 | 0.89 | 3.54 | 0.25 | 0.068 |
+| bn | mithi_bn_ahana (agent) | Apache-2.0 | (shared) | 2.65 | 1.68 | 3.26 | 0.51 | 0.145 |
+| bn | mithi_bn_nakul (test customer) | Apache-2.0 | (shared) | 2.14 | 1.70 | 3.09 | 0.55 | 0.073 |
+| bn | mms_bn | CC-BY-NC demo only | - | 8.77 | 0.76 | 4.58 | 0.17 | 0.133 |
+| kn | mithi_kn_ahana (agent) | Apache-2.0 | (shared) | 3.01 | 2.33 | 3.91 | 0.60 | 0.040 |
+| kn | mithi_kn_nakul (test customer) | Apache-2.0 | (shared) | 2.29 | 2.21 | 3.58 | 0.62 | 0.000 |
+| kn | mms_kn | CC-BY-NC demo only | - | 9.52 | 0.81 | 5.28 | 0.15 | 0.109 |
+| hi/bn/kn | Indic Parler-TTS | Apache-2.0, gated | PENDING | - | - | - | - | - |
+
+Decision: Mithi v2 Flash is the default CPU voice for hi/bn/kn (Apache-2.0, all three languages, recognised well),
+Kokoro stays for en/ja. Trade-off measured, not hidden: Mithi is 2-3x slower than MMS-TTS once warm (RTF 0.5-0.8 vs
+0.15-0.25) and slower than Kokoro Hindi (0.75 vs 0.31); MMS is non-commercial and sounds robotic. The Mithi authors
+describe its expression as flatter than larger models; we have no naturalness rating to add. Indic Parler-TTS: PENDING
+(gated, needs a Hugging Face token with accepted terms; not runnable here). Indic-Speak: not used (restricted licence).
+The big "cold" numbers (13-17 s for the first Kokoro sentence) are why the server now preloads and warms every voice
+before it reports a language ready, and why synthesis no longer blocks the pipecat audio context (next section).

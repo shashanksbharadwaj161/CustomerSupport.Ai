@@ -82,6 +82,12 @@ foreach ($n in @("ADMIN_PASSWORD", "VISITOR_PASSCODE", "SHAON_SHARE_HOST_FILE", 
 $env:SHAON_LOCAL_PREVIEW = "1"; $env:SHAON_EXPOSED = "0"; $env:ALLOW_KEY_EDIT = "true"; $env:TRANSPORT = "both"
 $env:SHAON_SELF_URL = "http://127.0.0.1:$Port"; $env:PYTHONIOENCODING = "utf-8"
 $env:SHAON_PRELOAD = ((& $Py scripts/share_helper.py preload) | Out-String).Trim()
+& $Py scripts/fetch_models.py --only "Oomni/mithi-v2-flash" --check *> $null
+if ($LASTEXITCODE -ne 0) {
+  # New CPU voices for Hindi/Bengali/Kannada (Apache-2.0, ~0.21 GB): fetch them once so an existing install gets them
+  Say "Downloading the Mithi voices for Hindi/Bengali/Kannada (about 0.21 GB, once)..." "Yellow"
+  & $Py scripts/fetch_models.py --only "Oomni/mithi-v2-flash"
+}
 & $Py scripts/fetch_models.py --check *> $null
 if ($LASTEXITCODE -eq 0) { $env:HF_HUB_OFFLINE = "1"; Say "Models: all downloaded" "Green" }
 else { Say "Some language models are not downloaded yet: those languages show as 'missing' in the app (ShaOn-Install.bat downloads them)." "Yellow" }

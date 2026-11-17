@@ -165,7 +165,7 @@ def main() -> int:
         srv = start_server(data_dir, provider)
         try:
             set_agent(lang, script[lang]["agent_voice"])
-            mp4 = OUT / f"shaon-conversation-{lang}.mp4"
+            mp4 = OUT / f"shaon-conversation-{lang}-full.mp4"  # unedited; report.py cuts the labelled 30-s excerpt
             rj = OUT / f"run-{lang}.json"
             r = sh(["node", "scripts/conversation_record.mjs", f"http://127.0.0.1:{PORT}", lang, str(mp4), str(rj), *files[lang]],
                    cwd=ROOT / "web", env=ENV_BASE, timeout=600)
