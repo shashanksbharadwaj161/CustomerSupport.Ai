@@ -32,6 +32,8 @@ PWSH="${PWSH:-$(command -v pwsh || true)}"
 if [ -n "$PWSH" ]; then
   step "share launcher (scripts/share.ps1 under pwsh, stub tunnel: link, drop + new link, cleanup)"
   "$PY" tests/share/run_launcher_test.py "$PWSH" || fail=1
+  step "local preview launcher (scripts/local.ps1: no passcode despite stale env, Settings editable, loopback only)"
+  PYTHON="$PY" "$PY" tests/share/run_local_test.py "$PWSH" || fail=1
 else
   echo; echo "=== share launcher: SKIPPED (pwsh not installed; set PWSH=/path/to/pwsh)"
 fi

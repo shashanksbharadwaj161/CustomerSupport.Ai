@@ -114,7 +114,7 @@ function Wait-Health([int]$seconds, $proc) {
 & $Py scripts/share_helper.py key *> $null
 if ($LASTEXITCODE -ne 0) {
   if ((Get-Url "http://127.0.0.1:$Port/health" 2) -ne 0) { Fail "Port $Port is already in use (is ShaOn already running?). Close it or run: scripts\share.ps1 -Port 8010" }
-  $env:SHAON_EXPOSED = "0"; $env:ALLOW_KEY_EDIT = "true"; $env:ADMIN_PASSWORD = $Admin; $env:VISITOR_PASSCODE = ""
+  $env:SHAON_LOCAL_PREVIEW = "0"; $env:SHAON_EXPOSED = "0"; $env:ALLOW_KEY_EDIT = "true"; $env:ADMIN_PASSWORD = $Admin; $env:VISITOR_PASSCODE = ""
   $env:SHAON_PRELOAD = ""; $env:TRANSPORT = "both"; $env:PYTHONIOENCODING = "utf-8"
   $kOut = Join-Path $ShareDir "keysetup.out.log"; $kErr = Join-Path $ShareDir "keysetup.err.log"
   $keyServer = Start-Process -FilePath $Py -ArgumentList @("-m", "uvicorn", "--factory", "api.main:create_app", "--host", "127.0.0.1", "--port", "$Port", "--log-level", "warning") `
@@ -152,6 +152,7 @@ if ($LASTEXITCODE -ne 0) {
 } else { Say "Anthropic key: configured" "Green" }
 
 # ---------------------------------------------------------------- 3. start the app (production, exposed mode)
+$env:SHAON_LOCAL_PREVIEW = "0"   # never the no-passcode local mode while sharing
 $env:SHAON_EXPOSED = "1"; $env:ALLOW_KEY_EDIT = "false"; $env:TRANSPORT = "both"
 $env:VISITOR_PASSCODE = $Visitor; $env:ADMIN_PASSWORD = $Admin
 $env:SHAON_MAX_CALLS = "$MaxCalls"; $env:SHAON_MAX_CALL_SECONDS = "$MaxCallSeconds"

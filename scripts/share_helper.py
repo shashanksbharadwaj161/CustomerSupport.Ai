@@ -4,6 +4,7 @@
   python scripts/share_helper.py status <port>            # one status line from the launcher-only endpoint
   python scripts/share_helper.py ready <port>             # exit 0 when every language is ready, prints per-language states
   python scripts/share_helper.py passcode                 # random visitor passcode, e.g. k7mq-x3fp-9tbw
+  python scripts/share_helper.py preload                  # SHAON_PRELOAD for the languages whose models are on disk
   python scripts/share_helper.py key                      # exit 0 if an Anthropic key is configured (prints yes/no only)
 """
 from __future__ import annotations
@@ -37,6 +38,17 @@ def main() -> int:
         return 0
     if cmd == "passcode":
         print("-".join("".join(secrets.choice(ALPHABET) for _ in range(4)) for _ in range(3)))
+        return 0
+    if cmd == "preload":  # only warm what is downloaded; missing languages show as 'missing' in the app
+        import pathlib
+        sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent))
+        from agent.engines import weights_cached
+        have = {"en": weights_cached("Systran/faster-whisper-small") and weights_cached("hexgrad/Kokoro-82M")}
+        have["ja"] = have["en"]
+        for l, iso in (("hi", "hin"), ("bn", "ben"), ("kn", "kan")):
+            have[l] = weights_cached("facebook/mms-1b-all") and (weights_cached(f"facebook/mms-tts-{iso}") or (l == "hi" and have["en"]))
+        items = (["lid"] if have["en"] else []) + [f"{k}:{l}" for l in LANGS if have[l] for k in ("stt", "tts")]
+        print(",".join(items))
         return 0
     if cmd == "key":  # reads the encrypted store directly (no server needed); prints yes/no, never the key
         try:
