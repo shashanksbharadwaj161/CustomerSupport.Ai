@@ -44,6 +44,9 @@ class FasterWhisperSTT(STT):
 
 
 def _cuda() -> bool:
+    import os
+    if (os.environ.get("SHAON_DEVICE") or "").lower() == "cpu":
+        return False
     try:
         import ctranslate2
 

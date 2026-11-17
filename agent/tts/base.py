@@ -52,6 +52,9 @@ class TTS(ABC):
 
 
 def device() -> str:
+    import os
+    if (os.environ.get("SHAON_DEVICE") or "").lower() == "cpu":
+        return "cpu"
     try:
         import torch
 

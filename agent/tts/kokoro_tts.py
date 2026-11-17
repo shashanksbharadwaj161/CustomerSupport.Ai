@@ -12,6 +12,29 @@ from agent.tts.base import TTS, Synthesis, Voice
 _LANG_CODE = {"en": "a", "ja": "j", "hi": "h"}  # Hindi voices exist (hf_*, hm_*): CPU candidate, quality unrated
 
 
+def _short_espeak_data_path() -> None:
+    """espeak-ng ignores a data folder whose path is 160+ characters (230+ on Windows) and falls back to the path it was
+    built with, then EXITS the process ("Error processing file .../phontab"). Measured here: a venv path of exactly 160
+    characters crashed, 156 worked. Deep install folders (OneDrive, Downloads/<long zip name>) can hit this, so copy the
+    21 MB data folder to a short path once and point phonemizer at it."""
+    import os
+    import shutil
+    import tempfile
+    try:
+        import espeakng_loader
+        from phonemizer.backend.espeak.wrapper import EspeakWrapper
+    except Exception:
+        return
+    src = espeakng_loader.get_data_path()
+    if len(str(src)) < 150:
+        return
+    base = os.environ.get("LOCALAPPDATA") or tempfile.gettempdir()
+    dst = os.path.join(base, "shaon-espeak-ng-data")
+    if not os.path.exists(os.path.join(dst, "phontab")):
+        shutil.copytree(src, dst, dirs_exist_ok=True)
+    EspeakWrapper.set_data_path(dst)
+
+
 class KokoroTTS(TTS):
     name = "kokoro"
     languages = ("en", "ja", "hi")
@@ -21,6 +44,11 @@ class KokoroTTS(TTS):
     def load(self) -> None:
         from kokoro import KPipeline
 
+        try:
+            import misaki.espeak  # noqa: F401  (sets the long default path on import; override it after)
+        except Exception:
+            pass
+        _short_espeak_data_path()
         self._KPipeline = KPipeline
         self.pipelines = {}
 

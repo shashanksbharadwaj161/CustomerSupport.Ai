@@ -9,15 +9,19 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 
 
 def _load_dotenv(path: pathlib.Path) -> None:
-    """Minimal .env loader (no dependency). Existing env vars win."""
+    """Minimal .env loader (no dependency). Existing env vars win; within the file the LAST line for a name wins
+    (a value added below the empty template line must not be shadowed by it)."""
     if not path.exists():
         return
-    for line in path.read_text(encoding="utf-8").splitlines():
+    vals: dict[str, str] = {}
+    for line in path.read_text(encoding="utf-8-sig").splitlines():
         line = line.strip()
         if not line or line.startswith("#") or "=" not in line:
             continue
         k, v = line.split("=", 1)
-        os.environ.setdefault(k.strip(), v.strip().strip('"').strip("'"))
+        vals[k.strip()] = v.strip().strip('"').strip("'")
+    for k, v in vals.items():
+        os.environ.setdefault(k, v)
 
 
 def _bool(name: str, default: bool) -> bool:

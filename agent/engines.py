@@ -43,6 +43,9 @@ def load_engines_config() -> dict:
 
 
 def has_cuda() -> bool:
+    import os
+    if (os.environ.get("SHAON_DEVICE") or "").lower() == "cpu":  # installer's CPU demo mode: use the CPU models it downloaded
+        return False
     try:
         import ctranslate2
 

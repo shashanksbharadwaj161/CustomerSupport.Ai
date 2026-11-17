@@ -168,3 +168,15 @@ def test_greeting_discloses_ai_in_every_language():
             assert marker.lower() in g[lang].lower(), (kind, lang)
     p = normalize({"persona": {"name": "X", "greeting": {"en": "Hi, how can I help?"}}})
     assert "AI assistant" in p["persona"]["greeting"]["en"]
+
+
+def test_dotenv_last_value_wins(tmp_path, monkeypatch):
+    """The .env made from .env.example has an empty ANTHROPIC_API_KEY= line; a value added below must win."""
+    from api.config import _load_dotenv
+    monkeypatch.delenv("SHAON_TEST_DOTENV", raising=False)
+    f = tmp_path / ".env"
+    f.write_text("﻿SHAON_TEST_DOTENV=\n# later\nSHAON_TEST_DOTENV=second\n", encoding="utf-8")
+    _load_dotenv(f)
+    import os
+    assert os.environ["SHAON_TEST_DOTENV"] == "second"
+    monkeypatch.delenv("SHAON_TEST_DOTENV")
