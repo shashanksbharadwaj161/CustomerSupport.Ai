@@ -93,8 +93,24 @@ def _hf_token() -> bool:
         return False
 
 
+def apply_thread_limit() -> int:
+    """SHAON_TORCH_THREADS=n caps the CPU threads the speech models use (torch: MMS, Mithi, Kokoro; CTranslate2: Whisper).
+    Default 0 = library default (all cores). Useful when the same PC also renders the browser / records the screen:
+    oversubscribed torch threads made synthesis 3-5x slower in the recording runs."""
+    import os
+    n = int(os.environ.get("SHAON_TORCH_THREADS") or 0)
+    if n > 0:
+        try:
+            import torch
+            torch.set_num_threads(n)
+        except Exception:
+            pass
+    return n
+
+
 class EngineManager:
     def __init__(self):
+        self.threads = apply_thread_limit()
         self.cfg = load_engines_config()
         self.cuda = has_cuda()
         self._stt: dict[str, object] = {}

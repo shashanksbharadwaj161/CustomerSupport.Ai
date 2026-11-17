@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import asyncio
+import re
 import time
 from collections.abc import AsyncGenerator
 
@@ -121,6 +122,7 @@ class RouterTTS(TTSService):
         lang = dominant_language(text)[0] or s.ctx.current_lang
         voice = s.voice_for(lang)
         t0 = time.perf_counter()
+        parts = split_clauses(text)  # first audio after the first clause, not after the whole sentence
         synth = None
         tried = []
         for v in [voice, *s.fallback_voices(lang)]:
@@ -130,7 +132,7 @@ class RouterTTS(TTSService):
                 if v.params.get("ref_from") and s.ensure_reference:
                     await self._synthesize_keepalive(lambda v=v: s.ensure_reference(v), context_id)  # OmniVoice reference
                 eng = await self._synthesize_keepalive(lambda v=v: s.engines.get_tts(v.engine), context_id)
-                synth = await self._synthesize_keepalive(lambda eng=eng, v=v: eng.synthesize(text, v), context_id)
+                synth = await self._synthesize_keepalive(lambda eng=eng, v=v: eng.synthesize(parts[0], v), context_id)
                 voice = v
                 break
             except Exception as e:  # engine missing / weights missing: try the next fallback voice
@@ -144,12 +146,41 @@ class RouterTTS(TTSService):
         if s.tts_first_ms is None:
             s.tts_first_ms = ms
         await self.push_frame(msg("tts", lang=lang, voice=voice.id, engine=voice.engine, demo_only=voice.demo_only, fallbacks=tried,
-                                  gen_ms=ms, audio_s=round(len(synth.audio) / synth.sample_rate, 2)))
-        pcm = (np.clip(synth.audio, -1, 1) * 32767).astype(np.int16).tobytes()
-        step = int(synth.sample_rate * CHUNK_SECONDS) * 2
-        for i in range(0, len(pcm), step):
-            yield TTSAudioRawFrame(audio=pcm[i:i + step], sample_rate=synth.sample_rate, num_channels=1,
-                                   context_id=context_id)
+                                  gen_ms=ms, audio_s=round(len(synth.audio) / synth.sample_rate, 2), clauses=len(parts)))
+        for k in range(len(parts)):
+            if k:  # later clauses: synthesised while the earlier audio is already playing
+                try:
+                    synth = await self._synthesize_keepalive(lambda p=parts[k]: eng.synthesize(p, voice), context_id)
+                except Exception as e:
+                    logger.warning(f"TTS {voice.engine} failed on a clause: {e}")
+                    break
+            pcm = (np.clip(synth.audio, -1, 1) * 32767).astype(np.int16).tobytes()
+            if k < len(parts) - 1:  # short natural pause at the clause boundary
+                pcm += b"\x00\x00" * int(synth.sample_rate * CLAUSE_GAP_S)
+            step = int(synth.sample_rate * CHUNK_SECONDS) * 2
+            for i in range(0, len(pcm), step):
+                yield TTSAudioRawFrame(audio=pcm[i:i + step], sample_rate=synth.sample_rate, num_channels=1,
+                                       context_id=context_id)
+
+
+CLAUSE_GAP_S = 0.12
+_CLAUSE_END = re.compile(r"(?<=[,;:，、；،])\s*")
+
+
+def split_clauses(text: str, min_chars: int = 18, only_over: int = 48) -> list[str]:
+    """Split a long sentence at commas / semicolons (Latin, Devanagari/Bengali/Kannada use the same, Japanese 、；) so
+    synthesis can start speaking after the first clause. Short pieces are merged so prosody does not get choppy."""
+    text = text.strip()
+    if len(text) <= only_over:
+        return [text]
+    raw = [p for p in _CLAUSE_END.split(text) if p.strip()]
+    out: list[str] = []
+    for p in raw:
+        if out and (len(out[-1]) < min_chars or len(p.strip()) < min_chars):
+            out[-1] = out[-1] + " " + p.strip()
+        else:
+            out.append(p.strip())
+    return out or [text]
 
 
 class BrainProcessor(FrameProcessor):

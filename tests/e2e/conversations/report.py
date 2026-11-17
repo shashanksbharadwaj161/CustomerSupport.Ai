@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Turn the recording runs (eval/out/conversations/run-*.json + mp4) into transcripts, a results table and a ZIP.
 
-PASS needs ALL of: 1280x720 H.264 video with an AAC audio track; both customer lines audible in the recording
+PASS needs ALL of: each agent answer fits the question asked (scripted mode: hours, then lost card); 1280x720 H.264 video with an AAC audio track; both customer lines audible in the recording
 (max level > -35 dBFS); the greeting and both agent answers audible; the greeting finished before the customer spoke;
 two customer turns recognised in the right language; two meaningful agent answers (not the "did not catch that" reply)
 in the right native script; no TTS / pipeline error events. Anything else is FAIL with the reason.
@@ -49,10 +49,13 @@ def evaluate(run: dict) -> dict:
     ok_users = [u for u in users if u.get("lang") == lang and (u.get("text") or "").strip()]
     if len(ok_users) < 2:
         fails.append(f"customer turns recognised in {lang}: {len(ok_users)} of {len(users)}")
-    unknown = REPLIES["unknown"].get(lang, "")
-    good = [a for a in answers if a.get("text") and a["text"] != unknown and dominant_language(a["text"])[0] == lang]
+    good = [a for a in answers if a.get("text") and dominant_language(a["text"])[0] == lang]
     if len(good) < 2:
-        fails.append(f"meaningful native-script answers: {len(good)}")
+        fails.append(f"native-script answers: {len(good)}")
+    if run.get("provider") == "scripted":  # the answer must fit the QUESTION (turn 1: hours, turn 2: lost card)
+        for k, (want, a) in enumerate(zip(("hours", "card"), answers)):
+            if (a.get("text") or "") != REPLIES[want][lang]:
+                fails.append(f"answer {k + 1} does not answer the {want} question: {a.get('text', '')[:60]}")
     if len(users) > 2:
         fails.append(f"{len(users)} customer turns detected for 2 spoken lines (a line was split)")
     if errors:

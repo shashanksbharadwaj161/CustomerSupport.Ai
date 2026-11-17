@@ -52,7 +52,7 @@ const agentLines = async () => (await msgs()).filter((m) => m.event === "transcr
 /** Wait until the agent has produced `n` agent lines AND has gone through `n` complete speaking cycles (state
  *  "speaking" seen and ended) and stays quiet for `quietMs`. A text line alone is not enough: the audio of a sentence
  *  starts seconds after its text (synthesis), and the customer must not talk over it. */
-async function waitAgentDone(n, timeoutMs = 120000, quietMs = 2000) {
+async function waitAgentDone(n, timeoutMs = 120000, quietMs = 1600) {
   const start = Date.now();
   let quietSince = null;
   while (Date.now() - start < timeoutMs) {

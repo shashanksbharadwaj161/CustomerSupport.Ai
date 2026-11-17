@@ -84,6 +84,8 @@ def make_customer_audio(script: dict, langs: list[str], out_dir: pathlib.Path) -
 def start_server(data_dir: str, provider: str) -> subprocess.Popen:
     env = {**os.environ, "SHAON_LOCAL_PREVIEW": "1", "SHAON_DATA_DIR": data_dir, "SHAON_SEED_DEMO": "0", "SHAON_DEVICE": "cpu",
            "SHAON_LLM_PROVIDER": provider, "HF_HUB_OFFLINE": "1", "SHAON_SELF_URL": f"http://127.0.0.1:{PORT}",
+           # the same 4 cores also run the headed browser (software WebGL) and the screen recorder
+           "SHAON_TORCH_THREADS": os.environ.get("SHAON_TORCH_THREADS", "2"),
            "SHAON_PRELOAD": "lid,stt:en,tts:en,stt:ja,tts:ja,stt:hi,tts:hi,stt:bn,tts:bn,stt:kn,tts:kn"}
     log = open(pathlib.Path(data_dir) / "server.log", "w")
     p = subprocess.Popen([PY, "-m", "uvicorn", "--factory", "api.main:create_app", "--host", "127.0.0.1", "--port", str(PORT),

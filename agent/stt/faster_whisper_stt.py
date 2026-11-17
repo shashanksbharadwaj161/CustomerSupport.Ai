@@ -18,7 +18,8 @@ class FasterWhisperSTT(STT):
         model = self.options.get("model", "large-v3")
         device = self.options.get("device") or ("cuda" if _cuda() else "cpu")
         compute = self.options.get("compute_type") or ("float16" if device == "cuda" else "int8")
-        self.model = WhisperModel(model, device=device, compute_type=compute,
+        import os
+        self.model = WhisperModel(model, device=device, compute_type=compute, cpu_threads=int(os.environ.get("SHAON_TORCH_THREADS") or 0),
                                   download_root=self.options.get("download_root"))
 
     def _kw(self) -> dict:

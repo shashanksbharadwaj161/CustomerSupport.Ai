@@ -15,8 +15,8 @@ INTENTS = {
     "hours": {"en": ["saturday", "open", "hours", "time"], "hi": ["शनिवार", "खुल", "समय", "बजे"],
               "bn": ["শনিবার", "খোল", "সময়", "কটায়"], "kn": ["ಶನಿವಾರ", "ತೆರೆ", "ಸಮಯ", "ಗಂಟೆ"],
               "ja": ["土曜", "何時", "開", "営業"]},
-    "card": {"en": ["card", "lost", "block", "stolen"], "hi": ["कार्ड", "खो", "ब्लॉक", "कार"],
-             "bn": ["কার্ড", "হারি", "ব্লক", "কার"], "kn": ["ಕಾರ್ಡ್", "ಕಳೆದ", "ಬ್ಲಾಕ್", "ಕಾರ"],
+    "card": {"en": ["card", "lost", "block", "stolen"], "hi": ["कार्ड", "खो", "ब्लॉक"],
+             "bn": ["কার্ড", "হারি", "ব্লক"], "kn": ["ಕಾರ್ಡ್", "ಕಳೆದ", "ಬ್ಲಾಕ್"],
              "ja": ["カード", "紛失", "なくし", "止め", "停止"]},
     "human": {"en": ["human", "person", "agent", "someone"], "hi": ["इंसान", "व्यक्ति", "किसी से बात"],
               "bn": ["মানুষ", "কারও সাথে"], "kn": ["ಮನುಷ್ಯ", "ವ್ಯಕ್ತಿ"], "ja": ["人と", "担当者", "オペレーター"]},
@@ -53,6 +53,8 @@ REPLIES = {
 }
 
 
+# NOTE: never use short stems such as "कार"/"কার"/"ಕಾರ" for "card": they are inside नमस्कार/নমস্কার/ನಮಸ್ಕಾರ ("hello")
+# and turned every greeting into a lost-card question (caught in the Bengali recording, 2026-11-17).
 def intent_of(text: str, lang: str) -> str:
     t = unicodedata.normalize("NFC", text).lower()
     scores = {k: sum(w.lower() in t for w in v.get(lang, []) + v["en"]) for k, v in INTENTS.items()}
