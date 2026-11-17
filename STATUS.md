@@ -15,6 +15,7 @@ PENDING = cannot be done here; says who must do it.
 | UI | all pages, tiers, reduced motion, axe 0 violations, 64 screenshots | Folded Signal moodboard + assets for final styling - you |
 | M0 numbers | harness, Kaggle runbook, recorder, rater | native recordings + ratings - native speakers; GPU run - you / Kaggle |
 | Share link (PC + Quick Tunnel) | `ShaOn-Share.bat` launcher (run under PowerShell 7 with a stub tunnel), visitor/admin passcodes, Host/Origin checks, busy + max length, SSRF guard, Get-ready screen; 5 languages + 3 switches through the share-mode server | **public tunnel path: NOT TESTED** (sandbox cannot reach the Cloudflare edge); Windows PowerShell 5.1 + real phone - you |
+| Windows installer | `ShaOn-Install.bat` / one-line command: preflight, winget tools, clone/pull, pinned venv, web build, models, self-test, first-run key step, hand-off to the share launcher; 8 stubbed scenarios 44/44 under PowerShell 7; the real pinned install + model download + self-test pass on Linux | **NOT TESTED: real winget, Windows 10/11, Windows PowerShell 5.1, real tunnel, real phone** - you (first run on your laptop) |
 
 ## D0 - Design spike: BUILT
 - Built: Next.js 16 static export in `web/`, single tokens file `web/src/styles/tokens.css` (JS reads it back via `lib/tokens.ts`), self-hosted Noto fonts for all 5 scripts, effects tiers Auto/Full/Lite/Off + `prefers-reduced-motion` + pause when hidden (`lib/effects.tsx`), the Signal (R3F particles, 7 states, 5 language motifs, AnalyserNode-driven) with a static fallback, GPU ASCII post-process (Latin glyphs only), landing hero with the wordmark assembling from particles, Signal lab page.
@@ -155,6 +156,40 @@ How to use: docs/SHARE.md. Design + rejected hosts: DEPLOY.md "Public link at $0
   `ShaOn-Share.bat`, wait for the green link, open it on a phone using mobile data (Wi-Fi off), enter the visitor
   passcode, Get ready all green, one call in English and one in Hindi; then close the window and check the link is dead.
 - Also not tested here: Windows PowerShell 5.1 itself, winget paths, Windows Defender prompts, a real iPhone/Android.
+
+## One-command Windows installer: BUILT; logic VERIFIED with stubs; real Windows NOT TESTED
+How to use: docs/SHARE.md ("Install and share in two steps").
+- Built: `ShaOn-Install.bat` -> `scripts/install.ps1` (PS 5.1 + 7, ASCII-only, `-ExecutionPolicy Bypass` for that run only).
+  Preflight table (Windows build, free disk: stop under 12 GB / warn under 20 GB, RAM: warn under 8 GB, CPU/GPU, install
+  folder, internet) before installing anything. winget installs only what is missing (Git, Python 3.12 - never newer,
+  Node LTS 20+, cloudflared, eSpeak NG, FFmpeg, VC++ runtime) with agreements accepted non-interactively; PATH refreshed
+  in the same session; winget missing -> exact Store link. Code: clone (bootstrap / one-liner), `git pull --ff-only`
+  (checkout) or in-place git connect (ZIP folder); picks `main` only when it exists and contains the installer, says
+  which; private-repo failure -> exact Git Credential Manager / `gh auth login` steps. `.venv` (Python 3.12), torch
+  from the PyTorch CPU index, pinned constraints `deploy/requirements-cpu.txt`, `npm ci` + production build,
+  `scripts/fetch_models.py` (sizes first, progress bars, retries, resume, optional gated IndicConformer with an HF token
+  asked once), `scripts/doctor.py`, `scripts/selftest.py` (TTS -> STT per language, offline, no Claude call), then
+  `scripts/share.ps1` in the same window. Every step is skipped when already done (hash markers).
+- First-run key: `share.ps1` starts the app locally only (key editing allowed, not shared), opens
+  http://127.0.0.1:PORT/settings/, the user pastes the key there and presses Enter; key never typed in the terminal,
+  logged or sent through the tunnel; spend-limit reminder. Then the shared app starts with key editing locked.
+- Verified with stubs (tests/install/run_installer_test.py, `INSTALLER=1 scripts/test_all.sh`, 44/44 PASS under
+  PowerShell 7.4): low disk stops first; winget missing; private-repo clone failure; fresh machine (7 tools installed,
+  clone, venv, pinned pip, npm, token skipped) with a failed model download -> plain resume message; second run (no
+  winget/pip/npm repeat, download resumes, self-test, key step, link + passcode + QR); third run (all skipped, key
+  configured, fake key never in output/logs/share-link.txt; 31 s incl. a 25 s share run); partially installed PC +
+  ZIP folder + merged main; pip failure -> plain message.
+- Verified for real (Linux, Python 3.12): a fresh venv with the installer's exact pip commands (torch CPU index + pinned
+  constraints) installs in 132 s, 3.4 GB, `pip check` clean; real model download 7.98 GB; self-test 5/5 languages in
+  24 s offline. Interrupted download: finished files kept, the rerun fetched only what was missing (mid-file resume
+  relies on huggingface_hub and could not be observed: 300 MB arrived in ~3 s here).
+- Found and fixed by the real run: (1) `pyopenjtalk` has no Windows wheel (would need a C++ compiler) -> Japanese G2P
+  deps spelled out with `pyopenjtalk-plus` (MIT, Windows wheels, dictionary bundled); (2) eSpeak NG ignores data paths of
+  160+ characters (230+ on Windows) and kills the process -> the data folder is copied to a short path when needed;
+  (3) `.env` loader let the empty template line shadow a key added below it -> last value wins.
+- **NOT TESTED here: real winget, real Windows 10/11, Windows PowerShell 5.1, Windows Defender/SmartScreen behaviour,
+  pip wheels on Windows (checked against PyPI only), the real Cloudflare tunnel, a real phone.** Shortest real test: on
+  the laptop run the one-line command from docs/SHARE.md, wait for the link, open it on a phone on mobile data.
 
 ## M9 - Eval report skeleton: BUILT
 - `python -m eval.make_eval_report` -> `docs/EVAL_REPORT.md`: per-language table (STT, LID, Claude, retrieval, TTS rating,

@@ -1,0 +1,281 @@
+{
+ "kind": "installer_test",
+ "generated_at": "2026-11-17T04:32:06",
+ "pwsh": "/tmp/claude-0/dl/pwsh/pwsh",
+ "note": "PowerShell 7 on Linux with stubbed winget/git clone/python/npm/cloudflared; real git for pull/fetch; real app server for the share hand-off.",
+ "not_tested": [
+  "real winget",
+  "Windows 10/11",
+  "Windows PowerShell 5.1",
+  "real Cloudflare tunnel",
+  "real phone"
+ ],
+ "passed": 44,
+ "total": 44,
+ "results": [
+  {
+   "scenario": "low_disk",
+   "check": "exit code 1",
+   "pass": true,
+   "detail": "ShaOn Voice AI - installer\n  --------------------------\n  Log of quiet steps: /tmp/shaon-installer-test-tk1hlik7/lowdisk/tmp/shaon-install/install.log\n\n== 1/8  Checking this PC\n\nCheck          Value                                                 Result\n-----          -----                          "
+  },
+  {
+   "scenario": "low_disk",
+   "check": "plain message about disk space",
+   "pass": true,
+   "detail": "ShaOn Voice AI - installer\n  --------------------------\n  Log of quiet steps: /tmp/shaon-installer-test-tk1hlik7/lowdisk/tmp/shaon-install/install.log\n\n== 1/8  Checking this PC\n\nCheck          Value                                                 Result\n-----          -----                          "
+  },
+  {
+   "scenario": "low_disk",
+   "check": "result table printed first",
+   "pass": true,
+   "detail": "ShaOn Voice AI - installer\n  --------------------------\n  Log of quiet steps: /tmp/shaon-installer-test-tk1hlik7/lowdisk/tmp/shaon-install/install.log\n\n== 1/8  Checking this PC\n\nCheck          Value                                                 Result\n-----          -----                          "
+  },
+  {
+   "scenario": "low_disk",
+   "check": "nothing installed or cloned",
+   "pass": true,
+   "detail": ""
+  },
+  {
+   "scenario": "no_winget",
+   "check": "exit code 1",
+   "pass": true,
+   "detail": "Check          Value                                                  Result\n-----          -----                                                  ------\nWindows        Microsoft Windows 11 Home (build 26100) [stub]         ok\nFree disk      120 GB                                                 ok\n"
+  },
+  {
+   "scenario": "no_winget",
+   "check": "exact Microsoft Store link",
+   "pass": true,
+   "detail": "Check          Value                                                  Result\n-----          -----                                                  ------\nWindows        Microsoft Windows 11 Home (build 26100) [stub]         ok\nFree disk      120 GB                                                 ok\n"
+  },
+  {
+   "scenario": "private_repo",
+   "check": "exit code 1",
+   "pass": true,
+   "detail": "\n\n== 2/8  Tools (Git, Python 3.12, Node.js, cloudflared, eSpeak NG, FFmpeg, VC++ runtime)\n[04:30:53]   Git           present\n[04:30:53]   Python 3.12   present\n[04:30:53]   Node.js LTS   present\n[04:30:53]   cloudflared   present\n[04:30:53]   eSpeak NG     present\n[04:30:53]   FFmpeg        present\n"
+  },
+  {
+   "scenario": "private_repo",
+   "check": "says the repository may be private",
+   "pass": true,
+   "detail": "\n\n== 2/8  Tools (Git, Python 3.12, Node.js, cloudflared, eSpeak NG, FFmpeg, VC++ runtime)\n[04:30:53]   Git           present\n[04:30:53]   Python 3.12   present\n[04:30:53]   Node.js LTS   present\n[04:30:53]   cloudflared   present\n[04:30:53]   eSpeak NG     present\n[04:30:53]   FFmpeg        present\n"
+  },
+  {
+   "scenario": "private_repo",
+   "check": "exact sign-in steps (Git Credential Manager, gh auth login, gh auth setup-git)",
+   "pass": true,
+   "detail": "\n\n== 2/8  Tools (Git, Python 3.12, Node.js, cloudflared, eSpeak NG, FFmpeg, VC++ runtime)\n[04:30:53]   Git           present\n[04:30:53]   Python 3.12   present\n[04:30:53]   Node.js LTS   present\n[04:30:53]   cloudflared   present\n[04:30:53]   eSpeak NG     present\n[04:30:53]   FFmpeg        present\n"
+  },
+  {
+   "scenario": "private_repo",
+   "check": "no traceback / stack trace",
+   "pass": true,
+   "detail": "\n\n== 2/8  Tools (Git, Python 3.12, Node.js, cloudflared, eSpeak NG, FFmpeg, VC++ runtime)\n[04:30:53]   Git           present\n[04:30:53]   Python 3.12   present\n[04:30:53]   Node.js LTS   present\n[04:30:53]   cloudflared   present\n[04:30:53]   eSpeak NG     present\n[04:30:53]   FFmpeg        present\n"
+  },
+  {
+   "scenario": "private_repo",
+   "check": "winget not called (all tools present)",
+   "pass": true,
+   "detail": ""
+  },
+  {
+   "scenario": "fresh",
+   "check": "winget installed all 7 tools",
+   "pass": true,
+   "detail": "install Git.Git --accept-package-agreements --accept-source-agreements\ninstall Python.Python.3.12 --accept-package-agreements --accept-source-agreements\ninstall OpenJS.NodeJS.LTS --accept-package-agreements --accept-source-agreements\ninstall Cloudflare.cloudflared --accept-package-agreements --accep"
+  },
+  {
+   "scenario": "fresh",
+   "check": "winget agreements accepted non-interactively",
+   "pass": true,
+   "detail": "install Git.Git --accept-package-agreements --accept-source-agreements\ninstall Python.Python.3.12 --accept-package-agreements --accept-source-agreements\ninstall OpenJS.NodeJS.LTS --accept-package-agreements --accept-source-agreements\ninstall Cloudflare.cloudflared --accept-package-agreements --accep"
+  },
+  {
+   "scenario": "fresh",
+   "check": "PATH refreshed in the same session (tools found right after install)",
+   "pass": true,
+   "detail": "[04:30:55] Installing PyTorch 2.15.0 (CPU build) ...\nSuccessfully installed (stub)\n[04:30:55] Installing ShaOn's Python packages (app,stt-whisper,mms,tts-kokoro,retrieval) ...\nSuccessfully installed (stub)\n[04:30:55] Python packages ready.\n\n== 5/8  Web app (production build)\n[04:30:55] Installing we"
+  },
+  {
+   "scenario": "fresh",
+   "check": "cloned the work branch and said why",
+   "pass": true,
+   "detail": "[04:30:55] Installing PyTorch 2.15.0 (CPU build) ...\nSuccessfully installed (stub)\n[04:30:55] Installing ShaOn's Python packages (app,stt-whisper,mms,tts-kokoro,retrieval) ...\nSuccessfully installed (stub)\n[04:30:55] Python packages ready.\n\n== 5/8  Web app (production build)\n[04:30:55] Installing we"
+  },
+  {
+   "scenario": "fresh",
+   "check": "venv + pinned pip install",
+   "pass": true,
+   "detail": "-c import sys; print('%d.%d.%d' % sys.version_info[:3])\n-c import sys; print('%d.%d.%d' % sys.version_info[:3])\n-c import sys; print('%d.%d.%d' % sys.version_info[:3])\n-c import sys; print('%d.%d.%d' % sys.version_info[:3])\n-m venv /tmp/shaon-installer-test-tk1hlik7/fresh/home/ShaOn/.venv\n-c import "
+  },
+  {
+   "scenario": "fresh",
+   "check": "torch from the CPU index",
+   "pass": true,
+   "detail": "-c import sys; print('%d.%d.%d' % sys.version_info[:3])\n-c import sys; print('%d.%d.%d' % sys.version_info[:3])\n-c import sys; print('%d.%d.%d' % sys.version_info[:3])\n-c import sys; print('%d.%d.%d' % sys.version_info[:3])\n-m venv /tmp/shaon-installer-test-tk1hlik7/fresh/home/ShaOn/.venv\n-c import "
+  },
+  {
+   "scenario": "fresh",
+   "check": "web app built (npm ci + build)",
+   "pass": true,
+   "detail": "npm ci --no-audit --no-fund\nnpm run build\n"
+  },
+  {
+   "scenario": "fresh",
+   "check": "HF token asked once, skipped on Enter",
+   "pass": true,
+   "detail": "[04:30:55] Installing PyTorch 2.15.0 (CPU build) ...\nSuccessfully installed (stub)\n[04:30:55] Installing ShaOn's Python packages (app,stt-whisper,mms,tts-kokoro,retrieval) ...\nSuccessfully installed (stub)\n[04:30:55] Python packages ready.\n\n== 5/8  Web app (production build)\n[04:30:55] Installing we"
+  },
+  {
+   "scenario": "fresh",
+   "check": "total download size shown before downloading",
+   "pass": true,
+   "detail": "[04:30:55] Installing PyTorch 2.15.0 (CPU build) ...\nSuccessfully installed (stub)\n[04:30:55] Installing ShaOn's Python packages (app,stt-whisper,mms,tts-kokoro,retrieval) ...\nSuccessfully installed (stub)\n[04:30:55] Python packages ready.\n\n== 5/8  Web app (production build)\n[04:30:55] Installing we"
+  },
+  {
+   "scenario": "fresh",
+   "check": "stops on the failed download with a plain resume message",
+   "pass": true,
+   "detail": "[04:30:55] Installing PyTorch 2.15.0 (CPU build) ...\nSuccessfully installed (stub)\n[04:30:55] Installing ShaOn's Python packages (app,stt-whisper,mms,tts-kokoro,retrieval) ...\nSuccessfully installed (stub)\n[04:30:55] Python packages ready.\n\n== 5/8  Web app (production build)\n[04:30:55] Installing we"
+  },
+  {
+   "scenario": "fresh",
+   "check": ".env says CPU demo mode",
+   "pass": true,
+   "detail": ""
+  },
+  {
+   "scenario": "second_run",
+   "check": "winget not called again",
+   "pass": true,
+   "detail": "install Git.Git --accept-package-agreements --accept-source-agreements\ninstall Python.Python.3.12 --accept-package-agreements --accept-source-agreements\ninstall OpenJS.NodeJS.LTS --accept-package-agreements --accept-source-agreements\ninstall Cloudflare.cloudflared --accept-package-agreements --accep"
+  },
+  {
+   "scenario": "second_run",
+   "check": "git pull --ff-only on the existing checkout",
+   "pass": true,
+   "detail": "   4. In the Anthropic Console (console.anthropic.com), set a monthly spend limit for this key.\n      ShaOn also stops at its own cap (default 10 USD, shown in Settings).\n   Never type or paste the key into THIS window.\n  ------------------------------------------------------------\n  Press Enter whe"
+  },
+  {
+   "scenario": "second_run",
+   "check": "pip skipped (pinned set unchanged)",
+   "pass": true,
+   "detail": "   4. In the Anthropic Console (console.anthropic.com), set a monthly spend limit for this key.\n      ShaOn also stops at its own cap (default 10 USD, shown in Settings).\n   Never type or paste the key into THIS window.\n  ------------------------------------------------------------\n  Press Enter whe"
+  },
+  {
+   "scenario": "second_run",
+   "check": "web build skipped",
+   "pass": true,
+   "detail": "npm ci --no-audit --no-fund\nnpm run build\n"
+  },
+  {
+   "scenario": "second_run",
+   "check": "download resumed and finished",
+   "pass": true,
+   "detail": "   4. In the Anthropic Console (console.anthropic.com), set a monthly spend limit for this key.\n      ShaOn also stops at its own cap (default 10 USD, shown in Settings).\n   Never type or paste the key into THIS window.\n  ------------------------------------------------------------\n  Press Enter whe"
+  },
+  {
+   "scenario": "second_run",
+   "check": "self-test ran and passed",
+   "pass": true,
+   "detail": "   4. In the Anthropic Console (console.anthropic.com), set a monthly spend limit for this key.\n      ShaOn also stops at its own cap (default 10 USD, shown in Settings).\n   Never type or paste the key into THIS window.\n  ------------------------------------------------------------\n  Press Enter whe"
+  },
+  {
+   "scenario": "second_run",
+   "check": "first-run key step: local Settings URL + admin passcode, never asks for the key here",
+   "pass": true,
+   "detail": "[04:30:57] Python 3.12.10 at /tmp/shaon-installer-test-tk1hlik7/fresh/installed/python3.12\n\n== 3/8  ShaOn code\n[04:30:57] Git checkout found (branch claude/sweet-ptolemy-7qza59). Updating with git pull --ff-only ...\n[04:30:57] Code is up to date (branch claude/sweet-ptolemy-7qza59).\n\n== 4/8  Python "
+  },
+  {
+   "scenario": "second_run",
+   "check": "Enter without a key -> 'No key found yet'",
+   "pass": true,
+   "detail": "[04:30:57] Python 3.12.10 at /tmp/shaon-installer-test-tk1hlik7/fresh/installed/python3.12\n\n== 3/8  ShaOn code\n[04:30:57] Git checkout found (branch claude/sweet-ptolemy-7qza59). Updating with git pull --ff-only ...\n[04:30:57] Code is up to date (branch claude/sweet-ptolemy-7qza59).\n\n== 4/8  Python "
+  },
+  {
+   "scenario": "second_run",
+   "check": "spend-limit reminder",
+   "pass": true,
+   "detail": "[04:30:57] Python 3.12.10 at /tmp/shaon-installer-test-tk1hlik7/fresh/installed/python3.12\n\n== 3/8  ShaOn code\n[04:30:57] Git checkout found (branch claude/sweet-ptolemy-7qza59). Updating with git pull --ff-only ...\n[04:30:57] Code is up to date (branch claude/sweet-ptolemy-7qza59).\n\n== 4/8  Python "
+  },
+  {
+   "scenario": "second_run",
+   "check": "ends with the public link + visitor passcode + QR",
+   "pass": true,
+   "detail": "\n== 8/8  Installed in 0 min. Starting the share launcher ...\n\n  ShaOn Voice AI - share by link\n  ------------------------------\n[04:30:58] Python 3.12 (/tmp/claude-0/-home-user-CustomerSupport-Ai/d5b3f5f6-a277-5c85-82d8-ea0daf880095/scratchpad/venv/bin/python)\n[04:30:58] Web app: production build (s"
+  },
+  {
+   "scenario": "third_run",
+   "check": "self-test skipped (already passed for this version)",
+   "pass": true,
+   "detail": "\n  ShaOn Voice AI - share by link\n  ------------------------------\n[04:31:30] Python 3.12 (/tmp/claude-0/-home-user-CustomerSupport-Ai/d5b3f5f6-a277-5c85-82d8-ea0daf880095/scratchpad/venv/bin/python)\n[04:31:31] Web app: production build (served by the app itself, one origin)\n[04:31:31] cloudflared: "
+  },
+  {
+   "scenario": "third_run",
+   "check": "models: nothing to download",
+   "pass": true,
+   "detail": "\n  ShaOn Voice AI - share by link\n  ------------------------------\n[04:31:30] Python 3.12 (/tmp/claude-0/-home-user-CustomerSupport-Ai/d5b3f5f6-a277-5c85-82d8-ea0daf880095/scratchpad/venv/bin/python)\n[04:31:31] Web app: production build (served by the app itself, one origin)\n[04:31:31] cloudflared: "
+  },
+  {
+   "scenario": "third_run",
+   "check": "key step skipped: 'Anthropic key: configured'",
+   "pass": true,
+   "detail": "CPU            Stub CPU (8 threads)                                ok\nGPU            Intel(R) UHD Graphics                               not needed (CPU demo mode)\nInstall folder /tmp/shaon-installer-test-tk1hlik7/fresh/home/ShaOn ok\nInternet       github.com / huggingface.co reachable              "
+  },
+  {
+   "scenario": "third_run",
+   "check": "link printed",
+   "pass": true,
+   "detail": "\n== 4/8  Python packages (pinned; first time about 3 GB, 10-20 minutes)\n[04:31:30] Python packages already installed (pinned set unchanged) - skipped.\n\n== 5/8  Web app (production build)\n[04:31:30] Web app already built for this version - skipped.\n\n== 6/8  Speech models (CPU demo mode)\nModels: all 8"
+  },
+  {
+   "scenario": "third_run",
+   "check": "API key never in output, logs or share-link.txt",
+   "pass": true,
+   "detail": "[]"
+  },
+  {
+   "scenario": "third_run",
+   "check": "installer part fast on later runs (installer+launcher 30.5 s incl. 25 s share run)",
+   "pass": true,
+   "detail": "30.5"
+  },
+  {
+   "scenario": "partial",
+   "check": "only the missing 5 tools installed",
+   "pass": true,
+   "detail": "install Python.Python.3.12 --accept-package-agreements --accept-source-agreements\ninstall Cloudflare.cloudflared --accept-package-agreements --accept-source-agreements\ninstall eSpeak-NG.eSpeak-NG --accept-package-agreements --accept-source-agreements\ninstall Gyan.FFmpeg --accept-package-agreements -"
+  },
+  {
+   "scenario": "partial",
+   "check": "present tools skipped",
+   "pass": true,
+   "detail": "\n== 4/8  Python packages (pinned; first time about 3 GB, 10-20 minutes)\n[04:32:02] Creating the virtual environment (.venv) ...\n[04:32:03] Installing PyTorch 2.15.0 (CPU build) ...\nSuccessfully installed (stub)\n[04:32:03] Installing ShaOn's Python packages (app,stt-whisper,mms,tts-kokoro,retrieval) "
+  },
+  {
+   "scenario": "partial",
+   "check": "ZIP folder connected to git in place",
+   "pass": true,
+   "detail": "\n== 4/8  Python packages (pinned; first time about 3 GB, 10-20 minutes)\n[04:32:02] Creating the virtual environment (.venv) ...\n[04:32:03] Installing PyTorch 2.15.0 (CPU build) ...\nSuccessfully installed (stub)\n[04:32:03] Installing ShaOn's Python packages (app,stt-whisper,mms,tts-kokoro,retrieval) "
+  },
+  {
+   "scenario": "partial",
+   "check": "detects main was merged and uses it",
+   "pass": true,
+   "detail": "\n== 4/8  Python packages (pinned; first time about 3 GB, 10-20 minutes)\n[04:32:02] Creating the virtual environment (.venv) ...\n[04:32:03] Installing PyTorch 2.15.0 (CPU build) ...\nSuccessfully installed (stub)\n[04:32:03] Installing ShaOn's Python packages (app,stt-whisper,mms,tts-kokoro,retrieval) "
+  },
+  {
+   "scenario": "partial",
+   "check": "finishes (-NoShare)",
+   "pass": true,
+   "detail": "\n== 4/8  Python packages (pinned; first time about 3 GB, 10-20 minutes)\n[04:32:02] Creating the virtual environment (.venv) ...\n[04:32:03] Installing PyTorch 2.15.0 (CPU build) ...\nSuccessfully installed (stub)\n[04:32:03] Installing ShaOn's Python packages (app,stt-whisper,mms,tts-kokoro,retrieval) "
+  },
+  {
+   "scenario": "pip_fail",
+   "check": "stops with a plain explanation",
+   "pass": true,
+   "detail": "== 2/8  Tools (Git, Python 3.12, Node.js, cloudflared, eSpeak NG, FFmpeg, VC++ runtime)\n[04:32:05]   Git           present\n[04:32:05]   Python 3.12   present\n[04:32:05]   Node.js LTS   present\n[04:32:05]   cloudflared   present\n[04:32:05]   eSpeak NG     present\n[04:32:05]   FFmpeg        present\n[0"
+  }
+ ]
+}
