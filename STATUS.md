@@ -3,7 +3,7 @@
 Honest state of every milestone. VERIFIED = run and checked in this repo's tests or by a measured run.
 PENDING = cannot be done here; says who must do it.
 
-## At a glance (2026-11-16)
+## At a glance (2026-11-17)
 
 | Area | Works now (verified in this VM: 4 CPU, no GPU, no API key) | PENDING - who |
 |---|---|---|
@@ -14,7 +14,7 @@ PENDING = cannot be done here; says who must do it.
 | Guardrails | local layers 100% of local-layer attacks, 0 false positives | Claude red-team run - you (needs key) |
 | UI | all pages, tiers, reduced motion, axe 0 violations, 64 screenshots | Folded Signal moodboard + assets for final styling - you |
 | M0 numbers | harness, Kaggle runbook, recorder, rater | native recordings + ratings - native speakers; GPU run - you / Kaggle |
-| Remote demo | exposed mode with login + WebSocket verified locally | real Quick Tunnel + phone test - you |
+| Share link (PC + Quick Tunnel) | `ShaOn-Share.bat` launcher (run under PowerShell 7 with a stub tunnel), visitor/admin passcodes, Host/Origin checks, busy + max length, SSRF guard, Get-ready screen; 5 languages + 3 switches through the share-mode server | **public tunnel path: NOT TESTED** (sandbox cannot reach the Cloudflare edge); Windows PowerShell 5.1 + real phone - you |
 
 ## D0 - Design spike: BUILT
 - Built: Next.js 16 static export in `web/`, single tokens file `web/src/styles/tokens.css` (JS reads it back via `lib/tokens.ts`), self-hosted Noto fonts for all 5 scripts, effects tiers Auto/Full/Lite/Off + `prefers-reduced-motion` + pause when hidden (`lib/effects.tsx`), the Signal (R3F particles, 7 states, 5 language motifs, AnalyserNode-driven) with a static fallback, GPU ASCII post-process (Latin glyphs only), landing hero with the wordmark assembling from particles, Signal lab page.
@@ -128,6 +128,33 @@ PENDING = cannot be done here; says who must do it.
 - Verified: exposed mode locally: API without token -> 401, WebSocket without token -> refused, password login -> token ->
   full WebSocket call (in `scripts/test_all.sh`). WebSocket transport E2E on localhost.
 - PENDING (user): running the real Quick Tunnel and the phone test (no public tunnel was opened from this sandbox).
+
+## Share by public link ($0, PC + Quick Tunnel): BUILT + VERIFIED locally; public tunnel path: NOT TESTED
+How to use: docs/SHARE.md. Design + rejected hosts: DEPLOY.md "Public link at $0".
+- Built: `ShaOn-Share.bat` -> `scripts/share.ps1` (prerequisites, production build, exposed mode, per-language warm-up,
+  Quick Tunnel, public /health check, link + visitor passcode + QR, `share-link.txt` (gitignored), watchdog that restarts
+  the tunnel and prints the NEW link, status line every 30 s). One origin: FastAPI serves web + /api + call WebSocket.
+- Security (tests/test_share_security.py, 21 tests, mutation-checked): per-launch visitor passcode (calls only) and admin
+  passcode, REST + WebSocket upgrade; Host/Origin limited to localhost + the learned tunnel host; per-IP rate limits from
+  CF-Connecting-IP (only trusted from loopback); max calls (2) -> "busy"; max call length (5 min); key edit off;
+  ingestion admin-only, SSRF guard on every redirect hop (10 SSRF URLs refused); passcodes/tokens scrubbed from logs.
+- Visitor UI (web/scripts/share_ui_e2e.mjs, 5/5 PASS): wrong passcode rejected, Get ready (mic, speaker tap, WebSocket
+  check, per-language badges), second caller sees "busy", 20 s max length ends the call, offline mid-call -> friendly
+  "connection lost" screen. Phone layout 390 px (design/screens/share-*-phone.png), effects Auto = Lite on phones.
+- Launcher (tests/share/run_launcher_test.py, 7/7 PASS under PowerShell 7.4 on Linux with a stub cloudflared): link
+  printed, share-link.txt has link + visitor passcode only, no admin passcode / key in logs, tunnel drop -> NEW link,
+  clean stop.
+- Live calls through the share-mode server (Host = tunnel host, visitor passcode, real CPU engines, fake LLM):
+  8/8 PASS (one run each, 4-core CPU, 2026-11-17). First audio (ms): en 3246, ja 2937, hi 4110, bn 3517,
+  kn 5054; switches hi->en 4314/3156, bn->ja 3579/2820, kn->hi 5026/4369. Raw: eval/out/share_e2e.json.
+- Fixed during this pass: first Hindi call took 108 s (MMS adapter not really warmed) -> warm-up now transcribes 1 s per
+  language and readiness waits for it; the Get-ready WebSocket check used the call-start rate limit, so a 5th quick
+  call was silently refused -> own bucket, and a rate-limited start now shows "wait a minute".
+- **public tunnel path: NOT TESTED.** cloudflared got a trycloudflare URL from this sandbox but could not connect to the
+  Cloudflare edge (no direct egress). Shortest manual test (5 min): `winget install Cloudflare.cloudflared`, double-click
+  `ShaOn-Share.bat`, wait for the green link, open it on a phone using mobile data (Wi-Fi off), enter the visitor
+  passcode, Get ready all green, one call in English and one in Hindi; then close the window and check the link is dead.
+- Also not tested here: Windows PowerShell 5.1 itself, winget paths, Windows Defender prompts, a real iPhone/Android.
 
 ## M9 - Eval report skeleton: BUILT
 - `python -m eval.make_eval_report` -> `docs/EVAL_REPORT.md`: per-language table (STT, LID, Claude, retrieval, TTS rating,

@@ -1,0 +1,420 @@
+{
+  "generated_at": "2026-11-17T03:03:39",
+  "host": "vm",
+  "kind": "share_e2e",
+  "share_mode": true,
+  "note": "FLEURS read speech as caller; scripted fake LLM (machine-written lines, native review pending); CPU engines; one run each.",
+  "cases": [
+    {
+      "case": "en",
+      "pass": true,
+      "turns": [
+        {
+          "want": "en",
+          "detected": "en",
+          "reason": "lid",
+          "stt_engine": "faster-whisper",
+          "intended_stt": "faster-whisper",
+          "routing": null,
+          "fallbacks": null,
+          "stt_ms": 2634,
+          "user_text": "This seems sensible because the Earth doesn't feel as if it's moving, does it?",
+          "reply": "Test model reply. Our branch opens at ten in the morning on Saturday.",
+          "reply_lang": "en",
+          "tts_voice": "kokoro_en_heart",
+          "tts_gen_ms": 1849,
+          "first_audio_ms": 3246,
+          "checks": {
+            "language_detected": true,
+            "stt_routed_as_configured": true,
+            "reply_language_from_script": true,
+            "tts_produced_audio": true,
+            "no_digits_in_reply": true,
+            "timings_present": true
+          },
+          "pass": true
+        }
+      ],
+      "errors": [],
+      "wall_s": 9.554,
+      "clips": [
+        {
+          "id": "en_8324220666349639753",
+          "seconds": 4.38,
+          "ref": "This seems sensible, because the Earth doesn't feel as if it's moving, does it?"
+        }
+      ]
+    },
+    {
+      "case": "ja",
+      "pass": true,
+      "turns": [
+        {
+          "want": "ja",
+          "detected": "ja",
+          "reason": "lid",
+          "stt_engine": "faster-whisper",
+          "intended_stt": "faster-whisper",
+          "routing": null,
+          "fallbacks": null,
+          "stt_ms": 2235,
+          "user_text": "現在、羽根を折り返すことができないこっちは、トンボと影呂のみです。",
+          "reply": "テスト用の応答です。 土曜日は午前十時に開店します。",
+          "reply_lang": "ja",
+          "tts_voice": "kokoro_ja_alpha",
+          "tts_gen_ms": 689,
+          "first_audio_ms": 2937,
+          "checks": {
+            "language_detected": true,
+            "stt_routed_as_configured": true,
+            "reply_language_from_script": true,
+            "tts_produced_audio": true,
+            "no_digits_in_reply": true,
+            "timings_present": true
+          },
+          "pass": true
+        }
+      ],
+      "errors": [],
+      "wall_s": 11.044,
+      "clips": [
+        {
+          "id": "ja_9552781918205264174",
+          "seconds": 7.8,
+          "ref": "現在、翅を折り返すことができない昆虫はトンボとカゲロウのみです。"
+        }
+      ]
+    },
+    {
+      "case": "hi",
+      "pass": true,
+      "turns": [
+        {
+          "want": "hi",
+          "detected": "hi",
+          "reason": "lid",
+          "stt_engine": "mms",
+          "intended_stt": "mms",
+          "routing": null,
+          "fallbacks": null,
+          "stt_ms": 3416,
+          "user_text": "गीज़ा में मौजूद ग्रेट पिरामिड सात अजुबा में से केवल एक है जो आज भी खड़ा है",
+          "reply": "यह परीक्षण उत्तर है। शनिवार को शाखा सुबह दस बजे खुलती है।",
+          "reply_lang": "hi",
+          "tts_voice": "kokoro_hi_alpha",
+          "tts_gen_ms": 683,
+          "first_audio_ms": 4110,
+          "checks": {
+            "language_detected": true,
+            "stt_routed_as_configured": true,
+            "reply_language_from_script": true,
+            "tts_produced_audio": true,
+            "no_digits_in_reply": true,
+            "timings_present": true
+          },
+          "pass": true
+        }
+      ],
+      "errors": [],
+      "wall_s": 13.55,
+      "clips": [
+        {
+          "id": "hi_17191669298005207755",
+          "seconds": 7.32,
+          "ref": "गीज़ा में मौजूद ग्रेट पिरामिड सात अजूबा में से केवल एक है जो आज भी खड़ा है।"
+        }
+      ]
+    },
+    {
+      "case": "bn",
+      "pass": true,
+      "turns": [
+        {
+          "want": "bn",
+          "detected": "bn",
+          "reason": "lid",
+          "stt_engine": "mms",
+          "intended_stt": "mms",
+          "routing": null,
+          "fallbacks": null,
+          "stt_ms": 3169,
+          "user_text": "এই রোকটি সুকরের দ্বারা বাহিত যা পরে মসার মাধ্যমে মানুষে ধেশতান্তরিত হয়",
+          "reply": "এটি পরীক্ষার উত্তর। শনিবার শাখা সকাল দশটায় খোলে।",
+          "reply_lang": "bn",
+          "tts_voice": "mms_bn",
+          "tts_gen_ms": 339,
+          "first_audio_ms": 3517,
+          "checks": {
+            "language_detected": true,
+            "stt_routed_as_configured": true,
+            "reply_language_from_script": true,
+            "tts_produced_audio": true,
+            "no_digits_in_reply": true,
+            "timings_present": true
+          },
+          "pass": true
+        }
+      ],
+      "errors": [],
+      "wall_s": 12.054,
+      "clips": [
+        {
+          "id": "bn_15428193159095919435",
+          "seconds": 6.48,
+          "ref": "এই রোগটি শূকরের দ্বারা বাহিত, যা পরে মশার মাধ্যমে মানুষের দেহে স্থানান্তরিত হয়।"
+        }
+      ]
+    },
+    {
+      "case": "kn",
+      "pass": true,
+      "turns": [
+        {
+          "want": "kn",
+          "detected": "kn",
+          "reason": "lid",
+          "stt_engine": "mms",
+          "intended_stt": "mms",
+          "routing": null,
+          "fallbacks": null,
+          "stt_ms": 3823,
+          "user_text": "ಈ ರೋಗವು ಹಂದಿಗಳಿನದ ಉದ್ಪತ್ತಿಯಾಗುತ್ತದೆ ನಂತರ ಅದು ಸೊಳ್ಳಗಳ ಮೂಲಕ ಮನುಷ್ಯರಿಗೆ ವಳಸೆ ಹೋಗುತ್ತದೆ",
+          "reply": "ನಾನು ಈಗ ನಿಮ್ಮನ್ನು ನಮ್ಮ ಸಹೋದ್ಯೋಗಿಯೊಂದಿಗೆ ಸಂಪರ್ಕಿಸುತ್ತೇನೆ. ದಯವಿಟ್ಟು ಲೈನ್‌ನಲ್ಲಿರಿ.",
+          "reply_lang": "kn",
+          "tts_voice": "mms_kn",
+          "tts_gen_ms": 1212,
+          "first_audio_ms": 5054,
+          "checks": {
+            "language_detected": true,
+            "stt_routed_as_configured": true,
+            "reply_language_from_script": true,
+            "tts_produced_audio": true,
+            "no_digits_in_reply": true,
+            "timings_present": true
+          },
+          "pass": true
+        }
+      ],
+      "errors": [],
+      "wall_s": 15.065,
+      "clips": [
+        {
+          "id": "kn_3984784351832864807",
+          "seconds": 9.0,
+          "ref": "ಈ ರೋಗವು ಹಂದಿಗಳಿಂದ ಉತ್ಪತಿಯಾಗುತ್ತದೆ, ನಂತರ ಅದು ಸೊಳ್ಳೆಗಳ ಮೂಲಕ ಮನುಷ್ಯರಿಗೆ ವಲಸೆ ಹೋಗುತ್ತದೆ."
+        }
+      ]
+    },
+    {
+      "case": "hi->en",
+      "pass": true,
+      "turns": [
+        {
+          "want": "hi",
+          "detected": "hi",
+          "reason": "lid",
+          "stt_engine": "mms",
+          "intended_stt": "mms",
+          "routing": null,
+          "fallbacks": null,
+          "stt_ms": 3612,
+          "user_text": "गीज़ा में मौजूद ग्रेट पिरामिड सात अजुबा में से केवल एक है जो आज भी खड़ा है",
+          "reply": "यह परीक्षण उत्तर है। शनिवार को शाखा सुबह दस बजे खुलती है।",
+          "reply_lang": "hi",
+          "tts_voice": "kokoro_hi_alpha",
+          "tts_gen_ms": 695,
+          "first_audio_ms": 4314,
+          "checks": {
+            "language_detected": true,
+            "stt_routed_as_configured": true,
+            "reply_language_from_script": true,
+            "tts_produced_audio": true,
+            "no_digits_in_reply": true,
+            "timings_present": true
+          },
+          "pass": true
+        },
+        {
+          "want": "en",
+          "detected": "en",
+          "reason": "lid",
+          "stt_engine": "faster-whisper",
+          "intended_stt": "faster-whisper",
+          "routing": null,
+          "fallbacks": null,
+          "stt_ms": 2357,
+          "user_text": "This seems sensible because the Earth doesn't feel as if it's moving, does it?",
+          "reply": "Test model reply. Our branch opens at ten in the morning on Saturday.",
+          "reply_lang": "en",
+          "tts_voice": "kokoro_en_heart",
+          "tts_gen_ms": 1313,
+          "first_audio_ms": 3156,
+          "checks": {
+            "language_detected": true,
+            "stt_routed_as_configured": true,
+            "reply_language_from_script": true,
+            "tts_produced_audio": true,
+            "no_digits_in_reply": true,
+            "timings_present": true
+          },
+          "pass": true
+        }
+      ],
+      "errors": [],
+      "wall_s": 39.079,
+      "clips": [
+        {
+          "id": "hi_17191669298005207755",
+          "seconds": 7.32,
+          "ref": "गीज़ा में मौजूद ग्रेट पिरामिड सात अजूबा में से केवल एक है जो आज भी खड़ा है।"
+        },
+        {
+          "id": "en_8324220666349639753",
+          "seconds": 4.38,
+          "ref": "This seems sensible, because the Earth doesn't feel as if it's moving, does it?"
+        }
+      ]
+    },
+    {
+      "case": "bn->ja",
+      "pass": true,
+      "turns": [
+        {
+          "want": "bn",
+          "detected": "bn",
+          "reason": "lid",
+          "stt_engine": "mms",
+          "intended_stt": "mms",
+          "routing": null,
+          "fallbacks": null,
+          "stt_ms": 3254,
+          "user_text": "এই রোকটি সুকরের দ্বারা বাহিত যা পরে মসার মাধ্যমে মানুষে ধেেস্তান্তরিত হয়",
+          "reply": "এটি পরীক্ষার উত্তর। শনিবার শাখা সকাল দশটায় খোলে।",
+          "reply_lang": "bn",
+          "tts_voice": "mms_bn",
+          "tts_gen_ms": 314,
+          "first_audio_ms": 3579,
+          "checks": {
+            "language_detected": true,
+            "stt_routed_as_configured": true,
+            "reply_language_from_script": true,
+            "tts_produced_audio": true,
+            "no_digits_in_reply": true,
+            "timings_present": true
+          },
+          "pass": true
+        },
+        {
+          "want": "ja",
+          "detected": "ja",
+          "reason": "lid",
+          "stt_engine": "faster-whisper",
+          "intended_stt": "faster-whisper",
+          "routing": null,
+          "fallbacks": null,
+          "stt_ms": 2154,
+          "user_text": "現在羽根を折り返すことができないコンチュアはトンボとカゲロのみです",
+          "reply": "テスト用の応答です。 土曜日は午前十時に開店します。",
+          "reply_lang": "ja",
+          "tts_voice": "kokoro_ja_alpha",
+          "tts_gen_ms": 652,
+          "first_audio_ms": 2820,
+          "checks": {
+            "language_detected": true,
+            "stt_routed_as_configured": true,
+            "reply_language_from_script": true,
+            "tts_produced_audio": true,
+            "no_digits_in_reply": true,
+            "timings_present": true
+          },
+          "pass": true
+        }
+      ],
+      "errors": [],
+      "wall_s": 39.581,
+      "clips": [
+        {
+          "id": "bn_15428193159095919435",
+          "seconds": 6.48,
+          "ref": "এই রোগটি শূকরের দ্বারা বাহিত, যা পরে মশার মাধ্যমে মানুষের দেহে স্থানান্তরিত হয়।"
+        },
+        {
+          "id": "ja_9552781918205264174",
+          "seconds": 7.8,
+          "ref": "現在、翅を折り返すことができない昆虫はトンボとカゲロウのみです。"
+        }
+      ]
+    },
+    {
+      "case": "kn->hi",
+      "pass": true,
+      "turns": [
+        {
+          "want": "kn",
+          "detected": "kn",
+          "reason": "lid",
+          "stt_engine": "mms",
+          "intended_stt": "mms",
+          "routing": null,
+          "fallbacks": null,
+          "stt_ms": 4011,
+          "user_text": "ಈ ರೋಗವು ಹಂದಿಗಳಿನ ಉದ್ಪತ್ತಿಯಾಗುತ್ತದೆ ನಂತರ ಅದು ಸೊಳ್ಳಗಳ ಮೂಲಕ ಮನುಷ್ಯರಿಗೆ ವಳಸೆ ಹೋಗುತ್ತದೆ",
+          "reply": "ನಾನು ಈಗ ನಿಮ್ಮನ್ನು ನಮ್ಮ ಸಹೋದ್ಯೋಗಿಯೊಂದಿಗೆ ಸಂಪರ್ಕಿಸುತ್ತೇನೆ. ದಯವಿಟ್ಟು ಲೈನ್‌ನಲ್ಲಿರಿ.",
+          "reply_lang": "kn",
+          "tts_voice": "mms_kn",
+          "tts_gen_ms": 995,
+          "first_audio_ms": 5026,
+          "checks": {
+            "language_detected": true,
+            "stt_routed_as_configured": true,
+            "reply_language_from_script": true,
+            "tts_produced_audio": true,
+            "no_digits_in_reply": true,
+            "timings_present": true
+          },
+          "pass": true
+        },
+        {
+          "want": "hi",
+          "detected": "hi",
+          "reason": "lid",
+          "stt_engine": "mms",
+          "intended_stt": "mms",
+          "routing": null,
+          "fallbacks": null,
+          "stt_ms": 3646,
+          "user_text": "गीज़ा में मौजूद ग्रेट पिरामिड सात अजुबा में से केवल एक है जो आज भी खड़ा है",
+          "reply": "यह परीक्षण उत्तर है। शनिवार को शाखा सुबह दस बजे खुलती है।",
+          "reply_lang": "hi",
+          "tts_voice": "kokoro_hi_alpha",
+          "tts_gen_ms": 711,
+          "first_audio_ms": 4369,
+          "checks": {
+            "language_detected": true,
+            "stt_routed_as_configured": true,
+            "reply_language_from_script": true,
+            "tts_produced_audio": true,
+            "no_digits_in_reply": true,
+            "timings_present": true
+          },
+          "pass": true
+        }
+      ],
+      "errors": [],
+      "wall_s": 44.577,
+      "clips": [
+        {
+          "id": "kn_3984784351832864807",
+          "seconds": 9.0,
+          "ref": "ಈ ರೋಗವು ಹಂದಿಗಳಿಂದ ಉತ್ಪತಿಯಾಗುತ್ತದೆ, ನಂತರ ಅದು ಸೊಳ್ಳೆಗಳ ಮೂಲಕ ಮನುಷ್ಯರಿಗೆ ವಲಸೆ ಹೋಗುತ್ತದೆ."
+        },
+        {
+          "id": "hi_17191669298005207755",
+          "seconds": 7.32,
+          "ref": "गीज़ा में मौजूद ग्रेट पिरामिड सात अजूबा में से केवल एक है जो आज भी खड़ा है।"
+        }
+      ]
+    }
+  ],
+  "pass_rate": 1.0
+}

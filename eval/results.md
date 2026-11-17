@@ -162,3 +162,22 @@ Context for the numbers above: they were produced in the Claude Code cloud VM (4
 Findings that change setup (already applied):
 - Kokoro needs Python 3.10-3.12 (`requires-python` pinned). English G2P needs espeak-ng and the spaCy `en_core_web_sm` model (added to the `tts-kokoro` extra). Japanese needs `python -m unidic download` once.
 - Whisper writes numbers as digits ("4729", "5,000") while references spell them out: results show WER both with and without the two number lines per language.
+
+
+## Share mode (public-link launcher), 2026-11-17
+Server in share mode (Host = tunnel host, visitor passcode, max calls 2), FLEURS read speech as caller, real CPU engines,
+fake LLM, browser over the WebSocket transport on localhost. One run each. The public Cloudflare path was NOT tested.
+
+| Case | Result | First audio (ms) |
+|---|---|---|
+| en | PASS | 3246 |
+| ja | PASS | 2937 |
+| hi | PASS | 4110 |
+| bn | PASS | 3517 |
+| kn | PASS | 5054 |
+| hi -> en | PASS | 4314 / 3156 |
+| bn -> ja | PASS | 3579 / 2820 |
+| kn -> hi | PASS | 5026 / 4369 |
+
+Visitor UI checks (share_ui_e2e.json): wrong passcode, Get ready, busy, max call length, offline mid-call: 5/5 PASS.
+Security tests: 21/21 (tests/test_share_security.py). Launcher with stub tunnel: 7/7.
