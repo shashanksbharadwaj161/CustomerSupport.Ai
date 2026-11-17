@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-17T04:29:56",
+  "generated_at": "2026-11-17T12:08:13",
   "host": "vm",
   "kind": "share_ui_e2e",
   "checks": [
@@ -21,7 +21,7 @@
       "check": "max_call_length_ends_call",
       "ok": true,
       "after_s": 20,
-      "text": "Call endedThe call ended automatically after 20 seconds (demo time limit). You can start a new call.New call"
+      "text": "Call endedThe call ended automatically after 20 seconds (demo time limit). You can start a new call.New call →"
     },
     {
       "check": "offline_mid_call_shows_friendly_state",
